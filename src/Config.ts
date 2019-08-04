@@ -28,7 +28,7 @@ export class Config {
         if ("config" in storage) {
             config = Object.assign(config, JSON.parse(storage["config"]));
         }
-        
+
         console.dir("Load " + JSON.stringify(config));
         return config;
     }

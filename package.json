@@ -5,8 +5,6 @@
   "author": "neobooru",
   "license": "MIT",
   "scripts": {
-    "prettier": "prettier \"src/**/*.{ts,js,vue}\"",
-    "prettier:write": "npm run prettier -- --write",
     "build": "cross-env NODE_ENV=production webpack --hide-modules",
     "build:dev": "cross-env NODE_ENV=development webpack --hide-modules",
     "build-zip": "node scripts/build-zip.js",
