@@ -107,7 +107,7 @@ export default Vue.extend({
     data() {
         return {
             szuru: null as SzuruWrapper | null,
-            post: null as SzuruPost | null,
+            post: new SzuruPost(),
             messages: [] as Message[]
         };
     },
@@ -167,7 +167,7 @@ export default Vue.extend({
             window.open(url);
         },
         getTagClasses(tag: SzuruTag): string[] {
-            let classes: string[] = []
+            let classes: string[] = [];
 
             if (tag.category) {
                 classes.push("tag-" + tag.category.name);
@@ -184,7 +184,7 @@ export default Vue.extend({
             }
         },
         getMessageClasses(message: Message) {
-            let classes: string[] = []
+            let classes: string[] = [];
 
             switch (message.type) {
                 case "error":
@@ -204,7 +204,7 @@ export default Vue.extend({
     mounted() {
         this.grabPost();
 
-        SzuruWrapper.createFromConfig().then((x) => {
+        SzuruWrapper.createFromConfig().then(x => {
             if (x) {
                 this.szuru = x;
             } else {
