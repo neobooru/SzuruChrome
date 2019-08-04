@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { SzuruPost, SzuruTag, SzuruCategory } from "../SzuruTypes";
+import { SzuruPost, SzuruTag } from "../SzuruTypes";
 
 export default class Shimmie2 implements ILoader {
     canImport(location: Location): boolean {
