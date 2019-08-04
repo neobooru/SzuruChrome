@@ -1,0 +1,106 @@
+body {
+    margin: 0px;
+    font-family: "Open Sans", sans-serif;
+    display: block;
+    font-size: 100%;
+}
+
+button {
+    background-color: #a2a2a2;
+    border: none;
+    color: white;
+    font-family: "Open Sans", sans-serif;
+    height: 30px;
+    cursor: pointer;
+}
+
+button.primary {
+    background-color: #24aadd;
+}
+
+input[type="text"] {
+    background-color: #fafafa;
+    border: 1px solid #eee;
+    height: 30px;
+    width: 100%;
+}
+
+img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.full {
+    width: 100%;
+}
+
+select {
+    background-color: #fafafa;
+    border: 1px solid #eee;
+    height: 30px;
+    width: 100%;
+    font-family: "Open Sans", sans-serif;
+}
+
+.compact-tags {
+    list-style-type: none;
+    padding: 0;
+    display: inline;
+}
+
+.tag-copyright {
+    color: rgb(170, 0, 170);
+}
+
+.tag-character {
+    color: rgb(0, 170, 0);
+}
+
+.tag-artist {
+    color: rgb(170, 0, 0);
+}
+
+.tag-meta {
+    color: rgb(255, 128, 0);
+}
+
+.remove-tag,
+.tag-usages {
+    color: #888;
+}
+
+a.remove-tag {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.tag-usages {
+    font-size: 90%;
+    margin-left: 0.7em;
+}
+
+.messages {
+    list-style-type: none;
+    padding: 0;
+    display: inline;
+}
+
+.messages > li {
+    padding: 5px;
+    border-radius: 2px;
+    background: #24aadd;
+    color: white;
+}
+
+.messages > li > a {
+    color: white;
+    text-decoration: none;
+}
+
+.messages > li:not(:last-child) {
+    margin-bottom: 5px;
+}
+
+.message-error {
+    background: #f44336 !important;
+}
