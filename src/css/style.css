@@ -48,6 +48,10 @@ select {
     display: inline;
 }
 
+.tag-general {
+    color: #24aadd;
+}
+
 .tag-copyright {
     color: rgb(170, 0, 170);
 }

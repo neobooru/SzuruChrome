@@ -92,11 +92,11 @@ export default class Gelbooru implements ILoader {
                 let tagName: string;
 
                 if (isSafebooru) {
-                    tagName = el.getElementsByTagName("a")[0].innerText.replace(/\s/g, "_");
+                    tagName = el.getElementsByTagName("a")[0].innerText;
                 } else {
                     // First <a> is "?"
                     // Second <a> is "actual_tag_name"
-                    tagName = el.getElementsByTagName("a")[1].innerText.replace(/\s/g, "_");
+                    tagName = el.getElementsByTagName("a")[1].innerText;
                 }
 
                 let category: SzuruCategory | undefined;

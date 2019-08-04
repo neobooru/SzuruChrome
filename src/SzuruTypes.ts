@@ -20,7 +20,7 @@ export class SzuruTag {
     category?: SzuruCategory;
 
     constructor(name: string, category?: SzuruCategory) {
-        this.name = name;
+        this.name = name.replace(/\s/g, "_"); // Replace all spaces with underscores
         this.category = category;
     }
 }

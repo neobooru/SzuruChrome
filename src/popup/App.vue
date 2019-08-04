@@ -171,6 +171,8 @@ export default Vue.extend({
 
             if (tag.category) {
                 classes.push("tag-" + tag.category.name);
+            } else {
+                classes.push("tag-general");
             }
 
             return classes;
