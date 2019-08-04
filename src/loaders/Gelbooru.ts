@@ -1,11 +1,18 @@
 import ILoader from "./ILoader"
 import { SzuruPost, SzuruTag, SzuruCategory } from "../SzuruTypes";
 
+// Small hack to avoid screwing with semver
+enum Version {
+    v020 = 1, // 0.2.0
+    v025, // 0.2.5
+}
+
 export default class Gelbooru implements ILoader {
     canImport(location: Location): boolean {
         return (
             location.host == "safebooru.org" ||
-            location.host == "gelbooru.com"
+            location.host == "gelbooru.com" ||
+            location.host == "rule34.xxx"
         );
     }
 
@@ -14,26 +21,26 @@ export default class Gelbooru implements ILoader {
          * Make sure to use the `dom` variable and NOT `document`!
          */
 
-        // TODO: Replace this with version checking, instead of just one 'special case' domain
-        let isSafebooru: boolean;
-        const safebooruSiteTitle = dom.querySelector("#site-title > a") as HTMLAnchorElement;
-
-        if (safebooruSiteTitle && safebooruSiteTitle.innerText == "Safebooru") {
-            // If safebooru (and maybe other sites?)
-            isSafebooru = true;
-        } else {
-            // If gelbooru (version 0.2.5)
-            isSafebooru = false;
+        let version: Version;
+        switch (dom.location.host) {
+            case "safebooru.org":
+            case "rule34.xxx":
+                version = Version.v020;
+                break;
+            case "gelbooru.com":
+                version = Version.v025;
+                break;
+            default:
+                console.error("Couldn't guess version");
+                return null;
         }
 
-        console.log("isSafebooru: " + isSafebooru);
+        console.log("Gelbooru guessed version: " + version);
 
         let post = new SzuruPost();
-
-        // Set source to the current page (NOT a direct link to the image)
         post.source = dom.location.href;
 
-        // Get image url (direct url to image)
+        // Set image url (direct url to image)
         const originalImageElements = dom.querySelectorAll("li > a");
         for (const idx in originalImageElements) {
             const el = originalImageElements[idx] as HTMLAnchorElement;
@@ -48,7 +55,7 @@ export default class Gelbooru implements ILoader {
         const safetyExp = new RegExp("Rating: (.*)");
         let safetyElements: NodeListOf<Element>;
 
-        if (isSafebooru) {
+        if (version == Version.v020) {
             safetyElements = dom.querySelectorAll("#stats > ul > li");
         } else {
             safetyElements = dom.querySelectorAll("#tag-list > div > li");
@@ -80,7 +87,7 @@ export default class Gelbooru implements ILoader {
         // Set tags
         let tagElements: NodeListOf<Element>;
 
-        if (isSafebooru) {
+        if (version == Version.v020) {
             tagElements = dom.querySelectorAll("#tag-sidebar > li");
         } else {
             tagElements = dom.querySelectorAll("#tag-list > div > li[class^='tag-type']");
@@ -91,8 +98,17 @@ export default class Gelbooru implements ILoader {
             if (el && el.innerText) {
                 let tagName: string;
 
-                if (isSafebooru) {
-                    tagName = el.getElementsByTagName("a")[0].innerText;
+                if (version == Version.v020) {
+                    const nameElements = el.getElementsByTagName("a");
+
+                    // Some <li/> don't actually contain a name.
+                    // E.g. the sub-headers ("Copyright", "Character", "General", "Meta") on rule34.xxx
+                    if (nameElements.length > 0) {
+                        tagName = el.getElementsByTagName("a")[0].innerText;
+                    }
+                    else {
+                        continue;
+                    }
                 } else {
                     // First <a> is "?"
                     // Second <a> is "actual_tag_name"
