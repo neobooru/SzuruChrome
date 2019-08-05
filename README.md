@@ -4,7 +4,12 @@ Chrome/Firefox extension which can import media from various sites into a [szuru
 
 ## Supported sites
 
--   Gelbooru/Safebooru
+-   Gelbooru/Safebooru/Rule34.xxx
+-   Danbooru (and Safebooru variant)
+-   Rule34 paheal (Shimmie2)
+-   yande.re/konachan (Moebooru)
+-   Reddit
+-   Twitter
 
 ## Installation
 
@@ -50,6 +55,7 @@ Firefox: `about:debugging` -> "Load Temporary Add-on..." -> Select any file in t
 -   Finishing the initial version of this add-on (see visual design doc for all features)
 -   Auto-set tag category when creating a new tag (imported tag)
 -   Reverse image search to check whether (similar) file already exist before uploading it
+-   Right click any image on a page to import it
 -   Support more sites
 -   Configurable list of tags to always ignore (e.g. tagme, highres)
 -   [low priority] Import artist commentary
