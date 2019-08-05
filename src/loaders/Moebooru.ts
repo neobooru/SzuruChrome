@@ -14,7 +14,7 @@ export default class Moebooru implements ILoader {
         post.source = dom.location.href;
 
         // Set image url
-        const originalImageElement = document.querySelector("#highres") as HTMLAnchorElement;
+        const originalImageElement = dom.querySelector("#highres") as HTMLAnchorElement;
         if (originalImageElement) {
             post.imageUrl = originalImageElement.href;
         }
@@ -22,7 +22,7 @@ export default class Moebooru implements ILoader {
         // Set safety
         // Same method as Gelbooru but cleaner code
         const safetyExp = new RegExp("Rating: (.*)");
-        const safetyElements = Array.from(document.querySelectorAll("#stats > ul > li"))
+        const safetyElements = Array.from(dom.querySelectorAll("#stats > ul > li"))
             .map(x => x as HTMLLIElement)
             .filter(x => x.innerText.startsWith("Rating:"));
 
@@ -62,7 +62,7 @@ export default class Moebooru implements ILoader {
 
             let category: SzuruCategory | undefined;
 
-            // Loop over all classes because some sites (konachan) 
+            // Loop over all classes because some sites (konachan)
             // have mutliple classes, e.g. "tag-link tag-type-copyright"
             for (const className of Array.from(el.classList)) {
                 switch (className) {
