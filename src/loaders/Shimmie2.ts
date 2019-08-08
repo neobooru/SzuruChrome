@@ -1,13 +1,13 @@
 import ILoader from "./ILoader"
-import { SzuruPost, SzuruTag } from "../SzuruTypes";
+import { LocalPost, LocalTag } from "../LocalTypes";
 
 export default class Shimmie2 implements ILoader {
     canImport(location: Location): boolean {
         return location.host == "rule34.paheal.net";
     }
 
-    async grabPost(dom: Document): Promise<SzuruPost | null> {
-        let post = new SzuruPost();
+    async grabPost(dom: Document): Promise<LocalPost | null> {
+        let post = new LocalPost();
         post.source = dom.location.href;
 
         // Set image url
@@ -29,7 +29,7 @@ export default class Shimmie2 implements ILoader {
         // For example by deleting 'wrong' tags or setting up some aliases in szurubooru.
         post.tags = Array.from(dom.querySelectorAll("a.tag_name"))
             .map(x => (x as HTMLAnchorElement).innerText.toLowerCase())
-            .map(x => new SzuruTag(x));
+            .map(x => new LocalTag(x));
 
         // console.dir(post);
 

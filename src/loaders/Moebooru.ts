@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { SzuruPost, SzuruTag, SzuruCategory } from "../SzuruTypes";
+import { LocalPost, LocalTag, LocalCategory } from "../LocalTypes";
 
 export default class Moebooru implements ILoader {
     canImport(location: Location): boolean {
@@ -9,8 +9,8 @@ export default class Moebooru implements ILoader {
         );
     }
 
-    async grabPost(dom: Document): Promise<SzuruPost | null> {
-        let post = new SzuruPost();
+    async grabPost(dom: Document): Promise<LocalPost | null> {
+        let post = new LocalPost();
         post.source = dom.location.href;
 
         // Set image url
@@ -60,28 +60,28 @@ export default class Moebooru implements ILoader {
                 continue;
             }
 
-            let category: SzuruCategory | undefined;
+            let category: LocalCategory | undefined;
 
             // Loop over all classes because some sites (konachan)
             // have mutliple classes, e.g. "tag-link tag-type-copyright"
             for (const className of Array.from(el.classList)) {
                 switch (className) {
                     case "tag-type-copyright":
-                        category = SzuruCategory.Copyright;
+                        category = "copyright";
                         break;
                     case "tag-type-character":
-                        category = SzuruCategory.Character;
+                        category = "character";
                         break;
                     case "tag-type-artist":
-                        category = SzuruCategory.Artist;
+                        category = "artist";
                         break;
                     case "tag-type-metadata":
-                        category = SzuruCategory.Meta;
+                        category = "meta";
                         break;
                 }
             }
 
-            let tag = new SzuruTag(tagName, category);
+            let tag = new LocalTag(tagName, category);
             post.tags.push(tag);
         }
 

@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { SzuruPost, SzuruTag, SzuruCategory } from "../SzuruTypes";
+import { LocalPost, LocalTag, LocalCategory } from "../LocalTypes";
 
 // Small hack to avoid screwing with semver
 enum Version {
@@ -16,7 +16,7 @@ export default class Gelbooru implements ILoader {
         );
     }
 
-    async grabPost(dom: Document): Promise<SzuruPost | null> {
+    async grabPost(dom: Document): Promise<LocalPost | null> {
         /**
          * Make sure to use the `dom` variable and NOT `document`!
          */
@@ -37,7 +37,7 @@ export default class Gelbooru implements ILoader {
 
         console.log("Gelbooru guessed version: " + version);
 
-        let post = new SzuruPost();
+        let post = new LocalPost();
         post.source = dom.location.href;
 
         // Set image url (direct url to image)
@@ -115,24 +115,24 @@ export default class Gelbooru implements ILoader {
                     tagName = el.getElementsByTagName("a")[1].innerText;
                 }
 
-                let category: SzuruCategory | undefined;
+                let category: LocalCategory | undefined;
 
                 switch (el.className) {
                     case "tag-type-copyright":
-                        category = SzuruCategory.Copyright;
+                        category = "copyright";
                         break;
                     case "tag-type-character":
-                        category = SzuruCategory.Character;
+                        category = "character";
                         break;
                     case "tag-type-artist":
-                        category = SzuruCategory.Artist;
+                        category = "artist";
                         break;
                     case "tag-type-metadata":
-                        category = SzuruCategory.Meta;
+                        category = "meta";
                         break;
                 }
 
-                let tag = new SzuruTag(tagName, category);
+                let tag = new LocalTag(tagName, category);
                 post.tags.push(tag);
             }
         }

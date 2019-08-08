@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { SzuruPost, SzuruTag } from "../SzuruTypes";
+import { LocalPost, LocalTag } from "../LocalTypes";
 
 export default class Reddit implements ILoader {
     canImport(location: Location): boolean {
@@ -10,8 +10,8 @@ export default class Reddit implements ILoader {
         );
     }
 
-    async grabPost(dom: Document): Promise<SzuruPost | null> {
-        let post = new SzuruPost();
+    async grabPost(dom: Document): Promise<LocalPost | null> {
+        let post = new LocalPost();
         post.source = dom.location.href;
 
         // Set image url

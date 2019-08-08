@@ -1,6 +1,7 @@
-import axios, { AxiosRequestConfig, AxiosPromise, Method } from 'axios';
-import { SzuruPost, SzuruError } from './SzuruTypes';
+import axios, { AxiosRequestConfig } from 'axios';
+import { LocalPost, LocalError } from './LocalTypes';
 import { Config } from './Config';
+import { TagsResult, TagCategoriesResult } from './SzuruTypes';
 
 /**
  * A 1:1 wrapper around the szurubooru API.
@@ -32,10 +33,18 @@ export default class SzuruWrapper {
     }
 
     async getInfo(): Promise<any> {
-        return await this.apiGet("info");
+        return (await this.apiGet("info")).data;
     }
 
-    async createPost(post: SzuruPost): Promise<void> {
+    async getTags(): Promise<TagsResult> {
+        return (await this.apiGet("tags")).data;
+    }
+
+    async getTagCategories(): Promise<TagCategoriesResult> {
+        return (await this.apiGet("tag-categories")).data;
+    }
+
+    async createPost(post: LocalPost): Promise<void> {
         var obj = {
             tags: post.tags.map(x => x.name),
             safety: post.safety,
@@ -82,7 +91,7 @@ export default class SzuruWrapper {
         try {
             return await axios(config);
         } catch (ex) {
-            const error = ex.response.data as SzuruError;
+            const error = ex.response.data as LocalError;
             throw error ? error : ex;
         }
     }

@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { SzuruPost, SzuruTag } from "../SzuruTypes";
+import { LocalPost, LocalTag } from "../LocalTypes";
 
 function getOriginalImage(imageUrl: string) {
     const x = imageUrl.replace(/:large|:med|:small|:orig$/, ""); // Remove `:large`, `:small` etc from url
@@ -11,8 +11,8 @@ export default class Twitter implements ILoader {
         return location.host == "twitter.com";
     }
 
-    async grabPost(dom: Document): Promise<SzuruPost | null> {
-        let post = new SzuruPost();
+    async grabPost(dom: Document): Promise<LocalPost | null> {
+        let post = new LocalPost();
         post.source = dom.location.href;
 
         // Set image url

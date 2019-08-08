@@ -56,7 +56,6 @@ Firefox: `about:debugging` -> "Load Temporary Add-on..." -> Select any file in t
 -   Auto-set tag category when creating a new tag (imported tag)
 -   Reverse image search to check whether (similar) file already exist before uploading it
 -   Right click any image on a page to import it
--   Support more sites
 -   Configurable list of tags to always ignore (e.g. tagme, highres)
 -   [low priority] Import artist commentary
 -   [low priority] Import notes

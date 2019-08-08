@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { SzuruPost, SzuruTag, SzuruCategory } from "../SzuruTypes";
+import { LocalPost, LocalTag, LocalCategory } from "../LocalTypes";
 
 export default class Danbooru implements ILoader {
     canImport(location: Location): boolean {
@@ -9,8 +9,8 @@ export default class Danbooru implements ILoader {
         );
     }
 
-    async grabPost(dom: Document): Promise<SzuruPost | null> {
-        let post = new SzuruPost();
+    async grabPost(dom: Document): Promise<LocalPost | null> {
+        let post = new LocalPost();
         post.source = dom.location.href;
 
         // Set image url
@@ -54,24 +54,24 @@ export default class Danbooru implements ILoader {
                 tagName = tagNameElement.innerText;
             }
 
-            let category: SzuruCategory | undefined;
+            let category: LocalCategory | undefined;
             switch (tagElement.className) {
                 case "category-3":
-                    category = SzuruCategory.Copyright;
+                    category = "copyright";
                     break;
                 case "category-4":
-                    category = SzuruCategory.Character;
+                    category = "character";
                     break;
                 case "category-1":
-                    category = SzuruCategory.Artist;
+                    category = "artist";
                     break;
                 case "category-5":
-                    category = SzuruCategory.Meta;
+                    category = "meta";
                     break;
             }
 
             if (tagName) {
-                let tag = new SzuruTag(tagName, category);
+                let tag = new LocalTag(tagName, category);
                 post.tags.push(tag);
             }
         }

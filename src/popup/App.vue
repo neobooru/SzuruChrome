@@ -88,7 +88,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { browser } from "webextension-polyfill-ts";
-import { SzuruPost, SzuruCategory, SzuruTag, SzuruError } from "../SzuruTypes";
+import { LocalPost, LocalTag, LocalError } from "../LocalTypes";
 import SzuruWrapper from "../SzuruWrapper";
 
 type MessageType = "error" | "info";
@@ -107,7 +107,7 @@ export default Vue.extend({
     data() {
         return {
             szuru: null as SzuruWrapper | null,
-            post: new SzuruPost(),
+            post: new LocalPost(),
             messages: [] as Message[]
         };
     },
@@ -120,7 +120,7 @@ export default Vue.extend({
             }))[0];
 
             // Send 'grab_post' to the content script on the active tab
-            const post = (await browser.tabs.sendMessage(activeTab.id!, "grab_post")) as SzuruPost;
+            const post = (await browser.tabs.sendMessage(activeTab.id!, "grab_post")) as LocalPost;
 
             if (post) {
                 this.post = post;
@@ -148,7 +148,7 @@ export default Vue.extend({
                 // TODO: Add url to post page on szurubooru
                 this.pushInfo("Uploaded <a href='#'>post</a>");
             } catch (ex) {
-                const error = ex as SzuruError;
+                const error = ex as LocalError;
 
                 if (error) {
                     this.pushError(error.description);
@@ -166,18 +166,18 @@ export default Vue.extend({
             const url = browser.extension.getURL("options/options.html");
             window.open(url);
         },
-        getTagClasses(tag: SzuruTag): string[] {
+        getTagClasses(tag: LocalTag): string[] {
             let classes: string[] = [];
 
             if (tag.category) {
-                classes.push("tag-" + tag.category.name);
+                classes.push("tag-" + tag.category);
             } else {
                 classes.push("tag-general");
             }
 
             return classes;
         },
-        removeTag(tag: SzuruTag) {
+        removeTag(tag: LocalTag) {
             if (this.post) {
                 const idx = this.post.tags.indexOf(tag);
                 if (idx != -1) {

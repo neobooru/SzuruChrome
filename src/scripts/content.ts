@@ -1,9 +1,9 @@
 import { browser, Runtime } from "webextension-polyfill-ts";
 import * as loaders from "../loaders";
-import { SzuruPost } from "../SzuruTypes";
+import { LocalPost } from "../LocalTypes";
 import ILoader from "../loaders/ILoader";
 
-async function grabPost(): Promise<SzuruPost | null> {
+async function grabPost(): Promise<LocalPost | null> {
     for (const loaderName in loaders) {
         // HACK:
         const loader = new (loaders as any)[loaderName]() as ILoader;
