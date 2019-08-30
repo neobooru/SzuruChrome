@@ -17,7 +17,12 @@ _Work in progress_
 
 For development see [build/debug](#Builddebug).  
 There also is a .xpi for Firefox on the [release tab](https://github.com/neobooru/SzuruChrome/releases).  
-There _isn't_ a .crx for Chrome because you can't install it anyway, so you'll have to use the unpacked extension.
+There _isn't_ a .crx for Chrome because you can't install it anyway, so you'll have to use the unpacked extension.  
+
+This extension should also work on Firefox Android (I can't test this because Firefox Android doesn't support client certificates).  
+Same goes for Kiwi Browser and pretty much all other Chromium based browsers with extension support.  
+The Yandex browser does support client certificates and extensions (SzuruChrome works fine), but I'm not sure if I'd trust them with my data.  
+The layout is obviously not designed for mobile, so at times it looks less than ideal.
 
 ## How does it work?
 
