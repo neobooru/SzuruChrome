@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { LocalPost, LocalError } from './LocalTypes';
-import { Config } from './Config';
-import { TagsResult, TagCategoriesResult } from './SzuruTypes';
+import { SzuruSiteConfig } from './Config';
+import { TagsResult, TagCategoriesResult, Post } from './SzuruTypes';
 
 /**
  * A 1:1 wrapper around the szurubooru API.
@@ -44,7 +44,7 @@ export default class SzuruWrapper {
         return (await this.apiGet("tag-categories")).data;
     }
 
-    async createPost(post: LocalPost): Promise<void> {
+    async createPost(post: LocalPost): Promise<Post> {
         var obj = {
             tags: post.tags.map(x => x.name),
             safety: post.safety,
@@ -55,7 +55,7 @@ export default class SzuruWrapper {
         console.log("Create new post object");
         console.dir(obj);
 
-        await this.apiPost("posts", obj);
+        return (await this.apiPost("posts", obj)).data;
     }
 
     private async apiGet(url: string, additionalHeaders: any = {}): Promise<any> {
@@ -96,13 +96,7 @@ export default class SzuruWrapper {
         }
     }
 
-    static async createFromConfig(): Promise<SzuruWrapper | null> {
-        const config = await Config.load();
-
-        if (config.sites.length == 0) {
-            return null;
-        }
-
-        return new SzuruWrapper(config.sites[0].domain, config.sites[0].username, config.sites[0].authToken);
+    static async createFromConfig(siteConfig: SzuruSiteConfig): Promise<SzuruWrapper | null> {
+        return new SzuruWrapper(siteConfig.domain, siteConfig.username, siteConfig.authToken);
     }
 }

@@ -42,5 +42,45 @@ export interface TagCategory {
     default: boolean;
 }
 
+export interface MicroUser {
+    name: string;
+    avatarUrl: string;
+}
+
+export interface Post {
+    id: number;
+    version: number;
+    creationTime: Date;
+    lastEditTime?: Date;
+    safety: Safety;
+    source: string;
+    type: string;
+    mimeType: string;
+    checksum: string;
+    fileSize: number;
+    canvasWidth: number;
+    canvasHeight: number;
+    contentUrl: string;
+    thumbnailUrl: string;
+    flags: string[];
+    tags: MicroTag[];
+    relations: any[]; // MicroPost resource
+    user: MicroUser;
+    score: number;
+    ownScore: number;
+    ownFavorite: boolean;
+    tagCount: number;
+    favoriteCount: number;
+    commentCount: number;
+    noteCount: number;
+    relationCount: number;
+    featureCount: number;
+    lastFeatureTime?: Date;
+    favoritedBy: MicroUser[];
+    hasCustomThumbnail: boolean;
+    notes: any[]; // Note resource
+    comments: any[]; // Comment resource
+}
+
 export type TagsResult = PagedSearchResult<Tag>
 export type TagCategoriesResult = UnpagedSearchResult<TagCategory>

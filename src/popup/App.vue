@@ -90,6 +90,8 @@ import Vue from "vue";
 import { browser } from "webextension-polyfill-ts";
 import { LocalPost, LocalTag, LocalError } from "../LocalTypes";
 import SzuruWrapper from "../SzuruWrapper";
+import { Post } from "../SzuruTypes";
+import { Config, SzuruSiteConfig } from "../Config";
 
 type MessageType = "error" | "info";
 
@@ -106,6 +108,7 @@ class Message {
 export default Vue.extend({
     data() {
         return {
+            activeSite: null as SzuruSiteConfig | null,
             szuru: null as SzuruWrapper | null,
             post: new LocalPost(),
             messages: [] as Message[]
@@ -130,8 +133,7 @@ export default Vue.extend({
             }
         },
         async upload() {
-            // Clear messages
-            this.messages = [];
+            this.clearMessages();
 
             if (!this.post || !this.post.imageUrl) {
                 this.pushError("There is no post to upload!");
@@ -144,9 +146,13 @@ export default Vue.extend({
             }
 
             try {
+                this.pushInfo("Uploading...");
+                window.scrollTo(0, 0);
                 const createdPost = await this.szuru.createPost(this.post);
-                // TODO: Add url to post page on szurubooru
-                this.pushInfo("Uploaded <a href='#'>post</a>");
+                // HACK: Directly set message because there isn't a better way to update messages
+                // TODO: Clicking a link doesn't actually open it in a new tab,
+                // see https://stackoverflow.com/questions/8915845
+                this.messages[0].content = `<a href='${this.getPostUrl(createdPost)}'>Uploaded post</a>`;
             } catch (ex) {
                 const error = ex as LocalError;
 
@@ -201,18 +207,26 @@ export default Vue.extend({
         },
         pushError(message: string) {
             this.messages.push(new Message(message, "error"));
+        },
+        clearMessages() {
+            this.messages = [];
+        },
+        getPostUrl(post: Post): string {
+            if (!this.activeSite) return "";
+            return this.activeSite.domain + "/post/" + post.id;
         }
     },
-    mounted() {
-        this.grabPost();
+    async mounted() {
+        const cfg = await Config.load();
+        this.activeSite = cfg.sites.length > 0 ? cfg.sites[0] : null;
 
-        SzuruWrapper.createFromConfig().then(x => {
-            if (x) {
-                this.szuru = x;
-            } else {
-                this.pushError("No szurubooru server configured!");
-            }
-        });
+        if (this.activeSite == null) {
+            this.pushError("No szurubooru server configured!");
+        } else {
+            this.szuru = await SzuruWrapper.createFromConfig(this.activeSite);
+        }
+
+        this.grabPost();
     }
 });
 </script>
