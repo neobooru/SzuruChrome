@@ -149,14 +149,15 @@ export default Vue.extend({
                 this.pushInfo("Uploading...");
                 window.scrollTo(0, 0);
                 const createdPost = await this.szuru.createPost(this.post);
-                // HACK: Directly set message because there isn't a better way to update messages
+                this.clearMessages();
                 // TODO: Clicking a link doesn't actually open it in a new tab,
                 // see https://stackoverflow.com/questions/8915845
-                this.messages[0].content = `<a href='${this.getPostUrl(createdPost)}'>Uploaded post</a>`;
+                this.pushInfo(`<a href='${this.getPostUrl(createdPost)}'>Uploaded post</a>`);
             } catch (ex) {
                 const error = ex as LocalError;
 
                 if (error) {
+                    this.clearMessages();
                     this.pushError(error.description);
                 } else {
                     // Probably too long for a message
