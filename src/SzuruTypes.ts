@@ -26,7 +26,7 @@ export interface Tag {
     names: string[];
     category: string;
     version: number;
-    description?: any;
+    description?: string; // Markdown
     creationTime: Date;
     lastEditTime?: Date;
     usages: number;

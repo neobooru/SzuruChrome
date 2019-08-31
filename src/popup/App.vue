@@ -146,13 +146,34 @@ export default Vue.extend({
             }
 
             try {
-                this.pushInfo("Uploading...");
+                // Create and upload post
+                let uploadMsg = new Message("Uploading...");
+                this.messages.push(uploadMsg);
                 window.scrollTo(0, 0);
                 const createdPost = await this.szuru.createPost(this.post);
-                this.clearMessages();
                 // TODO: Clicking a link doesn't actually open it in a new tab,
                 // see https://stackoverflow.com/questions/8915845
-                this.pushInfo(`<a href='${this.getPostUrl(createdPost)}'>Uploaded post</a>`);
+                uploadMsg.content = `<a href='${this.getPostUrl(createdPost)}'>Uploaded post</a>`;
+
+                let tagsMsg = new Message("Checking tags...");
+                this.messages.push(tagsMsg);
+
+                // Find tags with "default" category and update it
+                // TODO: Make all these categories configurable
+                const tagsWithCategory = this.post.tags.filter(x => x.category);
+                const unsetCategoryTags = createdPost.tags
+                    .filter(x => x.category == "default")
+                    .filter(x => tagsWithCategory.some(y => x.names.includes(y.name)));
+
+                console.dir(unsetCategoryTags);
+
+                if (unsetCategoryTags.length == 0) {
+                    tagsMsg.content = "All tags have the correct category";
+                } else {
+                    tagsMsg.content = `${unsetCategoryTags.length} tags need a different category`;
+                    // TODO: Call /tags?query={tag1},{tag2},{tag3}
+                    // TODO: Foreach tag call PUT /tag/{tag1} with updated category
+                }
             } catch (ex) {
                 const error = ex as LocalError;
 
