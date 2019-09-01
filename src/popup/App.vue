@@ -155,9 +155,6 @@ export default Vue.extend({
                 // see https://stackoverflow.com/questions/8915845
                 uploadMsg.content = `<a href='${this.getPostUrl(createdPost)}'>Uploaded post</a>`;
 
-                let tagsMsg = new Message("Checking tags...");
-                this.messages.push(tagsMsg);
-
                 // Find tags with "default" category and update it
                 // TODO: Make all these categories configurable
                 const tagsWithCategory = this.post.tags.filter(x => x.category);
@@ -165,14 +162,21 @@ export default Vue.extend({
                     .filter(x => x.category == "default")
                     .filter(x => tagsWithCategory.some(y => x.names.includes(y.name)));
 
-                console.dir(unsetCategoryTags);
+                if (unsetCategoryTags.length != 0) {
+                    let tagsMsg = new Message(`${unsetCategoryTags.length} tags need a different category`);
+                    this.messages.push(tagsMsg);
 
-                if (unsetCategoryTags.length == 0) {
-                    tagsMsg.content = "All tags have the correct category";
-                } else {
-                    tagsMsg.content = `${unsetCategoryTags.length} tags need a different category`;
-                    // TODO: Call /tags?query={tag1},{tag2},{tag3}
-                    // TODO: Foreach tag call PUT /tag/{tag1} with updated category
+                    // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
+                    const query = "?query=" + unsetCategoryTags.map(x => encodeURIComponent(x.names[0]));
+                    const tags = (await this.szuru.getTags(query)).results;
+
+                    for (let i in tags) {
+                        tagsMsg.content = `Updating tag ${i}/${unsetCategoryTags.length}`;
+                        tags[i].category = tagsWithCategory.find(x => tags[i].names.includes(x.name))!.category!
+                        await this.szuru.updateTag(tags[i]);
+                    }
+
+                    tagsMsg.content = "Updated all tags";
                 }
             } catch (ex) {
                 const error = ex as LocalError;

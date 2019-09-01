@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { LocalPost, LocalError } from './LocalTypes';
 import { SzuruSiteConfig } from './Config';
-import { TagsResult, TagCategoriesResult, Post } from './SzuruTypes';
+import { TagsResult, TagCategoriesResult, Post, Tag } from './SzuruTypes';
 
 /**
  * A 1:1 wrapper around the szurubooru API.
@@ -36,8 +36,16 @@ export default class SzuruWrapper {
         return (await this.apiGet("info")).data;
     }
 
-    async getTags(): Promise<TagsResult> {
-        return (await this.apiGet("tags")).data;
+    async updateTag(tag: Tag): Promise<any> {
+        return (await this.apiPut("tag/" + tag.names[0], tag)).data;
+    }
+
+    async getTags(query: string): Promise<TagsResult> {
+        let url = "tags";
+        if (query) {
+            url += query;
+        }
+        return (await this.apiGet(url)).data;
     }
 
     async getTagCategories(): Promise<TagCategoriesResult> {
@@ -73,6 +81,18 @@ export default class SzuruWrapper {
         const fullUrl = this.apiUrl + url;
         const config: AxiosRequestConfig = {
             method: "POST",
+            url: fullUrl,
+            data: data
+        }
+
+        config.headers = { ...this.baseHeaders, ...additionalHeaders };
+        return await this.execute(config);
+    }
+
+    private async apiPut(url: string, data: any, additionalHeaders: any = {}): Promise<any> {
+        const fullUrl = this.apiUrl + url;
+        const config: AxiosRequestConfig = {
+            method: "PUT",
             url: fullUrl,
             data: data
         }
