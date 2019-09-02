@@ -93,7 +93,7 @@ import SzuruWrapper from "../SzuruWrapper";
 import { Post } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
 
-type MessageType = "error" | "info";
+type MessageType = "error" | "info" | "success";
 
 class Message {
     content: string;
@@ -154,6 +154,7 @@ export default Vue.extend({
                 // TODO: Clicking a link doesn't actually open it in a new tab,
                 // see https://stackoverflow.com/questions/8915845
                 uploadMsg.content = `<a href='${this.getPostUrl(createdPost)}'>Uploaded post</a>`;
+                uploadMsg.type = "success";
 
                 // Find tags with "default" category and update it
                 // TODO: Make all these categories configurable
@@ -172,11 +173,12 @@ export default Vue.extend({
 
                     for (let i in tags) {
                         tagsMsg.content = `Updating tag ${i}/${unsetCategoryTags.length}`;
-                        tags[i].category = tagsWithCategory.find(x => tags[i].names.includes(x.name))!.category!
+                        tags[i].category = tagsWithCategory.find(x => tags[i].names.includes(x.name))!.category!;
                         await this.szuru.updateTag(tags[i]);
                     }
 
-                    tagsMsg.content = "Updated all tags";
+                    tagsMsg.content = `Updated ${tags.length} tags`;
+                    tagsMsg.type = "success";
                 }
             } catch (ex) {
                 const error = ex as LocalError;
@@ -223,6 +225,9 @@ export default Vue.extend({
             switch (message.type) {
                 case "error":
                     classes.push("message-error");
+                    break;
+                case "success":
+                    classes.push("message-success");
                     break;
             }
 
