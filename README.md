@@ -77,7 +77,7 @@ See workaround below.
 ```apache
 # CORS hack
 Header always set Access-Control-Allow-Origin "*"
-Header always set Access-Control-Allow-Methods "POST, GET, OPTIONS"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
 Header always set Access-Control-Allow-Headers "Authorization, Content-Type"
 
 # CORS custom response for OPTIONS request (because szurubooru doesn't handle this, yet)
