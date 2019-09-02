@@ -108,6 +108,7 @@ a.remove-tag {
 .message-error {
     background: #f44336 !important;
 }
- .message-success {
+
+.message-success {
     background: #4caf50 !important;
 }
