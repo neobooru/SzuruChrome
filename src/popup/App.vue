@@ -168,7 +168,7 @@ export default Vue.extend({
                     this.messages.push(tagsMsg);
 
                     // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
-                    const query = "?query=" + unsetCategoryTags.map(x => encodeURIComponent(x.names[0]));
+                    const query = "?query=" + unsetCategoryTags.map(x => this.encodeTagName(x.names[0]));
                     const tags = (await this.szuru.getTags(query)).results;
 
                     for (let i in tags) {
@@ -245,6 +245,11 @@ export default Vue.extend({
         getPostUrl(post: Post): string {
             if (!this.activeSite) return "";
             return this.activeSite.domain + "/post/" + post.id;
+        },
+        encodeTagName(tagName: string) {
+            // Searching for posts with re:zero will show an error message about unknown named token.
+            // Searching for posts with re\:zero will show posts tagged with re:zero.
+            return encodeURIComponent(tagName.replace(/\:/g, "\\:"));
         }
     },
     async mounted() {
