@@ -1,17 +1,17 @@
 import ILoader from "./ILoader"
-import { LocalPost, LocalTag } from "../LocalTypes";
+import { ScrapedPost, ScrapedTag } from "../LocalTypes";
 
 export default class Shimmie2 implements ILoader {
     canImport(location: Location): boolean {
         return location.host == "rule34.paheal.net";
     }
 
-    async grabPost(dom: Document): Promise<LocalPost | null> {
-        let post = new LocalPost();
-        post.source = dom.location.href;
+    async grabPost(dom: Document): Promise<ScrapedPost | null> {
+        let post = new ScrapedPost();
+        post.source = document.location.href;
 
         // Set image url
-        const originalImageElements = Array.from(dom.querySelectorAll(".image_info > tbody > tr > td > a"))
+        const originalImageElements = Array.from(document.querySelectorAll(".image_info > tbody > tr > td > a"))
             .map(x => x as HTMLAnchorElement)
             .filter(x => x.innerText == "Image Only");
 
@@ -27,9 +27,9 @@ export default class Shimmie2 implements ILoader {
         // They also use uppercase tags, so we toLowerCase() those.
         // Tags might not match with other booru-likes, but that is for the user to figure out.
         // For example by deleting 'wrong' tags or setting up some aliases in szurubooru.
-        post.tags = Array.from(dom.querySelectorAll("a.tag_name"))
+        post.tags = Array.from(document.querySelectorAll("a.tag_name"))
             .map(x => (x as HTMLAnchorElement).innerText.toLowerCase())
-            .map(x => new LocalTag(x));
+            .map(x => new ScrapedTag(x));
 
         // console.dir(post);
 

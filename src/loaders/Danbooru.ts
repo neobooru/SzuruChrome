@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { LocalPost, LocalTag, LocalCategory } from "../LocalTypes";
+import { ScrapedPost, ScrapedTag, BooruCategory } from "../LocalTypes";
 
 export default class Danbooru implements ILoader {
     canImport(location: Location): boolean {
@@ -9,12 +9,12 @@ export default class Danbooru implements ILoader {
         );
     }
 
-    async grabPost(dom: Document): Promise<LocalPost | null> {
-        let post = new LocalPost();
-        post.source = dom.location.href;
+    async grabPost(dom: Document): Promise<ScrapedPost | null> {
+        let post = new ScrapedPost();
+        post.source = document.location.href;
 
         // Set image url
-        const originalImageElements = Array.from(dom.querySelectorAll("#post-information > ul > li > a"))
+        const originalImageElements = Array.from(document.querySelectorAll("#post-information > ul > li > a"))
             .map(x => x as HTMLAnchorElement)
             .filter(x => x.parentElement && x.parentElement.innerText.startsWith("Size"));
 
@@ -46,7 +46,7 @@ export default class Danbooru implements ILoader {
         }
 
         // Set tags
-        const tagElements = Array.from(dom.querySelectorAll("#tag-list > ul > li")).map(x => x as HTMLLIElement);
+        const tagElements = Array.from(document.querySelectorAll("#tag-list > ul > li")).map(x => x as HTMLLIElement);
         for (const tagElement of tagElements) {
             let tagName: string | undefined;
             const tagNameElement = tagElement.querySelector(".search-tag") as HTMLAnchorElement;
@@ -54,7 +54,7 @@ export default class Danbooru implements ILoader {
                 tagName = tagNameElement.innerText;
             }
 
-            let category: LocalCategory | undefined;
+            let category: BooruCategory | undefined;
             switch (tagElement.className) {
                 case "category-3":
                     category = "copyright";
@@ -71,7 +71,7 @@ export default class Danbooru implements ILoader {
             }
 
             if (tagName) {
-                let tag = new LocalTag(tagName, category);
+                let tag = new ScrapedTag(tagName, category);
                 post.tags.push(tag);
             }
         }

@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { LocalPost, LocalTag } from "../LocalTypes";
+import { ScrapedPost, ScrapedTag } from "../LocalTypes";
 
 function getOriginalImage(imageUrl: string) {
     const x = imageUrl.replace(/:large|:med|:small|:orig$/, ""); // Remove `:large`, `:small` etc from url
@@ -11,13 +11,13 @@ export default class Twitter implements ILoader {
         return location.host == "twitter.com";
     }
 
-    async grabPost(dom: Document): Promise<LocalPost | null> {
-        let post = new LocalPost();
-        post.source = dom.location.href;
+    async grabPost(dom: Document): Promise<ScrapedPost | null> {
+        let post = new ScrapedPost();
+        post.source = document.location.href;
 
         // Set image url
         // When clicked on post (not fullscreen, with post text etc)
-        const overlayElement = dom.querySelector("#permalink-overlay-dialog");
+        const overlayElement = document.querySelector("#permalink-overlay-dialog");
         if (overlayElement) {
             const cardImageElement = overlayElement.querySelector("div[data-element-context='platform_photo_card'] > img");
             if (cardImageElement) {
@@ -26,7 +26,7 @@ export default class Twitter implements ILoader {
         }
 
         // When clicked on image (fullscreen)
-        const mediaImageElements = dom.querySelectorAll("div.Gallery-media > img.media-image");
+        const mediaImageElements = document.querySelectorAll("div.Gallery-media > img.media-image");
         if (mediaImageElements.length > 0) {
             post.imageUrl = getOriginalImage((mediaImageElements[0] as HTMLImageElement).src);
         }

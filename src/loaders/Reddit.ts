@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { LocalPost, LocalTag } from "../LocalTypes";
+import { ScrapedPost, ScrapedTag } from "../LocalTypes";
 
 export default class Reddit implements ILoader {
     canImport(location: Location): boolean {
@@ -10,19 +10,19 @@ export default class Reddit implements ILoader {
         );
     }
 
-    async grabPost(dom: Document): Promise<LocalPost | null> {
-        let post = new LocalPost();
-        post.source = dom.location.href;
+    async grabPost(dom: Document): Promise<ScrapedPost | null> {
+        let post = new ScrapedPost();
+        post.source = document.location.href;
 
         // Set image url
         // For old.reddit.com
-        const oldLinkElements = dom.querySelectorAll("a.title");
+        const oldLinkElements = document.querySelectorAll("a.title");
         if (oldLinkElements.length > 0) {
             post.imageUrl = (oldLinkElements[0] as HTMLAnchorElement).href;
         }
 
         // For new reddit
-        const newLinkElements = dom.querySelectorAll("div[data-test-id='post-content'] > div > a");
+        const newLinkElements = document.querySelectorAll("div[data-test-id='post-content'] > div > a");
         if (newLinkElements.length > 0) {
             post.imageUrl = (newLinkElements[0] as HTMLAnchorElement).href;
         }

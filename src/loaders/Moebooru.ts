@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { LocalPost, LocalTag, LocalCategory } from "../LocalTypes";
+import { ScrapedPost, ScrapedTag, BooruCategory } from "../LocalTypes";
 
 export default class Moebooru implements ILoader {
     canImport(location: Location): boolean {
@@ -9,12 +9,12 @@ export default class Moebooru implements ILoader {
         );
     }
 
-    async grabPost(dom: Document): Promise<LocalPost | null> {
-        let post = new LocalPost();
-        post.source = dom.location.href;
+    async grabPost(dom: Document): Promise<ScrapedPost | null> {
+        let post = new ScrapedPost();
+        post.source = document.location.href;
 
         // Set image url
-        const originalImageElement = dom.querySelector("#highres") as HTMLAnchorElement;
+        const originalImageElement = document.querySelector("#highres") as HTMLAnchorElement;
         if (originalImageElement) {
             post.imageUrl = originalImageElement.href;
         }
@@ -22,7 +22,7 @@ export default class Moebooru implements ILoader {
         // Set safety
         // Same method as Gelbooru but cleaner code
         const safetyExp = new RegExp("Rating: (.*)");
-        const safetyElements = Array.from(dom.querySelectorAll("#stats > ul > li"))
+        const safetyElements = Array.from(document.querySelectorAll("#stats > ul > li"))
             .map(x => x as HTMLLIElement)
             .filter(x => x.innerText.startsWith("Rating:"));
 
@@ -44,7 +44,7 @@ export default class Moebooru implements ILoader {
         }
 
         // Set tags
-        const tagElements = Array.from(dom.querySelectorAll("#tag-sidebar > li"))
+        const tagElements = Array.from(document.querySelectorAll("#tag-sidebar > li"))
             .map(x => x as HTMLLIElement);
 
         for (const el of tagElements) {
@@ -60,7 +60,7 @@ export default class Moebooru implements ILoader {
                 continue;
             }
 
-            let category: LocalCategory | undefined;
+            let category: BooruCategory | undefined;
 
             // Loop over all classes because some sites (konachan)
             // have mutliple classes, e.g. "tag-link tag-type-copyright"
@@ -81,7 +81,7 @@ export default class Moebooru implements ILoader {
                 }
             }
 
-            let tag = new LocalTag(tagName, category);
+            let tag = new ScrapedTag(tagName, category);
             post.tags.push(tag);
         }
 

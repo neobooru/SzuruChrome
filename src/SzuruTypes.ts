@@ -4,6 +4,15 @@
 
 export type Safety = "safe" | "sketchy" | "unsafe";
 
+export type TagsResult = PagedSearchResult<Tag>
+export type TagCategoriesResult = UnpagedSearchResult<TagCategory>
+
+export interface SzuruError {
+    name: string;
+    title: string;
+    description: string;
+}
+
 export interface PagedSearchResult<T> {
     query: string;
     offset: number;
@@ -81,6 +90,3 @@ export interface Post {
     notes: any[]; // Note resource
     comments: any[]; // Comment resource
 }
-
-export type TagsResult = PagedSearchResult<Tag>
-export type TagCategoriesResult = UnpagedSearchResult<TagCategory>

@@ -16,10 +16,10 @@
     "plugins": [
       {
         "transform": "ts-optchain/transform"
-      },
+      }
     ]
   },
   "include": [
     "./src/**/*"
-  ],
+  ]
 }

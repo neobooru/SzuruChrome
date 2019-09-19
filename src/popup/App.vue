@@ -1,7 +1,7 @@
 <template>
     <div class="popup-container">
         <div class="popup-row">
-            <div class="popup-column1" style="margin: 10px 10px 0px 10px;">
+            <div class="popup-column1" style="margin: 0px 10px;">
                 <ul class="messages">
                     <li
                         v-for="msg in messages"
@@ -88,9 +88,9 @@
 <script lang="ts">
 import Vue from "vue";
 import { browser } from "webextension-polyfill-ts";
-import { LocalPost, LocalTag, LocalError } from "../LocalTypes";
+import { ScrapedPost, ScrapedTag } from "../LocalTypes";
 import SzuruWrapper from "../SzuruWrapper";
-import { Post } from "../SzuruTypes";
+import { Post, SzuruError } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
 
 type MessageType = "error" | "info" | "success";
@@ -110,7 +110,7 @@ export default Vue.extend({
         return {
             activeSite: null as SzuruSiteConfig | null,
             szuru: null as SzuruWrapper | null,
-            post: new LocalPost(),
+            post: new ScrapedPost(),
             messages: [] as Message[]
         };
     },
@@ -123,7 +123,7 @@ export default Vue.extend({
             }))[0];
 
             // Send 'grab_post' to the content script on the active tab
-            const post = (await browser.tabs.sendMessage(activeTab.id!, "grab_post")) as LocalPost;
+            const post = (await browser.tabs.sendMessage(activeTab.id!, "grab_post")) as ScrapedPost;
 
             if (post) {
                 this.post = post;
@@ -181,7 +181,7 @@ export default Vue.extend({
                     tagsMsg.type = "success";
                 }
             } catch (ex) {
-                const error = ex as LocalError;
+                const error = ex as SzuruError;
 
                 if (error) {
                     this.clearMessages();
@@ -200,7 +200,7 @@ export default Vue.extend({
             const url = browser.extension.getURL("options/options.html");
             window.open(url);
         },
-        getTagClasses(tag: LocalTag): string[] {
+        getTagClasses(tag: ScrapedTag): string[] {
             let classes: string[] = [];
 
             if (tag.category) {
@@ -211,7 +211,7 @@ export default Vue.extend({
 
             return classes;
         },
-        removeTag(tag: LocalTag) {
+        removeTag(tag: ScrapedTag) {
             if (this.post) {
                 const idx = this.post.tags.indexOf(tag);
                 if (idx != -1) {

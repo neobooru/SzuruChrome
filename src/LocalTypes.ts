@@ -4,9 +4,9 @@
 
 import { Safety } from "./SzuruTypes";
 
-export type LocalCategory = "copyright" | "character" | "artist" | "meta";
+export type BooruCategory = "copyright" | "character" | "artist" | "meta";
 
-export class LocalTag {
+export class ScrapedTag {
     name: string = "";
     category?: string;
 
@@ -17,15 +17,9 @@ export class LocalTag {
 }
 
 // FIXME: LocalPost -> valid szurubooru type
-export class LocalPost {
+export class ScrapedPost {
     safety: Safety = "safe";
     source: string = "";
     imageUrl: string = "";
-    tags: LocalTag[] = [];
-}
-
-export interface LocalError {
-    name: string;
-    title: string;
-    description: string;
+    tags: ScrapedTag[] = [];
 }

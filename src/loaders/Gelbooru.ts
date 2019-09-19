@@ -1,5 +1,5 @@
 import ILoader from "./ILoader"
-import { LocalPost, LocalTag, LocalCategory } from "../LocalTypes";
+import { ScrapedPost, ScrapedTag, BooruCategory } from "../LocalTypes";
 
 // Small hack to avoid screwing with semver
 enum Version {
@@ -16,13 +16,13 @@ export default class Gelbooru implements ILoader {
         );
     }
 
-    async grabPost(dom: Document): Promise<LocalPost | null> {
+    async grabPost(dom: Document): Promise<ScrapedPost | null> {
         /**
          * Make sure to use the `dom` variable and NOT `document`!
          */
 
         let version: Version;
-        switch (dom.location.host) {
+        switch (document.location.host) {
             case "safebooru.org":
             case "rule34.xxx":
                 version = Version.v020;
@@ -37,11 +37,11 @@ export default class Gelbooru implements ILoader {
 
         console.log("Gelbooru guessed version: " + version);
 
-        let post = new LocalPost();
-        post.source = dom.location.href;
+        let post = new ScrapedPost();
+        post.source = document.location.href;
 
         // Set image url (direct url to image)
-        const originalImageElements = dom.querySelectorAll("li > a");
+        const originalImageElements = document.querySelectorAll("li > a");
         for (const idx in originalImageElements) {
             const el = originalImageElements[idx] as HTMLAnchorElement;
 
@@ -56,9 +56,9 @@ export default class Gelbooru implements ILoader {
         let safetyElements: NodeListOf<Element>;
 
         if (version == Version.v020) {
-            safetyElements = dom.querySelectorAll("#stats > ul > li");
+            safetyElements = document.querySelectorAll("#stats > ul > li");
         } else {
-            safetyElements = dom.querySelectorAll("#tag-list > div > li");
+            safetyElements = document.querySelectorAll("#tag-list > div > li");
         }
 
         for (const idx in safetyElements) {
@@ -88,9 +88,9 @@ export default class Gelbooru implements ILoader {
         let tagElements: NodeListOf<Element>;
 
         if (version == Version.v020) {
-            tagElements = dom.querySelectorAll("#tag-sidebar > li");
+            tagElements = document.querySelectorAll("#tag-sidebar > li");
         } else {
-            tagElements = dom.querySelectorAll("#tag-list > div > li[class^='tag-type']");
+            tagElements = document.querySelectorAll("#tag-list > div > li[class^='tag-type']");
         }
 
         for (const idx in tagElements) {
@@ -115,7 +115,7 @@ export default class Gelbooru implements ILoader {
                     tagName = el.getElementsByTagName("a")[1].innerText;
                 }
 
-                let category: LocalCategory | undefined;
+                let category: BooruCategory | undefined;
 
                 switch (el.className) {
                     case "tag-type-copyright":
@@ -132,7 +132,7 @@ export default class Gelbooru implements ILoader {
                         break;
                 }
 
-                let tag = new LocalTag(tagName, category);
+                let tag = new ScrapedTag(tagName, category);
                 post.tags.push(tag);
             }
         }

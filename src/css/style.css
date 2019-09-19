@@ -101,6 +101,10 @@ a.remove-tag {
     text-decoration: none;
 }
 
+.messages > li:first-child {
+    margin-top: 10px;
+}
+
 .messages > li:not(:last-child) {
     margin-bottom: 5px;
 }
