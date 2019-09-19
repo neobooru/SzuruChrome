@@ -11,12 +11,12 @@ async function grabPost(): Promise<ScrapedPost | null> {
             console.log(`Using ${loaderName} importer to scrape this page`)
             return await loader.grabPost(document);
         }
+    }
 
-        // Try using the Fallback loader if no other loader can scrape this page
-        const post = new loaders.Fallback().grabPost(document);
-        if (post) {
-            return post;
-        }
+    // Try using the Fallback loader if no other loader can scrape this page
+    const post = new loaders.Fallback().grabPost(document);
+    if (post) {
+        return post;
     }
 
     return null;
