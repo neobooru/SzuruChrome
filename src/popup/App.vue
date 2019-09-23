@@ -25,19 +25,19 @@
                         <span class="block-title">Safety</span>
 
                         <label class="container">
-                            <input type="radio" value="safe" v-model="post.safety" />
+                            <input type="radio" value="safe" v-model="post.rating" />
                             <span class="checkmark"></span>
                             Safe
                         </label>
 
                         <label class="container">
-                            <input type="radio" value="sketchy" v-model="post.safety" />
+                            <input type="radio" value="sketchy" v-model="post.rating" />
                             <span class="checkmark"></span>
                             Sketchy
                         </label>
 
                         <label class="container">
-                            <input type="radio" value="unsafe" v-model="post.safety" />
+                            <input type="radio" value="unsafe" v-model="post.rating" />
                             <span class="checkmark"></span>
                             Unsafe
                         </label>
@@ -88,7 +88,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { browser } from "webextension-polyfill-ts";
-import { ScrapedPost, ScrapedTag } from "../LocalTypes";
+import { ScrapedPost, ScrapedTag, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
 import { Post, SzuruError } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
@@ -123,7 +123,11 @@ export default Vue.extend({
             }))[0];
 
             // Send 'grab_post' to the content script on the active tab
-            const post = (await browser.tabs.sendMessage(activeTab.id!, "grab_post")) as ScrapedPost;
+            const x = (await browser.tabs.sendMessage(activeTab.id!, "grab_post"));
+            // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
+            // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
+            const res = Object.assign(new ScrapeResults(), x);
+            const post = res.posts.length > 0 ? res.posts[0] : null;
 
             if (post) {
                 this.post = post;

@@ -1,7 +1,7 @@
-import axios, { AxiosRequestConfig } from 'axios';
-import { ScrapedPost } from './LocalTypes';
-import { SzuruSiteConfig } from './Config';
-import { TagsResult, TagCategoriesResult, Post, Tag, SzuruError } from './SzuruTypes';
+import axios, { AxiosRequestConfig } from "axios";
+import { ScrapedPost } from "neo-scraper";
+import { SzuruSiteConfig } from "./Config";
+import { TagsResult, TagCategoriesResult, Post, Tag, SzuruError } from "./SzuruTypes";
 
 /**
  * A 1:1 wrapper around the szurubooru API.
@@ -55,7 +55,7 @@ export default class SzuruWrapper {
     async createPost(post: ScrapedPost): Promise<Post> {
         var obj = {
             tags: post.tags.map(x => x.name),
-            safety: post.safety,
+            safety: post.rating,
             source: post.source,
             contentUrl: post.imageUrl
         };
