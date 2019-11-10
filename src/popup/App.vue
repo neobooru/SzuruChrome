@@ -123,7 +123,7 @@ export default Vue.extend({
             }))[0];
 
             // Send 'grab_post' to the content script on the active tab
-            const x = (await browser.tabs.sendMessage(activeTab.id!, "grab_post"));
+            const x = await browser.tabs.sendMessage(activeTab.id!, "grab_post");
             // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
             // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
             const res = Object.assign(new ScrapeResults(), x);
