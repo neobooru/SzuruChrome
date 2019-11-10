@@ -54,6 +54,15 @@
                 </div>
 
                 <div class="popup-content">
+                    <div class="popup-block" style="display:flex;">
+                        <input type="text" v-model="addTagInput" v-on:keyup.enter="addTag" />
+                        <button
+                            class="primary"
+                            style="margin-left: 5px; height: auto;"
+                            @click="addTag"
+                        >Add</button>
+                    </div>
+
                     <div class="popup-block">
                         <ul class="compact-tags">
                             <li v-for="tag in post.tags" :key="tag.name">
@@ -74,7 +83,7 @@
         <div class="popup-row">
             <div class="popup-column2">
                 <select disabled>
-                    <option>https://szuru.example.com</option>
+                    <option>{{ activeSite != null ? activeSite.domain : "(no site available)" }}</option>
                 </select>
             </div>
 
@@ -111,7 +120,8 @@ export default Vue.extend({
             activeSite: null as SzuruSiteConfig | null,
             szuru: null as SzuruWrapper | null,
             post: new ScrapedPost(),
-            messages: [] as Message[]
+            messages: [] as Message[],
+            addTagInput: ""
         };
     },
     methods: {
@@ -254,6 +264,13 @@ export default Vue.extend({
             // Searching for posts with re:zero will show an error message about unknown named token.
             // Searching for posts with re\:zero will show posts tagged with re:zero.
             return encodeURIComponent(tagName.replace(/\:/g, "\\:"));
+        },
+        addTag() {
+            const tagName = this.addTagInput;
+            this.addTagInput = "";
+            if (this.post.tags.find(x => x.name == tagName) == undefined) {
+                this.post.tags.push(new ScrapedTag(tagName));
+            }
         }
     },
     async mounted() {
