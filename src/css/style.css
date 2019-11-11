@@ -12,6 +12,8 @@ button {
     font-family: "Open Sans", sans-serif;
     height: 30px;
     cursor: pointer;
+    padding: 0 10px;
+    white-space: nowrap;
 }
 
 button.primary {

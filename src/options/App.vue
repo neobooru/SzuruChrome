@@ -22,6 +22,15 @@
                 <input type="text" name="token" v-model="authToken" />
             </label>
             <br />
+            <label>
+                Automatically search for similar posts
+                <input
+                    type="checkbox"
+                    name="autoSearchSimilar"
+                    v-model="autoSearchSimilar"
+                />
+            </label>
+            <br />
             <div class="settings-footer-buttons">
                 <button @click="testConnection">Test connection</button>
                 <button @click="saveSettings" class="primary">Save settings</button>
@@ -32,7 +41,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { oc } from 'ts-optchain';
+import { oc } from "ts-optchain";
 import SzuruWrapper from "../SzuruWrapper";
 import { Config, SzuruSiteConfig } from "../Config";
 
@@ -41,7 +50,8 @@ export default Vue.extend({
         return {
             domain: "",
             username: "",
-            authToken: ""
+            authToken: "",
+            autoSearchSimilar: false
         };
     },
     methods: {
@@ -75,6 +85,7 @@ export default Vue.extend({
             siteConfig.username = this.username;
             siteConfig.authToken = this.authToken;
             config.sites = [siteConfig];
+            config.autoSearchSimilar = this.autoSearchSimilar;
 
             await config.save();
         }
@@ -89,6 +100,7 @@ export default Vue.extend({
             this.domain = config.sites[0].domain;
             this.username = config.sites[0].username;
             this.authToken = config.sites[0].authToken;
+            this.autoSearchSimilar = config.autoSearchSimilar;
         }
     }
 });

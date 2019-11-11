@@ -90,3 +90,13 @@ export interface Post {
     notes: any[]; // Note resource
     comments: any[]; // Comment resource
 }
+
+export interface SimilarPost {
+    distance: number;
+    post: Post;
+}
+
+export interface ImageSearchResult {
+    exactPost: Post | null;
+    similarPosts: SimilarPost[];
+}

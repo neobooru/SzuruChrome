@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { ScrapedPost } from "neo-scraper";
 import { SzuruSiteConfig } from "./Config";
-import { TagsResult, TagCategoriesResult, Post, Tag, SzuruError } from "./SzuruTypes";
+import { TagsResult, TagCategoriesResult, Post, Tag, SzuruError, ImageSearchResult } from "./SzuruTypes";
 
 /**
  * A 1:1 wrapper around the szurubooru API.
@@ -64,6 +64,14 @@ export default class SzuruWrapper {
         console.dir(obj);
 
         return (await this.apiPost("posts", obj)).data;
+    }
+
+    async reverseSearch(imageUrl: string): Promise<ImageSearchResult> {
+        var obj = {
+            contentUrl: imageUrl
+        };
+
+        return (await this.apiPost("posts/reverse-search", obj)).data;
     }
 
     private async apiGet(url: string, additionalHeaders: any = {}): Promise<any> {

@@ -87,8 +87,9 @@
                 </select>
             </div>
 
-            <div class="popup-column2">
-                <button class="primary full" @click="upload">Import</button>
+            <div class="popup-column2" style="display: flex;">
+                <button class="primary" @click="findSimilar">Find similar</button>
+                <button class="primary full" style="margin-left: 5px;" @click="upload">Import</button>
             </div>
         </div>
     </div>
@@ -125,6 +126,7 @@ export default Vue.extend({
         };
     },
     methods: {
+        // Try to scrape the post from the page
         async grabPost() {
             // Get active tab
             const activeTab = (await browser.tabs.query({
@@ -146,6 +148,7 @@ export default Vue.extend({
                 this.pushError("Couldn't grab post");
             }
         },
+        // Try to upload the post to the selected szurubooru instance
         async upload() {
             this.clearMessages();
 
@@ -167,7 +170,7 @@ export default Vue.extend({
                 const createdPost = await this.szuru.createPost(this.post);
                 // TODO: Clicking a link doesn't actually open it in a new tab,
                 // see https://stackoverflow.com/questions/8915845
-                uploadMsg.content = `<a href='${this.getPostUrl(createdPost)}'>Uploaded post</a>`;
+                uploadMsg.content = `<a href='${this.getPostUrl(createdPost)}' target='_blank'>Uploaded post</a>`;
                 uploadMsg.type = "success";
 
                 // Find tags with "default" category and update it
@@ -206,10 +209,9 @@ export default Vue.extend({
                 }
             }
 
-            if (this.messages.length > 0) {
-                window.scrollTo(0, 0);
-            }
+            this.scrollToMessages();
         },
+        // Open extension settings page in new tab
         async openSettings() {
             const url = browser.extension.getURL("options/options.html");
             window.open(url);
@@ -225,6 +227,7 @@ export default Vue.extend({
 
             return classes;
         },
+        // Remove tag from post's taglist
         removeTag(tag: ScrapedTag) {
             if (this.post) {
                 const idx = this.post.tags.indexOf(tag);
@@ -247,9 +250,11 @@ export default Vue.extend({
 
             return classes;
         },
+        // Add info message
         pushInfo(message: string) {
             this.messages.push(new Message(message));
         },
+        // Add error message
         pushError(message: string) {
             this.messages.push(new Message(message, "error"));
         },
@@ -265,11 +270,55 @@ export default Vue.extend({
             // Searching for posts with re\:zero will show posts tagged with re:zero.
             return encodeURIComponent(tagName.replace(/\:/g, "\\:"));
         },
+        // Add tag to the post's taglist
         addTag() {
-            const tagName = this.addTagInput;
-            this.addTagInput = "";
-            if (this.post.tags.find(x => x.name == tagName) == undefined) {
-                this.post.tags.push(new ScrapedTag(tagName));
+            if (this.post) {
+                const tagName = this.addTagInput;
+                this.addTagInput = "";
+                if (this.post.tags.find(x => x.name == tagName) == undefined) {
+                    this.post.tags.push(new ScrapedTag(tagName));
+                }
+            }
+        },
+        // Find similar posts to the grabbed posts (this.post)
+        async findSimilar() {
+            if (!this.post || !this.szuru) {
+                return;
+            }
+
+            this.pushInfo("Searching for similar posts...");
+            const res = await this.szuru.reverseSearch(this.post.imageUrl);
+            this.clearMessages();
+
+            if (!res.exactPost && res.similarPosts.length == 0) {
+                this.pushInfo("No similar posts found");
+            } else {
+                if (res.exactPost) {
+                    this.pushError(
+                        `<a href='${this.getPostUrl(res.exactPost)}' target='_blank'>
+                        Post already uploaded (${res.exactPost.id})</a>`
+                    );
+                }
+
+                for (const similarPost of res.similarPosts) {
+                    // Don't show this message for the exactPost (because we have a different message for that)
+                    if (res.exactPost && res.exactPost.id == similarPost.post.id) {
+                        continue;
+                    }
+
+                    this.pushInfo(
+                        `<a href='${this.getPostUrl(similarPost.post)}' target='_blank'>Post ${similarPost.post.id}
+                        looks ${Math.round(100 - similarPost.distance * 100)}% similar</a>`
+                    );
+                }
+            }
+
+            this.scrollToMessages();
+        },
+        // Scroll to top if there are any messages
+        scrollToMessages() {
+            if (this.messages.length > 0) {
+                window.scrollTo(0, 0);
             }
         }
     },
@@ -277,13 +326,19 @@ export default Vue.extend({
         const cfg = await Config.load();
         this.activeSite = cfg.sites.length > 0 ? cfg.sites[0] : null;
 
-        if (this.activeSite == null) {
+        if (!this.activeSite) {
             this.pushError("No szurubooru server configured!");
         } else {
             this.szuru = await SzuruWrapper.createFromConfig(this.activeSite);
         }
 
-        this.grabPost();
+        // Always call grabPost, even when there is no activeSite
+        this.grabPost().then(() => {
+            if (cfg.autoSearchSimilar) {
+                // No need to check if any vars are unset, findSimilar does that internally
+                this.findSimilar();
+            }
+        });
     }
 });
 </script>
