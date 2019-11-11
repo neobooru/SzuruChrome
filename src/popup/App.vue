@@ -280,7 +280,7 @@ export default Vue.extend({
                 }
             }
         },
-        // Find similar posts to the grabbed posts (this.post)
+        // Find posts similar to the grabbed post (this.post)
         async findSimilar() {
             if (!this.post || !this.szuru) {
                 return;
