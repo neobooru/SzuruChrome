@@ -151,6 +151,7 @@ export default Vue.extend({
         // Try to upload the post to the selected szurubooru instance
         async upload() {
             this.clearMessages();
+            window.scrollTo(0, 0);
 
             if (!this.post || !this.post.imageUrl) {
                 this.pushError("There is no post to upload!");
@@ -166,7 +167,6 @@ export default Vue.extend({
                 // Create and upload post
                 let uploadMsg = new Message("Uploading...");
                 this.messages.push(uploadMsg);
-                window.scrollTo(0, 0);
                 const createdPost = await this.szuru.createPost(this.post);
                 // TODO: Clicking a link doesn't actually open it in a new tab,
                 // see https://stackoverflow.com/questions/8915845
@@ -208,8 +208,6 @@ export default Vue.extend({
                     alert(ex);
                 }
             }
-
-            this.scrollToMessages();
         },
         // Open extension settings page in new tab
         async openSettings() {
@@ -251,15 +249,23 @@ export default Vue.extend({
             return classes;
         },
         // Add info message
-        pushInfo(message: string) {
-            this.messages.push(new Message(message));
+        pushInfo(message: string): Message {
+            let msg = new Message(message);
+            this.messages.push(msg);
+            return msg;
         },
         // Add error message
-        pushError(message: string) {
-            this.messages.push(new Message(message, "error"));
+        pushError(message: string): Message {
+            let msg = new Message(message, "error");
+            this.messages.push(msg);
+            return msg;
         },
         clearMessages() {
             this.messages = [];
+        },
+        removeMessage(message: Message) {
+            const idx = this.messages.indexOf(message);
+            if (idx != -1) this.messages.splice(idx, 1);
         },
         getPostUrl(post: Post): string {
             if (!this.activeSite) return "";
@@ -286,9 +292,23 @@ export default Vue.extend({
                 return;
             }
 
-            this.pushInfo("Searching for similar posts...");
+            // Remove messages that contain "Post already uploaded" or "No similar posts found"
+            // but keep the other messages.
+            for (let i = 0; i < this.messages.length; i++) {
+                if (
+                    this.messages[i].content.indexOf("No similar posts found") != -1 ||
+                    this.messages[i].content.indexOf("Post already uploaded") != -1
+                ) {
+                    // Decrement i to negate the i++, because if we remove one object the items
+                    // shift one place to the left, aka index--
+                    // If we don't do i-- we'll skip the next item in our for loop
+                    this.messages.splice(i--, 1);
+                }
+            }
+
+            const msgSearchSimilar = this.pushInfo("Searching for similar posts...");
             const res = await this.szuru.reverseSearch(this.post.imageUrl);
-            this.clearMessages();
+            this.removeMessage(msgSearchSimilar);
 
             if (!res.exactPost && res.similarPosts.length == 0) {
                 this.pushInfo("No similar posts found");
@@ -311,14 +331,6 @@ export default Vue.extend({
                         looks ${Math.round(100 - similarPost.distance * 100)}% similar</a>`
                     );
                 }
-            }
-
-            this.scrollToMessages();
-        },
-        // Scroll to top if there are any messages
-        scrollToMessages() {
-            if (this.messages.length > 0) {
-                window.scrollTo(0, 0);
             }
         }
     },
