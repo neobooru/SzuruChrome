@@ -143,7 +143,7 @@ export default Vue.extend({
 
             if (post) {
                 this.post = post;
-                // console.dir(post);
+                console.dir(post);
             } else {
                 this.pushError("Couldn't grab post");
             }
