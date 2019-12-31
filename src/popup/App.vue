@@ -76,7 +76,7 @@
             </div>
 
             <div class="popup-column2">
-                <img :src="post.imageUrl" />
+                <img id="imgFull" :src="post.imageUrl" :title="postTooltip" />
             </div>
         </div>
 
@@ -102,6 +102,7 @@ import { ScrapedPost, ScrapedTag, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
 import { Post, SzuruError } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
+import axios from "axios";
 
 type MessageType = "error" | "info" | "success";
 
@@ -332,6 +333,33 @@ export default Vue.extend({
                     );
                 }
             }
+        },
+        formatByteCount(bytes: number, decimals = 2) {
+            if (bytes === 0) return "0 Bytes";
+
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ["Bytes", "KiB", "MiB"];
+
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+        }
+    },
+    computed: {
+        // Get post tooltip which contains the image size and dimensions
+        async postTooltip() {
+            // HACK: Workaround
+            // Probably has to do with https://github.com/vuejs/vue/issues/8721
+            const _this = this as any;
+
+            const img = document.getElementById("imgFull") as HTMLImageElement;
+            if (!img || !_this.post) return "";
+
+            const resp = await axios.head(_this.post.imageUrl);
+            const byteSize = resp.headers["Content-Length"];
+
+            return `${_this.formatByteCount(byteSize)} (${img.naturalWidth}x${img.naturalHeight})`;
         }
     },
     async mounted() {
