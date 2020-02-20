@@ -1,6 +1,6 @@
 {
   "name": "szuru-chrome",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Import media from various sites into szurubooru",
   "author": "neobooru",
   "license": "MIT",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "axios": "^0.19.0",
-    "neo-scraper": "^0.2.2",
+    "neo-scraper": "^0.2.3",
     "ts-optchain": "^0.1.8",
     "vue": "^2.6.10",
     "webextension-polyfill": "^0.3.1"
@@ -27,7 +27,7 @@
     "ejs": "^2.6.1",
     "file-loader": "^1.1.11",
     "mini-css-extract-plugin": "^0.4.4",
-    "node-sass": "^4.9.3",
+    "node-sass": "^4.13.1",
     "sass-loader": "^7.1.0",
     "ts-loader": "^6.0.4",
     "typescript": "^3.5.3",
