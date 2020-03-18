@@ -12,31 +12,31 @@
     "watch:dev": "cross-env HMR=true npm run build:dev -- --watch"
   },
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.19.2",
     "neo-scraper": "^0.2.3",
     "ts-optchain": "^0.1.8",
-    "vue": "^2.6.10",
+    "vue": "^2.6.11",
     "webextension-polyfill": "^0.3.1"
   },
   "devDependencies": {
     "archiver": "^3.1.1",
     "copy-webpack-plugin": "^5.1.1",
-    "core-js": "^3.0.1",
-    "cross-env": "^5.2.0",
+    "core-js": "^3.6.4",
+    "cross-env": "^5.2.1",
     "css-loader": "^2.1.1",
-    "ejs": "^2.6.1",
+    "ejs": "^2.7.4",
     "file-loader": "^1.1.11",
     "mini-css-extract-plugin": "^0.4.4",
     "node-sass": "^4.13.1",
-    "sass-loader": "^7.1.0",
-    "ts-loader": "^6.0.4",
-    "typescript": "^3.5.3",
-    "vue-loader": "^15.4.2",
-    "vue-template-compiler": "^2.6.10",
+    "sass-loader": "^7.3.1",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.8.3",
+    "vue-loader": "^15.9.0",
+    "vue-template-compiler": "^2.6.11",
     "web-ext-types": "^2.1.0",
     "webextension-polyfill-ts": "^0.9.1",
-    "webpack": "^4.39.1",
-    "webpack-cli": "^3.1.2",
-    "webpack-extension-reloader": "^1.1.0"
+    "webpack": "^4.42.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-extension-reloader": "^1.1.4"
   }
 }
