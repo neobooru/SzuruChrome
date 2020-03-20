@@ -1,93 +1,95 @@
 <template>
     <div class="popup-container">
-        <div class="popup-messages">
-            <ul class="messages">
-                <li
-                    v-for="msg in messages"
-                    :key="msg.name"
-                    :class="getMessageClasses(msg)"
-                    v-html="msg.content"
-                ></li>
-            </ul>
+        <div class="popup-row">
+            <div class="popup-column1" style="margin: 0px 10px;">
+                <ul class="messages">
+                    <li
+                        v-for="msg in messages"
+                        :key="msg.name"
+                        :class="getMessageClasses(msg)"
+                        v-html="msg.content"
+                    ></li>
+                </ul>
+            </div>
         </div>
 
-        <div class="popup-left">
-            <div class="popup-section">
-                <div class="section-header">
+        <div class="popup-row">
+            <div class="popup-column2">
+                <div class="popup-header">
                     <span>Basic info</span>
                     <i class="fas fa-cog" @click="openSettings"></i>
                 </div>
 
-                <div class="section-row">
-                    <span class="section-label">Safety</span>
+                <div class="popup-content">
+                    <div class="popup-block">
+                        <span class="block-title">Safety</span>
 
-                    <label class="container">
-                        <input type="radio" value="safe" v-model="selectedPost.rating" />
-                        <span class="checkmark"></span>
-                        Safe
-                    </label>
+                        <label class="container">
+                            <input type="radio" value="safe" v-model="post.rating" />
+                            <span class="checkmark"></span>
+                            Safe
+                        </label>
 
-                    <label class="container">
-                        <input type="radio" value="sketchy" v-model="selectedPost.rating" />
-                        <span class="checkmark"></span>
-                        Sketchy
-                    </label>
+                        <label class="container">
+                            <input type="radio" value="sketchy" v-model="post.rating" />
+                            <span class="checkmark"></span>
+                            Sketchy
+                        </label>
 
-                    <label class="container">
-                        <input type="radio" value="unsafe" v-model="selectedPost.rating" />
-                        <span class="checkmark"></span>
-                        Unsafe
-                    </label>
+                        <label class="container">
+                            <input type="radio" value="unsafe" v-model="post.rating" />
+                            <span class="checkmark"></span>
+                            Unsafe
+                        </label>
+                    </div>
+
+                    <div class="popup-block">
+                        <span class="block-title">Source</span>
+                        <input type="text" v-model="post.source" />
+                    </div>
                 </div>
 
-                <div class="section-row">
-                    <span class="section-label">Source</span>
-                    <input type="text" v-model="selectedPost.source" />
-                </div>
-            </div>
-
-            <div class="popup-section">
-                <div class="section-header">
+                <div class="popup-header">
                     <span>Tags</span>
                 </div>
 
-                <div class="section-row" style="display:flex;">
-                    <input type="text" v-model="addTagInput" v-on:keyup.enter="addTag" />
-                    <button
-                        class="primary"
-                        style="margin-left: 5px; height: auto;"
-                        @click="addTag"
-                    >Add</button>
-                </div>
+                <div class="popup-content">
+                    <div class="popup-block" style="display:flex;">
+                        <input type="text" v-model="addTagInput" v-on:keyup.enter="addTag" />
+                        <button
+                            class="primary"
+                            style="margin-left: 5px; height: auto;"
+                            @click="addTag"
+                        >Add</button>
+                    </div>
 
-                <div class="section-row">
-                    <ul class="compact-tags">
-                        <li v-for="tag in selectedPost.tags" :key="tag.name">
-                            <a class="remove-tag" @click="removeTag(tag)">x</a>
-                            <span :class="getTagClasses(tag)">{{ tag.name }}</span>
-                            <span class="tag-usages">0</span>
-                        </li>
-                    </ul>
+                    <div class="popup-block">
+                        <ul class="compact-tags">
+                            <li v-for="tag in post.tags" :key="tag.name">
+                                <a class="remove-tag" @click="removeTag(tag)">x</a>
+                                <span :class="getTagClasses(tag)">{{ tag.name }}</span>
+                                <span class="tag-usages">0</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <div class="popup-section">
-                <div class="section-row">
-                    <select disabled>
-                        <option>{{ activeSite != null ? activeSite.domain : "(no site available)" }}</option>
-                    </select>
-                </div>
+            <div class="popup-column2">
+                <img :src="post.imageUrl" />
             </div>
         </div>
 
-        <div class="popup-right">
-            <div class="popup-section">
-                <img :src="selectedPost.imageUrl" />
+        <div class="popup-row">
+            <div class="popup-column2">
+                <select disabled>
+                    <option>{{ activeSite != null ? activeSite.domain : "(no site available)" }}</option>
+                </select>
+            </div>
 
-                <div style="display: flex;">
-                    <button class="primary" @click="findSimilar">Find similar</button>
-                    <button class="primary full" style="margin-left: 5px;" @click="upload">Import</button>
-                </div>
+            <div class="popup-column2" style="display: flex;">
+                <button class="primary" @click="findSimilar">Find similar</button>
+                <button class="primary full" style="margin-left: 5px;" @click="upload">Import</button>
             </div>
         </div>
     </div>
@@ -104,14 +106,10 @@ import { Config, SzuruSiteConfig } from "../Config";
 type MessageType = "error" | "info" | "success";
 
 class Message {
-    readonly id: number;
     content: string;
     type: MessageType;
 
-    private static ids = 0;
-
     constructor(content: string, type: MessageType = "info") {
-        this.id = Message.ids++;
         this.content = content;
         this.type = type;
     }
@@ -122,7 +120,7 @@ export default Vue.extend({
         return {
             activeSite: null as SzuruSiteConfig | null,
             szuru: null as SzuruWrapper | null,
-            selectedPost: new ScrapedPost(),
+            post: new ScrapedPost(),
             messages: [] as Message[],
             addTagInput: ""
         };
@@ -131,12 +129,10 @@ export default Vue.extend({
         // Try to scrape the post from the page
         async grabPost() {
             // Get active tab
-            const activeTab = (
-                await browser.tabs.query({
-                    active: true,
-                    currentWindow: true
-                })
-            )[0];
+            const activeTab = (await browser.tabs.query({
+                active: true,
+                currentWindow: true
+            }))[0];
 
             // Send 'grab_post' to the content script on the active tab
             const x = await browser.tabs.sendMessage(activeTab.id!, "grab_post");
@@ -146,14 +142,73 @@ export default Vue.extend({
             const post = res.posts.length > 0 ? res.posts[0] : null;
 
             if (post) {
-                this.selectedPost = post;
+                this.post = post;
                 console.dir(post);
             } else {
                 this.pushError("Couldn't grab post");
             }
         },
         // Try to upload the post to the selected szurubooru instance
-        async upload() {},
+        async upload() {
+            this.clearMessages();
+            window.scrollTo(0, 0);
+
+            if (!this.post || !this.post.imageUrl) {
+                this.pushError("There is no post to upload!");
+                return;
+            }
+
+            if (!this.szuru) {
+                this.pushError("No szurubooru server configured!");
+                return;
+            }
+
+            try {
+                // Create and upload post
+                let uploadMsg = new Message("Uploading...");
+                this.messages.push(uploadMsg);
+                const createdPost = await this.szuru.createPost(this.post);
+                // TODO: Clicking a link doesn't actually open it in a new tab,
+                // see https://stackoverflow.com/questions/8915845
+                uploadMsg.content = `<a href='${this.getPostUrl(createdPost)}' target='_blank'>Uploaded post</a>`;
+                uploadMsg.type = "success";
+
+                // Find tags with "default" category and update it
+                // TODO: Make all these categories configurable
+                const tagsWithCategory = this.post.tags.filter(x => x.category);
+                const unsetCategoryTags = createdPost.tags
+                    .filter(x => x.category == "default")
+                    .filter(x => tagsWithCategory.some(y => x.names.includes(y.name)));
+
+                if (unsetCategoryTags.length != 0) {
+                    let tagsMsg = new Message(`${unsetCategoryTags.length} tags need a different category`);
+                    this.messages.push(tagsMsg);
+
+                    // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
+                    const query = "?query=" + unsetCategoryTags.map(x => this.encodeTagName(x.names[0]));
+                    const tags = (await this.szuru.getTags(query)).results;
+
+                    for (let i in tags) {
+                        tagsMsg.content = `Updating tag ${i}/${unsetCategoryTags.length}`;
+                        tags[i].category = tagsWithCategory.find(x => tags[i].names.includes(x.name))!.category!;
+                        await this.szuru.updateTag(tags[i]);
+                    }
+
+                    tagsMsg.content = `Updated ${tags.length} tags`;
+                    tagsMsg.type = "success";
+                }
+            } catch (ex) {
+                const error = ex as SzuruError;
+
+                if (error) {
+                    this.clearMessages();
+                    this.pushError(error.description);
+                } else {
+                    // Probably too long for a message
+                    alert(ex);
+                }
+            }
+        },
         // Open extension settings page in new tab
         async openSettings() {
             const url = browser.extension.getURL("options/options.html");
@@ -172,10 +227,10 @@ export default Vue.extend({
         },
         // Remove tag from post's taglist
         removeTag(tag: ScrapedTag) {
-            if (this.selectedPost) {
-                const idx = this.selectedPost.tags.indexOf(tag);
+            if (this.post) {
+                const idx = this.post.tags.indexOf(tag);
                 if (idx != -1) {
-                    this.selectedPost.tags.splice(idx, 1);
+                    this.post.tags.splice(idx, 1);
                 }
             }
         },
@@ -223,17 +278,17 @@ export default Vue.extend({
         },
         // Add tag to the post's taglist
         addTag() {
-            if (this.selectedPost) {
+            if (this.post) {
                 const tagName = this.addTagInput;
                 this.addTagInput = "";
-                if (this.selectedPost.tags.find(x => x.name == tagName) == undefined) {
-                    this.selectedPost.tags.push(new ScrapedTag(tagName));
+                if (this.post.tags.find(x => x.name == tagName) == undefined) {
+                    this.post.tags.push(new ScrapedTag(tagName));
                 }
             }
         },
-        // Find posts similar to the grabbed post (this.selectedPost)
+        // Find posts similar to the grabbed post (this.post)
         async findSimilar() {
-            if (!this.selectedPost || !this.szuru) {
+            if (!this.post || !this.szuru) {
                 return;
             }
 
@@ -252,7 +307,7 @@ export default Vue.extend({
             }
 
             const msgSearchSimilar = this.pushInfo("Searching for similar posts...");
-            const res = await this.szuru.reverseSearch(this.selectedPost.imageUrl);
+            const res = await this.szuru.reverseSearch(this.post.imageUrl);
             this.removeMessage(msgSearchSimilar);
 
             if (!res.exactPost && res.similarPosts.length == 0) {
@@ -303,47 +358,49 @@ export default Vue.extend({
 <style scoped>
 .popup-container {
     width: 700px;
-    display: grid;
-    grid-template-columns: 400px 300px;
 }
 
-.popup-messages {
-    grid-column: 1 / 3;
-    margin: 0 10px;
+.popup-row {
+    display: flex;
 }
 
-.popup-left {
-    grid-column: 1;
-}
-
-.popup-right {
-    grid-column: 2;
-}
-
-.popup-section {
+.popup-column1 {
+    flex: 100%;
     margin: 10px;
 }
 
-.section-header {
-    height: 30px;
-    padding: 0 6px 0 10px;
-    background-color: #eee;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.popup-column2 {
+    flex: 50%;
+    margin: 10px;
 }
 
-.section-header > span {
-    font-size: 1.2em;
+.popup-header {
+    height: 30px;
+    padding: 0 0 0 10px;
+    background-color: #eee;
+    margin: 0 0 10px 0;
+}
+
+.popup-content {
+    margin: 5px;
+}
+
+.popup-header > span {
     vertical-align: middle;
 }
 
-.section-row {
-    margin: 10px 5px 0;
+/* Horrible hack + guesswork */
+.popup-header > i {
+    float: right;
+    margin: 8px 5px;
+    cursor: pointer;
 }
 
-.section-label {
+.popup-block {
+    margin: 0 0 10px 0;
+}
+
+.block-title {
     display: block;
     margin: 0 0 5px 0;
 }
