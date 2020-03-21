@@ -83,9 +83,11 @@
         <div class="popup-right">
             <div class="popup-section">
                 <select v-model="selectedPost">
-                    <option v-for="post in posts" v-bind:key="post" v-bind:value="post">
-                        {{ post.name }}
-                    </option>
+                    <option
+                        v-for="post in posts"
+                        v-bind:key="post"
+                        v-bind:value="post"
+                    >{{ post.name }}</option>
                 </select>
             </div>
 
@@ -108,24 +110,7 @@ import { ScrapedPost, ScrapedTag, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
 import { Post, SzuruError } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
-
-type MessageType = "error" | "info" | "success";
-
-class Message {
-    readonly id: number;
-    content: string;
-    level: MessageType;
-    category: string;
-
-    private static ids = 0;
-
-    constructor(content: string, level: MessageType = "info", category: string | null = null) {
-        this.id = Message.ids++;
-        this.content = content;
-        this.level = level;
-        this.category = category ?? "none";
-    }
-}
+import { BrowserCommand, Message } from "../Common";
 
 class ScrapedPostViewModel extends ScrapedPost {
     name: string = "";
@@ -163,7 +148,7 @@ export default Vue.extend({
             )[0];
 
             // Send 'grab_post' to the content script on the active tab
-            const x = await browser.tabs.sendMessage(activeTab.id!, "grab_post");
+            const x = await browser.tabs.sendMessage(activeTab.id!, new BrowserCommand("grab_post"));
             // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
             // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
             const res = Object.assign(new ScrapeResults(), x);
@@ -187,7 +172,12 @@ export default Vue.extend({
         },
         // Try to upload the post to the selected szurubooru instance
         async upload() {
+            window.scrollTo(0, 0);
+
             // Outsource to background.ts
+            const cmd = new BrowserCommand("upload_post", this.selectedPost);
+            await browser.runtime.sendMessage(cmd);
+            // TODO: Handle errors/status update
         },
         // Open extension settings page in new tab
         async openSettings() {
