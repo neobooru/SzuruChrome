@@ -249,11 +249,6 @@ export default Vue.extend({
             if (!this.activeSite) return "";
             return this.activeSite.domain + "/post/" + post.id;
         },
-        encodeTagName(tagName: string) {
-            // Searching for posts with re:zero will show an error message about unknown named token.
-            // Searching for posts with re\:zero will show posts tagged with re:zero.
-            return encodeURIComponent(tagName.replace(/\:/g, "\\:"));
-        },
         // Add tag to the post's taglist
         addTag() {
             if (this.selectedPost) {
