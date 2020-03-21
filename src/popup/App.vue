@@ -82,6 +82,14 @@
 
         <div class="popup-right">
             <div class="popup-section">
+                <select v-model="selectedPost">
+                    <option v-for="post in posts" v-bind:key="post" v-bind:value="post">
+                        {{ post.name }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="popup-section">
                 <img :src="selectedPost.imageUrl" />
 
                 <div style="display: flex;">
@@ -106,26 +114,42 @@ type MessageType = "error" | "info" | "success";
 class Message {
     readonly id: number;
     content: string;
-    type: MessageType;
+    level: MessageType;
+    category: string;
 
     private static ids = 0;
 
-    constructor(content: string, type: MessageType = "info") {
+    constructor(content: string, level: MessageType = "info", category: string | null = null) {
         this.id = Message.ids++;
         this.content = content;
-        this.type = type;
+        this.level = level;
+        this.category = category ?? "none";
     }
+}
+
+class ScrapedPostViewModel extends ScrapedPost {
+    name: string = "";
 }
 
 export default Vue.extend({
     data() {
         return {
+            config: null as Config | null,
             activeSite: null as SzuruSiteConfig | null,
             szuru: null as SzuruWrapper | null,
-            selectedPost: new ScrapedPost(),
+            posts: [] as ScrapedPostViewModel[],
+            selectedPost: new ScrapedPost(), // Shouldn't be null because VueJS gets a mental breakdown when it sees a null.
             messages: [] as Message[],
             addTagInput: ""
         };
+    },
+    watch: {
+        selectedPost() {
+            if (this.config && this.config.autoSearchSimilar) {
+                // No need to check if any vars are unset, findSimilar does that internally
+                this.findSimilar();
+            }
+        }
     },
     methods: {
         // Try to scrape the post from the page
@@ -143,17 +167,28 @@ export default Vue.extend({
             // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
             // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
             const res = Object.assign(new ScrapeResults(), x);
-            const post = res.posts.length > 0 ? res.posts[0] : null;
 
-            if (post) {
-                this.selectedPost = post;
-                console.dir(post);
+            // Clear current posts array
+            this.posts = [];
+
+            for (var result of res.results) {
+                for (var i in result.posts) {
+                    const vm = Object.assign(new ScrapedPostViewModel(), result.posts[i]);
+                    vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
+                    this.posts.push(vm);
+                }
+            }
+
+            if (this.posts.length > 0) {
+                this.selectedPost = this.posts[0];
             } else {
-                this.pushError("Couldn't grab post");
+                this.pushInfo("No posts found.");
             }
         },
         // Try to upload the post to the selected szurubooru instance
-        async upload() {},
+        async upload() {
+            // Outsource to background.ts
+        },
         // Open extension settings page in new tab
         async openSettings() {
             const url = browser.extension.getURL("options/options.html");
@@ -182,7 +217,7 @@ export default Vue.extend({
         getMessageClasses(message: Message) {
             let classes: string[] = [];
 
-            switch (message.type) {
+            switch (message.level) {
                 case "error":
                     classes.push("message-error");
                     break;
@@ -194,23 +229,31 @@ export default Vue.extend({
             return classes;
         },
         // Add info message
-        pushInfo(message: string): Message {
-            let msg = new Message(message);
+        pushInfo(message: string, category: string | null = null): Message {
+            let msg = new Message(message, "info", category);
             this.messages.push(msg);
             return msg;
         },
         // Add error message
-        pushError(message: string): Message {
-            let msg = new Message(message, "error");
+        pushError(message: string, category: string | null = null): Message {
+            let msg = new Message(message, "error", category);
             this.messages.push(msg);
             return msg;
         },
-        clearMessages() {
-            this.messages = [];
-        },
-        removeMessage(message: Message) {
-            const idx = this.messages.indexOf(message);
-            if (idx != -1) this.messages.splice(idx, 1);
+        // Clear messages of given category. When category is empty clear all messages.
+        clearMessages(category: string | null) {
+            if (category) {
+                for (let i = 0; i < this.messages.length; i++) {
+                    if (this.messages[i].category == category) {
+                        // Decrement i to negate the i++, because if we remove one object the items
+                        // shift one place to the left, aka index--
+                        // If we don't do i-- we'll skip the next item in our for loop
+                        this.messages.splice(i--, 1);
+                    }
+                }
+            } else {
+                this.messages = [];
+            }
         },
         getPostUrl(post: Post): string {
             if (!this.activeSite) return "";
@@ -237,32 +280,18 @@ export default Vue.extend({
                 return;
             }
 
-            // Remove messages that contain "Post already uploaded" or "No similar posts found"
-            // but keep the other messages.
-            for (let i = 0; i < this.messages.length; i++) {
-                if (
-                    this.messages[i].content.indexOf("No similar posts found") != -1 ||
-                    this.messages[i].content.indexOf("Post already uploaded") != -1
-                ) {
-                    // Decrement i to negate the i++, because if we remove one object the items
-                    // shift one place to the left, aka index--
-                    // If we don't do i-- we'll skip the next item in our for loop
-                    this.messages.splice(i--, 1);
-                }
-            }
+            this.clearMessages("FIND_SIMILAR");
 
-            const msgSearchSimilar = this.pushInfo("Searching for similar posts...");
+            const msg = this.pushInfo("Searching for similar posts...", "FIND_SIMILAR");
             const res = await this.szuru.reverseSearch(this.selectedPost.imageUrl);
-            this.removeMessage(msgSearchSimilar);
 
             if (!res.exactPost && res.similarPosts.length == 0) {
-                this.pushInfo("No similar posts found");
+                msg.content = "No similar posts found";
             } else {
                 if (res.exactPost) {
-                    this.pushError(
-                        `<a href='${this.getPostUrl(res.exactPost)}' target='_blank'>
-                        Post already uploaded (${res.exactPost.id})</a>`
-                    );
+                    msg.content = `<a href='${this.getPostUrl(res.exactPost)}' target='_blank'>
+                        Post already uploaded (${res.exactPost.id})</a>`;
+                    msg.level = "error";
                 }
 
                 for (const similarPost of res.similarPosts) {
@@ -273,15 +302,16 @@ export default Vue.extend({
 
                     this.pushInfo(
                         `<a href='${this.getPostUrl(similarPost.post)}' target='_blank'>Post ${similarPost.post.id}
-                        looks ${Math.round(100 - similarPost.distance * 100)}% similar</a>`
+                        looks ${Math.round(100 - similarPost.distance * 100)}% similar</a>`,
+                        "FIND_SIMILAR"
                     );
                 }
             }
         }
     },
     async mounted() {
-        const cfg = await Config.load();
-        this.activeSite = cfg.sites.length > 0 ? cfg.sites[0] : null;
+        this.config = await Config.load();
+        this.activeSite = this.config.sites.length > 0 ? this.config.sites[0] : null;
 
         if (!this.activeSite) {
             this.pushError("No szurubooru server configured!");
@@ -290,12 +320,7 @@ export default Vue.extend({
         }
 
         // Always call grabPost, even when there is no activeSite
-        this.grabPost().then(() => {
-            if (cfg.autoSearchSimilar) {
-                // No need to check if any vars are unset, findSimilar does that internally
-                this.findSimilar();
-            }
-        });
+        this.grabPost();
     }
 });
 </script>
@@ -304,7 +329,7 @@ export default Vue.extend({
 .popup-container {
     width: 700px;
     display: grid;
-    grid-template-columns: 400px 300px;
+    grid-template-columns: 300px 400px;
 }
 
 .popup-messages {

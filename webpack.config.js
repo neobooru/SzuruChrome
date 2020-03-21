@@ -98,8 +98,6 @@ if (config.mode === 'production') {
 }
 
 if (process.env.HMR === 'true') {
-  config.entry['scripts/background'] = './scripts/background.ts';
-
   config.plugins = (config.plugins || []).concat([
     new ExtensionReloader({
       entries: {
