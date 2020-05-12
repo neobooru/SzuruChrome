@@ -105,7 +105,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { browser } from "webextension-polyfill-ts";
+import { browser, Runtime } from "webextension-polyfill-ts";
 import { ScrapedPost, ScrapedTag, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
 import { Post, SzuruError } from "../SzuruTypes";
@@ -303,6 +303,20 @@ export default Vue.extend({
         } else {
             this.szuru = await SzuruWrapper.createFromConfig(this.activeSite);
         }
+
+        browser.runtime.onMessage.addListener((cmd: BrowserCommand, sender: Runtime.MessageSender) => {
+            switch (cmd.name) {
+                case "push_message":
+                    this.messages.push(cmd.data);
+                    break;
+                case "remove_messages":
+                    for (let i = 0; i < cmd.data; i++) {
+                        if (this.messages.length == 0) break;
+                        this.messages.pop();
+                    }
+                    break;
+            }
+        });
 
         // Always call grabPost, even when there is no activeSite
         this.grabPost();

@@ -1,4 +1,4 @@
-export type BrowserCommandName = "grab_post" | "upload_post";
+export type BrowserCommandName = "grab_post" | "upload_post" | "push_message" | "remove_messages";
 export type MessageType = "error" | "info" | "success";
 
 export class BrowserCommand {

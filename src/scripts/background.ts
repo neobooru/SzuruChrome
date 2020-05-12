@@ -1,6 +1,6 @@
 import { ScrapedPost } from "neo-scraper";
 import { browser, Runtime } from "webextension-polyfill-ts";
-import { BrowserCommand } from "../Common";
+import { BrowserCommand, Message } from "../Common";
 import { Config } from "../Config.ts";
 import SzuruWrapper from "../SzuruWrapper.ts";
 import { SzuruError } from "../SzuruTypes";
@@ -14,9 +14,11 @@ async function uploadPost(post: ScrapedPost) {
 
     try {
         // Create and upload post
-        console.log("Uploading...");
+        browser.runtime.sendMessage(new BrowserCommand("remove_messages", 10));
+        browser.runtime.sendMessage(new BrowserCommand("push_message", new Message("Uploading...")));
         const createdPost = await szuru.createPost(post);
-        console.log("Uploaded post " + createdPost.id);
+        browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
+        browser.runtime.sendMessage(new BrowserCommand("push_message", new Message("Uploaded post " + createdPost.id, "success")));
 
         // TODO: Clicking a link doesn't actually open it in a new tab,
         // see https://stackoverflow.com/questions/8915845
@@ -30,23 +32,27 @@ async function uploadPost(post: ScrapedPost) {
             .filter(x => x.category == "default")
             .filter(x => tagsWithCategory.some(y => x.names.includes(y.name)));
         if (unsetCategoryTags.length != 0) {
-            console.log(`${unsetCategoryTags.length} tags need a different category`);
+            browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(`${unsetCategoryTags.length} tags need a different category`)));
             // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
             const query = "?query=" + unsetCategoryTags.map(x => encodeTagName(x.names[0]));
             const tags = (await szuru.getTags(query)).results;
             for (let i in tags) {
-                console.log(`Updating tag ${i}/${unsetCategoryTags.length}`);
+                browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
+                browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(`Updating tag ${i}/${unsetCategoryTags.length}`)));
                 tags[i].category = tagsWithCategory.find(x => tags[i].names.includes(x.name))!.category!;
                 await szuru.updateTag(tags[i]);
             }
-            console.log(`Updated ${tags.length} tags`);
+            browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
+            browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(`Updated ${tags.length} tags`, "success")));
         }
     } catch (ex) {
         const error = ex as SzuruError;
         if (error) {
             console.error(error);
+            browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex, "error")));
         } else {
             console.error(ex);
+            browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex, "error")));
         }
     }
 }
