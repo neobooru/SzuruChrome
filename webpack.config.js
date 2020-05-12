@@ -11,6 +11,7 @@ const config = {
   context: __dirname + '/src',
   entry: {
     'scripts/content': './scripts/content.ts',
+    'scripts/background': './scripts/background.ts',
     'popup/popup': './popup/popup.ts',
     'options/options': './options/options.ts',
   },
@@ -98,8 +99,6 @@ if (config.mode === 'production') {
 }
 
 if (process.env.HMR === 'true') {
-  config.entry['scripts/background'] = './scripts/background.ts';
-
   config.plugins = (config.plugins || []).concat([
     new ExtensionReloader({
       entries: {
