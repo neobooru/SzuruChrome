@@ -22,3 +22,11 @@ export class Message {
         this.category = category ?? "none";
     }
 }
+
+export function getUrl(root: string, ...parts: string[]): string {
+    let url = root.replace(/\/+$/, "");
+    for (const part of parts) {
+        url += "/" + part.replace(/\/+$/, "");
+    }
+    return url;
+}

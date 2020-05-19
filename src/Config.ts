@@ -15,7 +15,7 @@ export class Config {
 
     public async save() {
         await browser.storage.local.set({
-            "config": JSON.stringify(this)
+            config: JSON.stringify(this)
         });
 
         console.dir("Save " + JSON.stringify(this));
@@ -34,4 +34,3 @@ export class Config {
         return config;
     }
 }
-

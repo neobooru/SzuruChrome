@@ -110,7 +110,7 @@ import { ScrapedPost, ScrapedTag, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
 import { Post, SzuruError } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
-import { BrowserCommand, Message } from "../Common";
+import { BrowserCommand, Message, getUrl } from "../Common";
 
 class ScrapedPostViewModel extends ScrapedPost {
     name: string = "";
@@ -247,7 +247,7 @@ export default Vue.extend({
         },
         getPostUrl(post: Post): string {
             if (!this.activeSite) return "";
-            return this.activeSite.domain + "/post/" + post.id;
+            return getUrl(this.activeSite.domain, "post", post.id.toString());
         },
         // Add tag to the post's taglist
         addTag() {
