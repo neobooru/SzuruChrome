@@ -1,6 +1,6 @@
 {
   "name": "SzuruChrome",
-  "description": "Import media from various sites into szurubooru",
+  "description": "Import media from various sites into szurubooru.",
   "version": null,
   "manifest_version": 2,
   "icons": {
@@ -34,7 +34,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "{8cc2afc8-6c4a-4d2b-9513-46e46e5b4208}"
+      "id": "{13372607-2257-4360-8f51-5ce66fa73350}"
     }
   }
 }

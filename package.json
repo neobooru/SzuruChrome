@@ -1,9 +1,12 @@
 {
   "name": "szuru-chrome",
-  "version": "0.3.2",
-  "description": "Import media from various sites into szurubooru",
+  "version": "0.4.1",
+  "description": "Import media from various sites into szurubooru.",
   "author": "neobooru",
   "license": "MIT",
+  "repository": {
+    "url": "https://github.com/neobooru/SzuruChrome"
+  },
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack --hide-modules",
     "build:dev": "cross-env NODE_ENV=development webpack --hide-modules",
@@ -12,9 +15,8 @@
     "watch:dev": "cross-env HMR=true npm run build:dev -- --watch"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "neo-scraper": "^0.2.5",
-    "ts-optchain": "^0.1.8",
     "vue": "^2.6.11",
     "webextension-polyfill": "^0.3.1"
   },
@@ -24,7 +26,6 @@
     "core-js": "^3.6.5",
     "cross-env": "^5.2.1",
     "css-loader": "^2.1.1",
-    "ejs": "^2.7.4",
     "file-loader": "^1.1.11",
     "mini-css-extract-plugin": "^0.4.4",
     "node-sass": "^4.14.1",

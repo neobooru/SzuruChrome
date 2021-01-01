@@ -3,7 +3,7 @@
     "outDir": "./dist/",
     "sourceMap": true,
     "strict": true,
-    "module": "es2015",
+    "module": "es2020",
     "moduleResolution": "node",
     "target": "es6",
     "skipLibCheck": true,
@@ -12,11 +12,6 @@
     "lib": [
       "es2017",
       "dom"
-    ],
-    "plugins": [
-      {
-        "transform": "ts-optchain/transform"
-      }
     ]
   },
   "include": [
