@@ -10,6 +10,7 @@ export class Config {
   importExistingTags: boolean = true;
   importAllTags: boolean = false;
   importCommentary: boolean = false;
+  useOriginalSource: boolean = true;
   autoSearchSimilar: boolean = false;
   sites: Array<SzuruSiteConfig> = [];
 

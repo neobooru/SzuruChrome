@@ -27,6 +27,11 @@
         <input type="checkbox" name="autoSearchSimilar" v-model="autoSearchSimilar" />
       </label>
       <br />
+      <label>
+        Use original image source when available
+        <input type="checkbox" name="useOriginalSource" v-model="useOriginalSource" />
+      </label>
+      <br />
       <div class="settings-footer-buttons">
         <button @click="testConnection">Test connection</button>
         <button @click="saveSettings" class="primary">Save settings</button>
@@ -47,6 +52,7 @@ export default Vue.extend({
       username: "",
       authToken: "",
       autoSearchSimilar: false,
+      useOriginalSource: false,
     };
   },
   methods: {
@@ -81,6 +87,7 @@ export default Vue.extend({
       siteConfig.authToken = this.authToken;
       config.sites = [siteConfig];
       config.autoSearchSimilar = this.autoSearchSimilar;
+      config.useOriginalSource = this.useOriginalSource;
 
       await config.save();
     },
@@ -95,13 +102,19 @@ export default Vue.extend({
       this.domain = config.sites[0].domain;
       this.username = config.sites[0].username;
       this.authToken = config.sites[0].authToken;
-      this.autoSearchSimilar = config.autoSearchSimilar;
     }
+
+    this.autoSearchSimilar = config.autoSearchSimilar;
+    this.useOriginalSource = config.useOriginalSource;
   },
 });
 </script>
 
 <style scoped>
+label {
+  margin-bottom: 10px;
+}
+
 .settings-container {
   margin: 0;
   position: absolute;
@@ -115,11 +128,10 @@ export default Vue.extend({
 }
 
 .settings-header {
-  padding: 0 0 20px 0;
+  margin-bottom: 20px;
 }
 
 .settings-footer-buttons {
-  padding: 20px 0 0 0;
   float: right;
 }
 

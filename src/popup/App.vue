@@ -147,6 +147,11 @@ export default Vue.extend({
         for (var i in result.posts) {
           const vm = Object.assign(new ScrapedPostViewModel(), result.posts[i]);
           vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
+
+          if (this.config?.useOriginalSource == false || vm.source == undefined) {
+            vm.source = vm.pageUrl;
+          }
+
           this.posts.push(vm);
         }
       }
