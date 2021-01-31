@@ -39,7 +39,7 @@ The third part is the background script which handles the upload functionality. 
 
 ### The popup
 
-When opened (when you click on the add-on logo in your browser) it sends a message to the content script injected on the current page (active tab). This message asks the content script to scrape the DOM and return a SzuruPost element (with a source, imageUrl, safety, and a list of tags). Once it receives this element it renders it in the popup where you can make changes before importing it. When you click on the "Upload" button the SzuruPost will be sent to the background script which will handle the upload functionality. This is done so that the upload continues even after you close the popup. This means that you can close the popup after clicking the "Upload" button and it'll continue with the upload.
+When opened (when you click on the add-on logo in your browser) it sends a message to the content script injected on the current page (active tab). This message asks the content script to scrape the DOM and return a SzuruPost element (with a source, contentUrl, safety, and a list of tags). Once it receives this element it renders it in the popup where you can make changes before importing it. When you click on the "Upload" button the SzuruPost will be sent to the background script which will handle the upload functionality. This is done so that the upload continues even after you close the popup. This means that you can close the popup after clicking the "Upload" button and it'll continue with the upload.
 
 ### The content script
 
@@ -53,15 +53,15 @@ This script handles the uploading of a post. It will also update a tag's categor
 
 ```sh
 # Install node modules
-npm install
+yarn install
 
 # Use any of the following commands to build once
-npm run build
-npm run build:dev
+yarn build
+yarn build:dev
 
 # Or use one of these to build + rebuild on changes
-npm run watch
-npm run watch:dev
+yarn watch
+yarn watch:dev
 ```
 
 After this you can load them in your browser.  

@@ -57,7 +57,7 @@ export default class SzuruWrapper {
       tags: post.tags.map(x => x.name),
       safety: post.rating,
       source: post.source,
-      contentUrl: post.imageUrl
+      contentUrl: post.contentUrl
     };
 
     console.log("Create new post object");
@@ -66,9 +66,9 @@ export default class SzuruWrapper {
     return (await this.apiPost("posts", obj)).data;
   }
 
-  async reverseSearch(imageUrl: string): Promise<ImageSearchResult> {
+  async reverseSearch(contentUrl: string): Promise<ImageSearchResult> {
     var obj = {
-      contentUrl: imageUrl
+      contentUrl: contentUrl
     };
 
     return (await this.apiPost("posts/reverse-search", obj)).data;

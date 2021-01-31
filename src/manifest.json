@@ -14,7 +14,10 @@
   "options_page": "options/options.html",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
   ],
   "content_scripts": [
     {
@@ -29,8 +32,7 @@
   "background": {
     "scripts": [
       "scripts/background.js"
-    ],
-    "persistent": false
+    ]
   },
   "browser_specific_settings": {
     "gecko": {

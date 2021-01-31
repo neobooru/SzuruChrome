@@ -79,7 +79,10 @@
       </div>
 
       <div class="popup-section">
-        <img :src="selectedPost.imageUrl" />
+        <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
+        <video v-if="selectedPost.contentType == 'video'" controls>
+          <source :src="selectedPost.contentUrl" />
+        </video>
 
         <div style="display: flex">
           <button class="primary" @click="findSimilar">Find similar</button>
@@ -92,7 +95,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { browser, Runtime } from "webextension-polyfill-ts";
+import { browser, Runtime, WebRequest } from "webextension-polyfill-ts";
 import { ScrapedPost, ScrapedTag, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
 import { Post, SzuruError } from "../SzuruTypes";
@@ -124,18 +127,22 @@ export default Vue.extend({
     },
   },
   methods: {
+    async getActiveTabId() {
+      const activeTabs = await browser.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+
+      if (activeTabs.length > 0) return activeTabs[0].id!;
+      throw "No active tab.";
+    },
     // Try to scrape the post from the page
     async grabPost() {
       // Get active tab
-      const activeTab = (
-        await browser.tabs.query({
-          active: true,
-          currentWindow: true,
-        })
-      )[0];
+      const activeTabId = await this.getActiveTabId();
 
       // Send 'grab_post' to the content script on the active tab
-      const x = await browser.tabs.sendMessage(activeTab.id!, new BrowserCommand("grab_post"));
+      const x = await browser.tabs.sendMessage(activeTabId, new BrowserCommand("grab_post"));
       // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
       // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
       const res = Object.assign(new ScrapeResults(), x);
@@ -260,7 +267,7 @@ export default Vue.extend({
       this.clearMessages("FIND_SIMILAR");
 
       const msg = this.pushInfo("Searching for similar posts...", "FIND_SIMILAR");
-      const res = await this.szuru.reverseSearch(this.selectedPost.imageUrl);
+      const res = await this.szuru.reverseSearch(this.selectedPost.contentUrl);
 
       if (!res.exactPost && res.similarPosts.length == 0) {
         msg.content = "No similar posts found";
@@ -284,6 +291,13 @@ export default Vue.extend({
           );
         }
       }
+    },
+    // Returns ScrapedPost for a contentUrl, or undefined if the given contentUrl does not belong to a ScrapedPost.
+    getPostForUrl(contentUrl: string): ScrapedPostViewModel | undefined {
+      for (const post of this.posts) {
+        if (post.contentUrl == contentUrl) return post;
+      }
+      return undefined;
     },
   },
   async mounted() {
@@ -310,6 +324,27 @@ export default Vue.extend({
       }
     });
 
+    browser.webRequest.onBeforeSendHeaders.addListener(
+      (details: WebRequest.OnBeforeSendHeadersDetailsType) => {
+        let requestHeaders = details.requestHeaders ?? [];
+
+        // Find which ScrapedPost this belongs to, if any.
+        const post = this.getPostForUrl(details.url);
+        if (post != undefined) {
+          console.log(`Setting referrer to '${post.referrer}' for request to '${post.contentUrl}'.`);
+          // TODO: If the headers already have a 'Referer' header this will _not_ override that.
+          // Though as far as I am aware the 'img' tag doesn't set this header.
+          requestHeaders.push({ name: "Referer", value: post.referrer });
+        }
+
+        return <WebRequest.BlockingResponse>{
+          requestHeaders,
+        };
+      },
+      { urls: ["<all_urls>"] },
+      ["requestHeaders", "blocking", "extraHeaders" as any]
+    );
+
     // Always call grabPost, even when there is no activeSite
     this.grabPost();
   },
@@ -317,6 +352,10 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+video {
+  width: 100%;
+}
+
 .popup-container {
   width: 700px;
   display: grid;

@@ -1,12 +1,11 @@
 import { ScrapedPost } from "neo-scraper";
 import { browser, Runtime } from "webextension-polyfill-ts";
 import { BrowserCommand, Message } from "../Common";
-import { Config } from "../Config.ts";
-import SzuruWrapper from "../SzuruWrapper.ts";
+import { Config } from "../Config";
+import SzuruWrapper from "../SzuruWrapper";
 import { SzuruError } from "../SzuruTypes";
 
 async function uploadPost(post: ScrapedPost) {
-  // TODO: Upload post and send status updates to popup
   console.dir(post);
 
   const cfg = await Config.load();

@@ -5,12 +5,12 @@
     "strict": true,
     "module": "es2020",
     "moduleResolution": "node",
-    "target": "es6",
+    "target": "es2019",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "lib": [
-      "es2017",
+      "es2019",
       "dom"
     ]
   },
