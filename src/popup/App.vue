@@ -100,7 +100,7 @@ import { ScrapedPost, ScrapedTag, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
 import { Post, SzuruError } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
-import { BrowserCommand, Message, getUrl } from "../Common";
+import { BrowserCommand, Message, getUrl, isChrome } from "../Common";
 
 class ScrapedPostViewModel extends ScrapedPost {
   name: string = "";
@@ -324,6 +324,11 @@ export default Vue.extend({
       }
     });
 
+    let extraInfoSpec: WebRequest.OnBeforeSendHeadersOptions[] = ["requestHeaders", "blocking"];
+    if (isChrome()) {
+      extraInfoSpec.push("extraHeaders" as any);
+    }
+
     browser.webRequest.onBeforeSendHeaders.addListener(
       (details: WebRequest.OnBeforeSendHeadersDetailsType) => {
         let requestHeaders = details.requestHeaders ?? [];
@@ -342,7 +347,7 @@ export default Vue.extend({
         };
       },
       { urls: ["<all_urls>"] },
-      ["requestHeaders", "blocking", "extraHeaders" as any]
+      extraInfoSpec
     );
 
     // Always call grabPost, even when there is no activeSite

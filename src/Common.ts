@@ -30,3 +30,7 @@ export function getUrl(root: string, ...parts: string[]): string {
   }
   return url;
 }
+
+export function isChrome() {
+  return /Chrome/.test(navigator.userAgent);
+}
