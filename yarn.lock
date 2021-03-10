@@ -2501,10 +2501,10 @@ neo-async@^2.5.0, neo-async@^2.6.1:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-neo-scraper@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.4.1.tgz#138de16fbe81b7f45573fc089b729036c7532c96"
-  integrity sha512-2Am+OdSCyX6VA5iS5eFEqCGL+snfGbSjmliZlUjqWADIbhjuMYOJAgboyqCmNB8Wkly7BkSjc9HnifvxS4j4UQ==
+neo-scraper@^0.4.2:
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.4.2.tgz#9f1d6f129bea019bc894ed877442c1451b03b50f"
+  integrity sha512-cMVl7Ts2S18MlS6ca3fBK0nw131rv2YTtJlqPkLezWh8sVyiLiuBXUgDUy9mCqp2zr57aA22fvPR2XsTICnXUA==
 
 nice-try@^1.0.4:
   version "1.0.5"

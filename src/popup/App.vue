@@ -335,7 +335,7 @@ export default Vue.extend({
 
         // Find which ScrapedPost this belongs to, if any.
         const post = this.getPostForUrl(details.url);
-        if (post != undefined) {
+        if (post != undefined && post.referrer) {
           console.log(`Setting referrer to '${post.referrer}' for request to '${post.contentUrl}'.`);
           // TODO: If the headers already have a 'Referer' header this will _not_ override that.
           // Though as far as I am aware the 'img' tag doesn't set this header.
