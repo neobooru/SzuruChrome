@@ -32,6 +32,7 @@ async function uploadPost(post: ScrapedPost) {
     const unsetCategoryTags = createdPost.tags
       .filter(x => x.category == "default")
       .filter(x => tagsWithCategory.some(y => x.names.includes(y.name)));
+
     if (unsetCategoryTags.length != 0) {
       browser.runtime.sendMessage(
         new BrowserCommand("push_message", new Message(`${unsetCategoryTags.length} tags need a different category`))
@@ -39,18 +40,32 @@ async function uploadPost(post: ScrapedPost) {
       // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
       const query = "?query=" + unsetCategoryTags.map(x => encodeTagName(x.names[0]));
       const tags = (await szuru.getTags(query)).results;
+      const existingCategories = (await szuru.getTagCategories()).results;
+      let categoriesChangedCount = 0;
+
       for (let i in tags) {
         browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
         browser.runtime.sendMessage(
           new BrowserCommand("push_message", new Message(`Updating tag ${i}/${unsetCategoryTags.length}`))
         );
-        tags[i].category = tagsWithCategory.find(x => tags[i].names.includes(x.name))!.category!;
-        await szuru.updateTag(tags[i]);
+
+        const wantedCategory = tagsWithCategory.find(x => tags[i].names.includes(x.name))!.category!;
+        if (existingCategories.some(x => x.name == wantedCategory)) {
+          tags[i].category = wantedCategory;
+          await szuru.updateTag(tags[i]);
+          categoriesChangedCount++;
+        } else {
+          console.log(`Not adding the '${wantedCategory}' category to the tag '${tags[i].names[0]}' because the szurubooru instance does not have this category.`);
+        }
       }
+
       browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
-      browser.runtime.sendMessage(
-        new BrowserCommand("push_message", new Message(`Updated ${tags.length} tags`, "success"))
-      );
+
+      if (categoriesChangedCount > 0) {
+        browser.runtime.sendMessage(
+          new BrowserCommand("push_message", new Message(`Updated ${categoriesChangedCount} tags`, "success"))
+        );
+      }
     }
   } catch (ex) {
     const error = ex as SzuruError;

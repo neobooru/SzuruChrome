@@ -1,6 +1,6 @@
 {
   "name": "szuru-chrome",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Import media from various sites into szurubooru.",
   "author": "neobooru",
   "license": "MIT",
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
-    "neo-scraper": "^0.4.2",
+    "neo-scraper": "^0.4.3",
     "vue": "^2.6.11",
     "webextension-polyfill": "^0.3.1"
   },
