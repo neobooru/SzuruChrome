@@ -69,6 +69,14 @@ select {
     color: rgb(255, 128, 0);
 }
 
+.tag-species {
+    color: rgb(17, 14, 247);
+}
+
+.tag-lore {
+    color: rgb(48, 48, 48);
+}
+
 .remove-tag,
 .tag-usages {
     color: #888;
