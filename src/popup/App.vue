@@ -253,7 +253,7 @@ export default Vue.extend({
       if (this.selectedPost) {
         const tagName = this.addTagInput;
         this.addTagInput = "";
-        if (this.selectedPost.tags.find((x) => x.name == tagName) == undefined) {
+        if (tagName.length > 0 && this.selectedPost.tags.find((x) => x.name == tagName) == undefined) {
           this.selectedPost.tags.push(new ScrapedTag(tagName));
         }
       }
