@@ -13,6 +13,11 @@ export interface SzuruError {
   description: string;
 }
 
+export interface PostAlreadyUploadedError extends SzuruError {
+  otherPostId: number;
+  otherPostUrl: string;
+}
+
 export interface PagedSearchResult<T> {
   query: string;
   offset: number;

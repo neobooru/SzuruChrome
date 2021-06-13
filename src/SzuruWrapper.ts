@@ -40,12 +40,13 @@ export default class SzuruWrapper {
     return (await this.apiPut("tag/" + tag.names[0], tag)).data;
   }
 
-  async getTags(query: string): Promise<TagsResult> {
-    let url = "tags";
+  async getTags(query: string, offset: number = 0): Promise<TagsResult> {
+    const params = new URLSearchParams();
+    params.append("offset", offset.toString());
     if (query) {
-      url += query;
+      params.append("query", query);
     }
-    return (await this.apiGet(url)).data;
+    return (await this.apiGet("tags?" + params.toString())).data;
   }
 
   async getTagCategories(): Promise<TagCategoriesResult> {
@@ -82,7 +83,7 @@ export default class SzuruWrapper {
     };
 
     config.headers = { ...this.baseHeaders, ...additionalHeaders };
-    return await this.execute(config);
+    return this.execute(config);
   }
 
   private async apiPost(url: string, data: any, additionalHeaders: any = {}): Promise<any> {
@@ -94,7 +95,7 @@ export default class SzuruWrapper {
     };
 
     config.headers = { ...this.baseHeaders, ...additionalHeaders };
-    return await this.execute(config);
+    return this.execute(config);
   }
 
   private async apiPut(url: string, data: any, additionalHeaders: any = {}): Promise<any> {
@@ -106,14 +107,13 @@ export default class SzuruWrapper {
     };
 
     config.headers = { ...this.baseHeaders, ...additionalHeaders };
-    return await this.execute(config);
+    return this.execute(config);
   }
 
   private async execute(config: AxiosRequestConfig): Promise<any> {
     if (this.username && this.authToken) {
       const token = "Token " + btoa(`${this.username}:${this.authToken}`);
       config.headers["Authorization"] = token;
-      // console.log(token);
     }
 
     try {

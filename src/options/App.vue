@@ -32,6 +32,11 @@
         <input type="checkbox" name="useOriginalSource" v-model="useOriginalSource" />
       </label>
       <br />
+      <label>
+        Show how often a tag is used in the selected szurubooru instance
+        <input type="checkbox" name="loadTagCounts" v-model="loadTagCounts" />
+      </label>
+      <br />
       <div class="settings-footer-buttons">
         <button @click="testConnection">Test connection</button>
         <button @click="saveSettings" class="primary">Save settings</button>
@@ -52,6 +57,7 @@ export default Vue.extend({
       username: "",
       authToken: "",
       autoSearchSimilar: false,
+      loadTagCounts: false,
       useOriginalSource: false,
     };
   },
@@ -87,6 +93,7 @@ export default Vue.extend({
       siteConfig.authToken = this.authToken;
       config.sites = [siteConfig];
       config.autoSearchSimilar = this.autoSearchSimilar;
+      config.loadTagCounts = this.loadTagCounts;
       config.useOriginalSource = this.useOriginalSource;
 
       await config.save();
@@ -105,6 +112,7 @@ export default Vue.extend({
     }
 
     this.autoSearchSimilar = config.autoSearchSimilar;
+    this.loadTagCounts = config.loadTagCounts;
     this.useOriginalSource = config.useOriginalSource;
   },
 });

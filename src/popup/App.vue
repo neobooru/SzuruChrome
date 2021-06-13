@@ -2,7 +2,7 @@
   <div class="popup-container">
     <div class="popup-messages">
       <ul class="messages">
-        <li v-for="msg in messages" :key="msg.name" :class="getMessageClasses(msg)" v-html="msg.content"></li>
+        <li v-for="msg in messages" :key="msg.content" :class="getMessageClasses(msg)" v-html="msg.content"></li>
       </ul>
     </div>
 
@@ -56,7 +56,7 @@
             <li v-for="tag in selectedPost.tags" :key="tag.name">
               <a class="remove-tag" @click="removeTag(tag)">x</a>
               <span :class="getTagClasses(tag)">{{ tag.name }}</span>
-              <span class="tag-usages">0</span>
+              <span class="tag-usages">{{ tag.usages ? tag.usages : "" }}</span>
             </li>
           </ul>
         </div>
@@ -74,7 +74,7 @@
     <div class="popup-right">
       <div class="popup-section">
         <select v-model="selectedPost">
-          <option v-for="post in posts" v-bind:key="post" v-bind:value="post">{{ post.name }}</option>
+          <option v-for="post in posts" v-bind:key="post.name" v-bind:value="post">{{ post.name }}</option>
         </select>
       </div>
 
@@ -96,14 +96,43 @@
 <script lang="ts">
 import Vue from "vue";
 import { browser, Runtime, WebRequest } from "webextension-polyfill-ts";
-import { ScrapedPost, ScrapedTag, ScrapeResults } from "neo-scraper";
+import { ContentType, ScrapedPost, ScrapedTag, ScrapeResults, BooruTypes } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
-import { Post, SzuruError } from "../SzuruTypes";
+import { Post } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
-import { BrowserCommand, Message, getUrl, isChrome } from "../Common";
+import { BrowserCommand, Message, getUrl, isChrome, encodeTagName } from "../Common";
 
-class ScrapedPostViewModel extends ScrapedPost {
+class TagViewModel {
+  name: string;
+  category?: BooruTypes.TagCategory;
+  usages: number | undefined;
+
+  constructor(tag: ScrapedTag) {
+    this.name = tag.name;
+    this.category = tag.category;
+    this.usages = 0;
+  }
+}
+
+class PostViewModel {
   name: string = "";
+  tags: TagViewModel[] = [];
+  contentUrl: string;
+  pageUrl: string;
+  contentType: ContentType;
+  rating: BooruTypes.SafetyRating;
+  source: string | undefined;
+  referrer: string | undefined;
+
+  constructor(post: ScrapedPost) {
+    this.contentUrl = post.contentUrl;
+    this.pageUrl = post.pageUrl;
+    this.contentType = post.contentType;
+    this.rating = post.rating;
+    this.source = post.source;
+    this.referrer = post.referrer;
+    this.tags = post.tags.map((x) => new TagViewModel(x));
+  }
 }
 
 export default Vue.extend({
@@ -112,7 +141,7 @@ export default Vue.extend({
       config: null as Config | null,
       activeSite: null as SzuruSiteConfig | null,
       szuru: null as SzuruWrapper | null,
-      posts: [] as ScrapedPostViewModel[],
+      posts: [] as PostViewModel[],
       selectedPost: new ScrapedPost(), // Shouldn't be null because VueJS gets a mental breakdown when it sees a null.
       messages: [] as Message[],
       addTagInput: "",
@@ -152,10 +181,10 @@ export default Vue.extend({
 
       for (var result of res.results) {
         for (var i in result.posts) {
-          const vm = Object.assign(new ScrapedPostViewModel(), result.posts[i]);
+          const vm = new PostViewModel(result.posts[i]);
           vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
 
-          if (this.config?.useOriginalSource == false || vm.source == undefined) {
+          if (!this.config?.useOriginalSource || vm.source == undefined) {
             vm.source = vm.pageUrl;
           }
 
@@ -165,6 +194,9 @@ export default Vue.extend({
 
       if (this.posts.length > 0) {
         this.selectedPost = this.posts[0];
+        if (this.config?.loadTagCounts) {
+          this.loadTagCounts();
+        }
       } else {
         this.pushInfo("No posts found.");
       }
@@ -293,11 +325,39 @@ export default Vue.extend({
       }
     },
     // Returns ScrapedPost for a contentUrl, or undefined if the given contentUrl does not belong to a ScrapedPost.
-    getPostForUrl(contentUrl: string): ScrapedPostViewModel | undefined {
+    getPostForUrl(contentUrl: string): PostViewModel | undefined {
       for (const post of this.posts) {
         if (post.contentUrl == contentUrl) return post;
       }
       return undefined;
+    },
+    async loadTagCounts() {
+      const allTags = this.posts.flatMap((x) => x.tags);
+      console.log(allTags);
+
+      for (let i = 0; i < allTags.length; i += 100) {
+        const query = allTags
+          .slice(i, i + 101)
+          .map((x) => encodeTagName(x.name))
+          .join();
+        const resp = await this.szuru?.getTags(query);
+        console.dir(resp);
+
+        if (resp) {
+          for (let post of this.posts) {
+            for (let tag of resp.results) {
+              for (let postTag of post.tags) {
+                if (postTag.name == tag.names[0]) {
+                  postTag.usages = tag.usages;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        console.dir(this.posts);
+      }
     },
   },
   async mounted() {

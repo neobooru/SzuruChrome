@@ -34,3 +34,9 @@ export function getUrl(root: string, ...parts: string[]): string {
 export function isChrome() {
   return /Chrome/.test(navigator.userAgent);
 }
+
+export function encodeTagName(tagName: string) {
+  // Searching for posts with re:zero will show an error message about unknown named token.
+  // Searching for posts with re\:zero will show posts tagged with re:zero.
+  return tagName.replace(/\:/g, "\\:");
+}

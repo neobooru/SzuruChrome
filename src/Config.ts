@@ -12,6 +12,7 @@ export class Config {
   importCommentary: boolean = false;
   useOriginalSource: boolean = true;
   autoSearchSimilar: boolean = false;
+  loadTagCounts: boolean = true;
   sites: Array<SzuruSiteConfig> = [];
 
   public async save() {

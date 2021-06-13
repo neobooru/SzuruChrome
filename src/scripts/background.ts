@@ -1,9 +1,9 @@
 import { ScrapedPost } from "neo-scraper";
 import { browser, Runtime } from "webextension-polyfill-ts";
-import { BrowserCommand, Message } from "../Common";
+import { BrowserCommand, Message, encodeTagName, getUrl } from "../Common";
 import { Config } from "../Config";
 import SzuruWrapper from "../SzuruWrapper";
-import { SzuruError } from "../SzuruTypes";
+import { PostAlreadyUploadedError, SzuruError } from "../SzuruTypes";
 
 async function uploadPost(post: ScrapedPost) {
   console.dir(post);
@@ -38,7 +38,7 @@ async function uploadPost(post: ScrapedPost) {
         new BrowserCommand("push_message", new Message(`${unsetCategoryTags.length} tags need a different category`))
       );
       // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
-      const query = "?query=" + unsetCategoryTags.map(x => encodeTagName(x.names[0]));
+      const query = unsetCategoryTags.map(x => encodeTagName(x.names[0])).join();
       const tags = (await szuru.getTags(query)).results;
       const existingCategories = (await szuru.getTagCategories()).results;
       let categoriesChangedCount = 0;
@@ -55,7 +55,9 @@ async function uploadPost(post: ScrapedPost) {
           await szuru.updateTag(tags[i]);
           categoriesChangedCount++;
         } else {
-          console.log(`Not adding the '${wantedCategory}' category to the tag '${tags[i].names[0]}' because the szurubooru instance does not have this category.`);
+          console.log(
+            `Not adding the '${wantedCategory}' category to the tag '${tags[i].names[0]}' because the szurubooru instance does not have this category.`
+          );
         }
       }
 
@@ -68,21 +70,26 @@ async function uploadPost(post: ScrapedPost) {
       }
     }
   } catch (ex) {
-    const error = ex as SzuruError;
+    browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
+    let error = ex as SzuruError;
     if (error) {
       console.error(error);
-      browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex, "error")));
+      switch (error.name) {
+        case "PostAlreadyUploadedError":
+          const otherPostId = (error as PostAlreadyUploadedError).otherPostId;
+          const url = getUrl(szuru.apiUrl.replace("api", ""), "post", otherPostId.toString());
+          const msg = `<a href='${url}' target='_blank'>Post already uploaded (${otherPostId})</a>`;
+          browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(msg, "error")));
+          break;
+        default:
+          browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex, "error")));
+          break;
+      }
     } else {
       console.error(ex);
       browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex, "error")));
     }
   }
-}
-
-function encodeTagName(tagName: string) {
-  // Searching for posts with re:zero will show an error message about unknown named token.
-  // Searching for posts with re\:zero will show posts tagged with re:zero.
-  return encodeURIComponent(tagName.replace(/\:/g, "\\:"));
 }
 
 async function messageHandler(cmd: BrowserCommand, sender: Runtime.MessageSender): Promise<any> {
