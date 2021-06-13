@@ -341,22 +341,16 @@ export default Vue.extend({
           .map((x) => encodeTagName(x.name))
           .join();
         const resp = await this.szuru?.getTags(query);
-        console.dir(resp);
 
         if (resp) {
-          for (let post of this.posts) {
-            for (let tag of resp.results) {
-              for (let postTag of post.tags) {
+          for (let post of this.posts)
+            for (let tag of resp.results)
+              for (let postTag of post.tags)
                 if (postTag.name == tag.names[0]) {
                   postTag.usages = tag.usages;
                   break;
                 }
-              }
-            }
-          }
         }
-
-        console.dir(this.posts);
       }
     },
   },
