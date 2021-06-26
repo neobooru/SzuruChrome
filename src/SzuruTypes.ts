@@ -3,6 +3,7 @@
  */
 
 export type Safety = "safe" | "sketchy" | "unsafe";
+export type TagFields = "names" | "category" | "usages" | "implications";
 
 export type TagsResult = PagedSearchResult<Tag>;
 export type TagCategoriesResult = UnpagedSearchResult<TagCategory>;

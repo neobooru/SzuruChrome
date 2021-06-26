@@ -1,127 +1,132 @@
 body {
-    margin: 0px;
-    font-family: "Open Sans", sans-serif;
-    display: block;
-    font-size: 100%;
+  margin: 0px;
+  font-family: "Open Sans", sans-serif;
+  display: block;
+  font-size: 100%;
 }
 
 button {
-    background-color: #a2a2a2;
-    border: none;
-    color: white;
-    font-family: "Open Sans", sans-serif;
-    height: 30px;
-    cursor: pointer;
-    padding: 0 10px;
-    white-space: nowrap;
+  background-color: #a2a2a2;
+  border: none;
+  color: white;
+  font-family: "Open Sans", sans-serif;
+  height: 30px;
+  cursor: pointer;
+  padding: 0 10px;
+  white-space: nowrap;
 }
 
 button.primary {
-    background-color: #24aadd;
+  background-color: #24aadd;
 }
 
 input[type="text"] {
-    background-color: #fafafa;
-    border: 1px solid #eee;
-    height: 26px;
-    width: 100%;
+  background-color: #fafafa;
+  border: 1px solid #eee;
+  height: 26px;
+  width: 100%;
+}
+
+input[type="text"]:focus {
+  outline: #24aadd solid 2px;
+  box-sizing: content-box;
 }
 
 img {
-    max-width: 100%;
-    max-height: 100%;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .full {
-    width: 100%;
+  width: 100%;
 }
 
 select {
-    background-color: #fafafa;
-    border: 1px solid #eee;
-    height: 30px;
-    width: 100%;
+  background-color: #fafafa;
+  border: 1px solid #eee;
+  height: 30px;
+  width: 100%;
 }
 
 .compact-tags {
-    list-style-type: none;
-    padding: 0;
-    display: inline;
+  list-style-type: none;
+  padding: 0;
+  display: inline;
 }
 
 .tag-general {
-    color: #24aadd;
+  color: #24aadd;
 }
 
 .tag-copyright {
-    color: rgb(170, 0, 170);
+  color: rgb(170, 0, 170);
 }
 
 .tag-character {
-    color: rgb(0, 170, 0);
+  color: rgb(0, 170, 0);
 }
 
 .tag-artist {
-    color: rgb(170, 0, 0);
+  color: rgb(170, 0, 0);
 }
 
 .tag-meta {
-    color: rgb(255, 128, 0);
+  color: rgb(255, 128, 0);
 }
 
 .tag-species {
-    color: rgb(17, 14, 247);
+  color: rgb(17, 14, 247);
 }
 
 .tag-lore {
-    color: rgb(48, 48, 48);
+  color: rgb(48, 48, 48);
 }
 
 .remove-tag,
 .tag-usages {
-    color: #888;
+  color: #888;
 }
 
 a.remove-tag {
-    text-decoration: none;
-    cursor: pointer;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .tag-usages {
-    font-size: 90%;
-    margin-left: 0.7em;
+  font-size: 90%;
+  margin-left: 0.7em;
 }
 
 .messages {
-    list-style-type: none;
-    padding: 0;
-    display: inline;
+  list-style-type: none;
+  padding: 0;
+  display: inline;
 }
 
 .messages > li {
-    padding: 5px;
-    border-radius: 2px;
-    background: #24aadd;
-    color: white;
+  padding: 5px;
+  border-radius: 2px;
+  background: #24aadd;
+  color: white;
 }
 
 .messages > li > a {
-    color: white;
-    text-decoration: none;
+  color: white;
+  text-decoration: none;
 }
 
 .messages > li:first-child {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 .messages > li:not(:last-child) {
-    margin-bottom: 5px;
+  margin-bottom: 5px;
 }
 
 .message-error {
-    background: #f44336 !important;
+  background: #f44336 !important;
 }
 
 .message-success {
-    background: #4caf50 !important;
+  background: #4caf50 !important;
 }

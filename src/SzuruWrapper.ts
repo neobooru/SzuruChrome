@@ -1,7 +1,7 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, CancelToken } from "axios";
 import { ScrapedPost } from "neo-scraper";
 import { SzuruSiteConfig } from "./Config";
-import { TagsResult, TagCategoriesResult, Post, Tag, SzuruError, ImageSearchResult } from "./SzuruTypes";
+import { TagsResult, TagCategoriesResult, Post, Tag, SzuruError, ImageSearchResult, TagFields } from "./SzuruTypes";
 
 /**
  * A 1:1 wrapper around the szurubooru API.
@@ -40,13 +40,21 @@ export default class SzuruWrapper {
     return (await this.apiPut("tag/" + tag.names[0], tag)).data;
   }
 
-  async getTags(query: string, offset: number = 0): Promise<TagsResult> {
+  async getTags(
+    query: string,
+    offset: number = 0,
+    limit: number = 100,
+    fields: TagFields[] | undefined = undefined,
+    cancelToken: CancelToken | undefined = undefined
+  ): Promise<TagsResult> {
     const params = new URLSearchParams();
     params.append("offset", offset.toString());
-    if (query) {
-      params.append("query", query);
-    }
-    return (await this.apiGet("tags?" + params.toString())).data;
+    params.append("limit", limit.toString());
+
+    if (fields && fields.length > 0) params.append("fields", fields.join());
+    if (query) params.append("query", query);
+
+    return (await this.apiGet("tags?" + params.toString(), {}, cancelToken)).data;
   }
 
   async getTagCategories(): Promise<TagCategoriesResult> {
@@ -75,11 +83,16 @@ export default class SzuruWrapper {
     return (await this.apiPost("posts/reverse-search", obj)).data;
   }
 
-  private async apiGet(url: string, additionalHeaders: any = {}): Promise<any> {
+  private async apiGet(
+    url: string,
+    additionalHeaders: any = {},
+    cancelToken: CancelToken | undefined = undefined
+  ): Promise<any> {
     const fullUrl = this.apiUrl + url;
     const config: AxiosRequestConfig = {
       method: "GET",
-      url: fullUrl
+      url: fullUrl,
+      cancelToken
     };
 
     config.headers = { ...this.baseHeaders, ...additionalHeaders };

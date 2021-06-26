@@ -46,9 +46,30 @@
           <span>Tags</span>
         </div>
 
-        <div class="section-row" style="display: flex">
-          <input type="text" v-model="addTagInput" v-on:keyup.enter="addTag" />
-          <button class="primary" style="margin-left: 5px; height: auto" @click="addTag">Add</button>
+        <div class="section-row" style="display: flex; flex-direction: column">
+          <div style="display: flex">
+            <input
+              type="text"
+              v-model="addTagInput"
+              @keyup="onAddTagKeyUp"
+              @keydown="onAddTagKeyDown"
+              autocomplete="off"
+            />
+            <button class="primary" style="margin-left: 5px" @click="addTag">Add</button>
+          </div>
+
+          <div class="autocomplete-items" v-bind:class="{ show: autocompleteShown }">
+            <div
+              v-for="(tag, idx) in autocompleteTags"
+              :key="tag.name"
+              :class="{
+                active: idx == autocompleteIndex,
+              }"
+            >
+              <span :class="getTagClasses(tag)">{{ tag.name }}</span>
+              <span class="tag-usages">{{ tag.usages ? tag.usages : "" }}</span>
+            </div>
+          </div>
         </div>
 
         <div class="section-row">
@@ -98,19 +119,32 @@ import Vue from "vue";
 import { browser, Runtime, WebRequest } from "webextension-polyfill-ts";
 import { ContentType, ScrapedPost, ScrapedTag, ScrapeResults, BooruTypes } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
-import { Post } from "../SzuruTypes";
+import { MicroTag, Post, Tag } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
 import { BrowserCommand, Message, getUrl, isChrome, encodeTagName } from "../Common";
+import axios, { CancelTokenSource } from "axios";
 
 class TagViewModel {
-  name: string;
-  category?: BooruTypes.TagCategory;
-  usages: number | undefined;
+  public implications: TagViewModel[] = [];
 
-  constructor(tag: ScrapedTag) {
-    this.name = tag.name;
-    this.category = tag.category;
-    this.usages = 0;
+  constructor(public name: string, public category?: BooruTypes.TagCategory, public usages?: number | undefined) {}
+
+  static fromTag(tag: Tag) {
+    let x = new TagViewModel(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
+
+    if (tag.implications) {
+      x.implications = tag.implications.map((x) => TagViewModel.fromMicroTag(x));
+    }
+
+    return x;
+  }
+
+  static fromMicroTag(tag: MicroTag) {
+    return new TagViewModel(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
+  }
+
+  static fromScapedTag(tag: ScrapedTag): TagViewModel {
+    return new TagViewModel(tag.name, tag.category);
   }
 }
 
@@ -131,7 +165,7 @@ class PostViewModel {
     this.rating = post.rating;
     this.source = post.source;
     this.referrer = post.referrer;
-    this.tags = post.tags.map((x) => new TagViewModel(x));
+    this.tags = post.tags.map((x) => TagViewModel.fromScapedTag(x));
   }
 }
 
@@ -142,9 +176,13 @@ export default Vue.extend({
       activeSite: null as SzuruSiteConfig | null,
       szuru: null as SzuruWrapper | null,
       posts: [] as PostViewModel[],
-      selectedPost: new ScrapedPost(), // Shouldn't be null because VueJS gets a mental breakdown when it sees a null.
+      selectedPost: new PostViewModel(new ScrapedPost()), // Shouldn't be null because VueJS gets a mental breakdown when it sees a null.
       messages: [] as Message[],
       addTagInput: "",
+      autocompleteShown: false,
+      autocompleteTags: [] as TagViewModel[],
+      cancelSource: null as CancelTokenSource | null,
+      autocompleteIndex: -1,
     };
   },
   watch: {
@@ -215,10 +253,10 @@ export default Vue.extend({
       const url = browser.extension.getURL("options/options.html");
       window.open(url);
     },
-    getTagClasses(tag: ScrapedTag): string[] {
+    getTagClasses(tag: TagViewModel): string[] {
       let classes: string[] = [];
 
-      if (tag.category) {
+      if (tag.category && <any>tag.category != "default") {
         classes.push("tag-" + tag.category);
       } else {
         classes.push("tag-general");
@@ -227,7 +265,7 @@ export default Vue.extend({
       return classes;
     },
     // Remove tag from post's taglist
-    removeTag(tag: ScrapedTag) {
+    removeTag(tag: TagViewModel) {
       if (this.selectedPost) {
         const idx = this.selectedPost.tags.indexOf(tag);
         if (idx != -1) {
@@ -281,12 +319,11 @@ export default Vue.extend({
       return getUrl(this.activeSite.domain, "post", post.id.toString());
     },
     // Add tag to the post's taglist
-    addTag() {
+    addTag(tag: TagViewModel) {
       if (this.selectedPost) {
-        const tagName = this.addTagInput;
-        this.addTagInput = "";
-        if (tagName.length > 0 && this.selectedPost.tags.find((x) => x.name == tagName) == undefined) {
-          this.selectedPost.tags.push(new ScrapedTag(tagName));
+        // Only add tag if it doesn't already exist
+        if (tag.name.length > 0 && this.selectedPost.tags.find((x) => x.name == tag.name) == undefined) {
+          this.selectedPost.tags.push(tag);
         }
       }
     },
@@ -342,6 +379,7 @@ export default Vue.extend({
           .join();
         const resp = await this.szuru?.getTags(query);
 
+        // Not the best code, but it works I guess?
         if (resp) {
           for (let post of this.posts)
             for (let tag of resp.results)
@@ -352,6 +390,66 @@ export default Vue.extend({
                 }
         }
       }
+    },
+    async onAddTagKeyUp(e: KeyboardEvent) {
+      await this.autoCompletePopulator((<HTMLInputElement>e.target).value);
+    },
+    onAddTagKeyDown(e: KeyboardEvent) {
+      if (e.code == "ArrowDown") {
+        e.preventDefault();
+        if (this.autocompleteIndex < this.autocompleteTags.length - 1) {
+          this.autocompleteIndex++;
+        }
+      } else if (e.code == "ArrowUp") {
+        e.preventDefault();
+        if (this.autocompleteIndex >= 0) {
+          this.autocompleteIndex--;
+        }
+      } else if (e.code == "Enter") {
+        if (this.autocompleteIndex == -1) {
+          this.addTag(new TagViewModel(this.addTagInput));
+          this.addTagInput = ""; // Reset input
+
+          // TODO: Do we also want to add the implications?
+        } else {
+          // Add auto completed tag
+          const tagToAdd = this.autocompleteTags[this.autocompleteIndex];
+          this.addTag(tagToAdd);
+          this.addTagInput = ""; // Reset input
+
+          // Add implications for the tag
+          tagToAdd.implications.forEach(this.addTag);
+        }
+      }
+    },
+    async autoCompletePopulator(input: string) {
+      // Based on https://www.w3schools.com/howto/howto_js_autocomplete.asp
+      // TODO: Put this in a separate component
+
+      // Hide autocomplete when the input is empty, and don't do anything else.
+      if (input.length == 0) {
+        this.autocompleteIndex = -1;
+        this.autocompleteShown = false;
+        return;
+      }
+
+      // Cancel previous request
+      if (this.cancelSource) {
+        this.cancelSource.cancel();
+      }
+      this.cancelSource = axios.CancelToken.source();
+
+      const query = decodeURIComponent(`*${encodeTagName(input)}* sort:usages`);
+      const resp = await this.szuru?.getTags(
+        query,
+        0,
+        100,
+        ["names", "category", "usages", "implications"],
+        this.cancelSource.token
+      );
+
+      this.autocompleteTags = resp!.results.map((x) => TagViewModel.fromTag(x));
+      if (this.autocompleteTags.length > 0) this.autocompleteShown = true;
     },
   },
   async mounted() {
@@ -405,7 +503,7 @@ export default Vue.extend({
     );
 
     // Always call grabPost, even when there is no activeSite
-    this.grabPost();
+    await this.grabPost();
   },
 });
 </script>
@@ -460,5 +558,39 @@ video {
 .section-label {
   display: block;
   margin: 0 0 5px 0;
+}
+
+.autocomplete-items {
+  position: absolute;
+  z-index: 10;
+  background-color: white;
+  border: 2px solid #24aadd;
+  margin-top: 34px;
+  display: none;
+}
+
+.autocomplete-items.show {
+  display: block;
+}
+
+.autocomplete-items > div {
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.autocomplete-items > div:hover {
+  background: #24aadd;
+}
+
+.autocomplete-items > div:hover > span {
+  color: #fff;
+}
+
+.autocomplete-items > div.active {
+  background: #24aadd;
+}
+
+.autocomplete-items > div.active > span {
+  color: #fff;
 }
 </style>
