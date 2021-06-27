@@ -40,8 +40,8 @@ const buildZip = (src, dist, zipFilename) => {
 };
 
 const main = () => {
-  const { name, version } = extractExtensionData();
-  const zipFilename = `${name}-v${version}.zip`;
+  const { version } = extractExtensionData();
+  const zipFilename = `SzuruChrome-${version}.zip`;
 
   makeDestZipDirIfNotExists();
 
