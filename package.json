@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "archiver": "^3.1.1",
+    "autodll-webpack-plugin": "^0.4.2",
     "copy-webpack-plugin": "^5.1.1",
     "core-js": "^3.6.5",
     "cross-env": "^5.2.1",

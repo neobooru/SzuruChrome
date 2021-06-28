@@ -10,7 +10,7 @@
       <div class="popup-section">
         <div class="section-header">
           <span>Basic info</span>
-          <i class="fas fa-cog" @click="openSettings"></i>
+          <i class="fas fa-cog cursor-pointer" @click="openSettings"></i>
         </div>
 
         <div class="section-row">
@@ -558,6 +558,10 @@ video {
 .section-label {
   display: block;
   margin: 0 0 5px 0;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .autocomplete-items {

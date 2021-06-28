@@ -12,27 +12,15 @@
     "default_popup": "popup/popup.html"
   },
   "options_page": "options/options.html",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "webRequest",
-    "webRequestBlocking",
-    "<all_urls>"
-  ],
+  "permissions": ["storage", "activeTab", "webRequest", "webRequestBlocking", "<all_urls>"],
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "scripts/content.js"
-      ]
+      "matches": ["<all_urls>"],
+      "js": ["vendor.dll.js", "scripts/content.js"]
     }
   ],
   "background": {
-    "scripts": [
-      "scripts/background.js"
-    ]
+    "scripts": ["vendor.dll.js", "scripts/background.js"]
   },
   "browser_specific_settings": {
     "gecko": {

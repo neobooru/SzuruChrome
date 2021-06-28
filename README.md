@@ -79,7 +79,6 @@ These are some things I might work on. Though honestly I don't expect this exten
 - [low priority] Import notes
 - [lowest priority] Move from 'options_page' to 'options_ui'
 - [lowest priority] Multiple szurubooru instances (where you can choose to which one you want to upload the post)
-- [lowest priority] Application size could be reduced, but I am not too worried about that because it's all local and zipped it is just 1.2MB
 
 ## FAQ
 

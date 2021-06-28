@@ -2,6 +2,7 @@ const webpack = require("webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const ExtensionReloader = require("webpack-extension-reloader");
+const AutoDllPlugin = require("autodll-webpack-plugin");
 const { VueLoaderPlugin } = require("vue-loader");
 const { version } = require("./package.json");
 
@@ -86,7 +87,13 @@ const config = {
           return JSON.stringify(jsonContent, null, 2);
         }
       }
-    ])
+    ]),
+    new AutoDllPlugin({
+      filename: "[name].dll.js",
+      entry: {
+        vendor: ["vue", "neo-scraper", "webextension-polyfill-ts"]
+      }
+    })
   ]
 };
 
