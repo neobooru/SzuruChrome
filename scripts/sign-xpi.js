@@ -40,6 +40,8 @@ async function main() {
   if (result.success) {
     console.log(result.downloadedFiles[0]);
     renameSync(result.downloadedFiles[0], xpiPath);
+  } else {
+    exit(1);
   }
 }
 
