@@ -61,6 +61,7 @@
           <div class="autocomplete-items" v-bind:class="{ show: autocompleteShown }">
             <div
               v-for="(tag, idx) in autocompleteTags"
+              @click="onClickAutocompleteTagItem(tag)"
               :key="tag.name"
               :class="{
                 active: idx == autocompleteIndex,
@@ -324,6 +325,9 @@ export default Vue.extend({
         // Only add tag if it doesn't already exist
         if (tag.name.length > 0 && this.selectedPost.tags.find((x) => x.name == tag.name) == undefined) {
           this.selectedPost.tags.push(tag);
+
+          // Add implications for the tag
+          this.selectedPost.tags.push(...tag.implications);
         }
       }
     },
@@ -416,11 +420,13 @@ export default Vue.extend({
           const tagToAdd = this.autocompleteTags[this.autocompleteIndex];
           this.addTag(tagToAdd);
           this.addTagInput = ""; // Reset input
-
-          // Add implications for the tag
-          tagToAdd.implications.forEach(this.addTag);
         }
       }
+    },
+    onClickAutocompleteTagItem(tag: TagViewModel) {
+      this.addTag(tag);
+      this.addTagInput = ""; // Reset input
+      this.autocompleteShown = false; // Hide autocomplete list
     },
     async autoCompletePopulator(input: string) {
       // Based on https://www.w3schools.com/howto/howto_js_autocomplete.asp
