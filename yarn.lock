@@ -2690,10 +2690,10 @@ neo-async@^2.5.0, neo-async@^2.6.1:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-neo-scraper@^0.4.4:
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.4.4.tgz#cb6a31158f39d0b8f0e465a76ec95fb9c78adb06"
-  integrity sha512-cNK3nJlqo4rryy5/bwKD6X96Jl2E81nsDhNMfWJcZTlbVfteVEOvpbF9x2AAGgI8bwqHp5LALnPng/O4LmcqXQ==
+neo-scraper@^0.4.5:
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.4.5.tgz#86c1d1ebb6c04ad607282b08460dd090990dbe20"
+  integrity sha512-w6xnIv8qKD7ogamhVp6oprNLymtb4bUwnahOiRmEtpxwEx4drzYRDenH7hNFp8MAv6vb2+VUSYgCVwfS6NWpLA==
 
 nice-try@^1.0.4:
   version "1.0.5"
@@ -3140,9 +3140,9 @@ postcss-value-parser@^3.3.0, postcss-value-parser@^3.3.1:
   integrity sha512-pISE66AbVkp4fDQ7VHBwRNXzAAKJjw4Vw7nWI/+Q3vuly7SNfgYXvm6i5IgFylHGK5sP/xHAbB7N49OS4gWNyQ==
 
 postcss@^7.0.14, postcss@^7.0.5, postcss@^7.0.6:
-  version "7.0.35"
-  resolved "https://registry.yarnpkg.com/postcss/-/postcss-7.0.35.tgz#d2be00b998f7f211d8a276974079f2e92b970e24"
-  integrity sha512-3QT8bBJeX/S5zKTTjTCIjRF3If4avAT6kqxcASlTWEtAFCb9NH0OUxNDfgZSWdP5fJnBYCMEWkIFfWeugjzYMg==
+  version "7.0.36"
+  resolved "https://registry.yarnpkg.com/postcss/-/postcss-7.0.36.tgz#056f8cffa939662a8f5905950c07d5285644dfcb"
+  integrity sha512-BebJSIUMwJHRH0HAQoxN4u1CN86glsrwsW0q7T+/m44eXOUAxSNdHRkNZPYz5vVUbg17hFgOQDE7fZk7li3pZw==
   dependencies:
     chalk "^2.4.2"
     source-map "^0.6.1"
