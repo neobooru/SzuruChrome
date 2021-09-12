@@ -132,7 +132,7 @@ export default class SzuruWrapper {
     try {
       return await axios(config);
     } catch (ex) {
-      const error = ex.response.data as SzuruError;
+      const error = ex.response?.data as SzuruError | undefined;
       throw error ? error : ex;
     }
   }

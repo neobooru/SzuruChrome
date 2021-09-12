@@ -2,7 +2,12 @@
   <div class="popup-container">
     <div class="popup-messages">
       <ul class="messages">
-        <li v-for="msg in messages" :key="msg.content" :class="getMessageClasses(msg)" v-html="msg.content"></li>
+        <li
+          v-for="msg in messages"
+          :key="msg.content"
+          :class="getMessageClasses(msg)"
+          v-html="msg.content"
+        ></li>
       </ul>
     </div>
 
@@ -128,13 +133,13 @@ import axios, { CancelTokenSource } from "axios";
 class TagViewModel {
   public implications: TagViewModel[] = [];
 
-  constructor(public name: string, public category?: BooruTypes.TagCategory, public usages?: number | undefined) {}
+  constructor(public name: string, public category?: BooruTypes.TagCategory, public usages?: number | undefined) { }
 
   static fromTag(tag: Tag) {
     let x = new TagViewModel(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
 
     if (tag.implications) {
-      x.implications = tag.implications.map((x) => TagViewModel.fromMicroTag(x));
+      x.implications = tag.implications.map((y) => TagViewModel.fromMicroTag(y));
     }
 
     return x;
@@ -202,7 +207,7 @@ export default Vue.extend({
       });
 
       if (activeTabs.length > 0) return activeTabs[0].id!;
-      throw "No active tab.";
+      throw new Error("No active tab.");
     },
     // Try to scrape the post from the page
     async grabPost() {
@@ -301,7 +306,7 @@ export default Vue.extend({
       return msg;
     },
     // Clear messages of given category. When category is empty clear all messages.
-    clearMessages(category: string | null) {
+    clearMessages(category: string | null = null) {
       if (category) {
         for (let i = 0; i < this.messages.length; i++) {
           if (this.messages[i].category == category) {
@@ -340,29 +345,35 @@ export default Vue.extend({
       this.clearMessages("FIND_SIMILAR");
 
       const msg = this.pushInfo("Searching for similar posts...", "FIND_SIMILAR");
-      const res = await this.szuru.reverseSearch(this.selectedPost.contentUrl);
 
-      if (!res.exactPost && res.similarPosts.length == 0) {
-        msg.content = "No similar posts found";
-      } else {
-        if (res.exactPost) {
-          msg.content = `<a href='${this.getPostUrl(res.exactPost)}' target='_blank'>
+      try {
+        const res = await this.szuru.reverseSearch(this.selectedPost.contentUrl);
+
+        if (!res.exactPost && res.similarPosts.length == 0) {
+          msg.content = "No similar posts found";
+        } else {
+          if (res.exactPost) {
+            msg.content = `<a href='${this.getPostUrl(res.exactPost)}' target='_blank'>
                         Post already uploaded (${res.exactPost.id})</a>`;
-          msg.level = "error";
-        }
-
-        for (const similarPost of res.similarPosts) {
-          // Don't show this message for the exactPost (because we have a different message for that)
-          if (res.exactPost && res.exactPost.id == similarPost.post.id) {
-            continue;
+            msg.level = "error";
           }
 
-          this.pushInfo(
-            `<a href='${this.getPostUrl(similarPost.post)}' target='_blank'>Post ${similarPost.post.id}
+          for (const similarPost of res.similarPosts) {
+            // Don't show this message for the exactPost (because we have a different message for that)
+            if (res.exactPost && res.exactPost.id == similarPost.post.id) {
+              continue;
+            }
+
+            this.pushInfo(
+              `<a href='${this.getPostUrl(similarPost.post)}' target='_blank'>Post ${similarPost.post.id}
                         looks ${Math.round(100 - similarPost.distance * 100)}% similar</a>`,
-            "FIND_SIMILAR"
-          );
+              "FIND_SIMILAR"
+            );
+          }
         }
+      } catch (ex) {
+        this.clearMessages();
+        this.pushError("Error: couldn't reverse search.");
       }
     },
     // Returns ScrapedPost for a contentUrl, or undefined if the given contentUrl does not belong to a ScrapedPost.
