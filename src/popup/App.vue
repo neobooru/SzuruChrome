@@ -83,7 +83,10 @@
             <li v-for="tag in selectedPost.tags" :key="tag.name">
               <a class="remove-tag" @click="removeTag(tag)">x</a>
               <span :class="getTagClasses(tag)">{{ tag.name }}</span>
-              <span class="tag-usages">{{ tag.usages ? tag.usages : "" }}</span>
+              <span
+                v-if="showTagUsages"
+                class="tag-usages tag-usages-reserve-space"
+              >{{ tag.usages ? tag.usages : "" }}</span>
             </li>
           </ul>
         </div>
@@ -189,6 +192,7 @@ export default Vue.extend({
       autocompleteTags: [] as TagViewModel[],
       cancelSource: null as CancelTokenSource | null,
       autocompleteIndex: -1,
+      showTagUsages: false,
     };
   },
   watch: {
@@ -471,6 +475,7 @@ export default Vue.extend({
   },
   async mounted() {
     this.config = await Config.load();
+    this.showTagUsages = this.config.loadTagCounts;
     this.activeSite = this.config.sites.length > 0 ? this.config.sites[0] : null;
 
     if (!this.activeSite) {
@@ -531,9 +536,21 @@ video {
 }
 
 .popup-container {
-  width: 700px;
+  width: 780px;
   display: grid;
-  grid-template-columns: 300px 400px;
+}
+
+/* 
+  Override for firefox.
+  This is needed because `width: 780px` shows horizontal scrollbars, where `width: auto` does not.
+  Chrome(-likes) do need the explicit `width: 780px`, which is why we need to have different rules for each of them.
+
+  TODO: Firefox shows the horizontal scrollbar for a split second. Setting `overflow-x: hidden` does NOT fix this.
+ */
+@supports (-moz-appearance: none) {
+  .popup-container {
+    width: auto;
+  }
 }
 
 .popup-messages {
@@ -543,6 +560,7 @@ video {
 
 .popup-left {
   grid-column: 1;
+  max-width: 400px;
 }
 
 .popup-right {
@@ -613,5 +631,11 @@ video {
 
 .autocomplete-items > div.active > span {
   color: #fff;
+}
+
+/* Hacky way to stop the layout from resizing when we lazy load the usage count. */
+.tag-usages-reserve-space {
+  min-width: 5ch; /* 5 character width */
+  display: inline-block;
 }
 </style>
