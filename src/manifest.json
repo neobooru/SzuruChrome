@@ -16,11 +16,11 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["vendor.dll.js", "scripts/content.js"]
+      "js": ["vendor.js", "scripts/content.js"]
     }
   ],
   "background": {
-    "scripts": ["vendor.dll.js", "scripts/background.js"]
+    "scripts": ["vendor.js", "scripts/background.js"]
   },
   "browser_specific_settings": {
     "gecko": {

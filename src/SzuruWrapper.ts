@@ -126,6 +126,7 @@ export default class SzuruWrapper {
   private async execute(config: AxiosRequestConfig): Promise<any> {
     if (this.username && this.authToken) {
       const token = "Token " + btoa(`${this.username}:${this.authToken}`);
+      if (!config.headers) config.headers = {};
       config.headers["Authorization"] = token;
     }
 

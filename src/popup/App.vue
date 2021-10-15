@@ -109,15 +109,17 @@
       </div>
 
       <div class="popup-section">
-        <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
-        <video v-if="selectedPost.contentType == 'video'" controls>
-          <source :src="selectedPost.contentUrl" />
-        </video>
-
         <div style="display: flex">
           <button class="primary" @click="findSimilar">Find similar</button>
           <button class="primary full" style="margin-left: 5px" @click="upload">Import</button>
         </div>
+      </div>
+
+      <div class="popup-section">
+        <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
+        <video v-if="selectedPost.contentType == 'video'" controls>
+          <source :src="selectedPost.contentUrl" />
+        </video>
       </div>
     </div>
   </div>
@@ -260,7 +262,7 @@ export default Vue.extend({
     },
     // Open extension settings page in new tab
     async openSettings() {
-      const url = browser.extension.getURL("options/options.html");
+      const url = browser.runtime.getURL("options/options.html");
       window.open(url);
     },
     getTagClasses(tag: TagViewModel): string[] {
