@@ -1,11 +1,11 @@
-import { ScrapedPost } from "neo-scraper";
 import { browser, Runtime } from "webextension-polyfill-ts";
 import { BrowserCommand, Message, encodeTagName, getUrl } from "../Common";
 import { Config } from "../Config";
 import SzuruWrapper from "../SzuruWrapper";
 import { PostAlreadyUploadedError, SzuruError } from "../SzuruTypes";
+import { PostViewModel } from "../ViewModels";
 
-async function uploadPost(post: ScrapedPost) {
+async function uploadPost(post: PostViewModel) {
   console.dir(post);
 
   const cfg = await Config.load();
@@ -82,12 +82,12 @@ async function uploadPost(post: ScrapedPost) {
           browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(msg, "error")));
           break;
         default:
-          browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex, "error")));
+          browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex.message, "error")));
           break;
       }
     } else {
       console.error(ex);
-      browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex, "error")));
+      browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex.message, "error")));
     }
   }
 }

@@ -127,58 +127,14 @@
 
 <script lang="ts">
 import Vue from "vue";
+import axios, { CancelTokenSource } from "axios";
 import { browser, Runtime, WebRequest } from "webextension-polyfill-ts";
-import { ContentType, ScrapedPost, ScrapedTag, ScrapeResults, BooruTypes } from "neo-scraper";
+import { ScrapedPost, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
-import { MicroTag, Post, Tag } from "../SzuruTypes";
+import { Post, } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
 import { BrowserCommand, Message, getUrl, isChrome, encodeTagName } from "../Common";
-import axios, { CancelTokenSource } from "axios";
-
-class TagViewModel {
-  public implications: TagViewModel[] = [];
-
-  constructor(public name: string, public category?: BooruTypes.TagCategory, public usages?: number | undefined) { }
-
-  static fromTag(tag: Tag) {
-    let x = new TagViewModel(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
-
-    if (tag.implications) {
-      x.implications = tag.implications.map((y) => TagViewModel.fromMicroTag(y));
-    }
-
-    return x;
-  }
-
-  static fromMicroTag(tag: MicroTag) {
-    return new TagViewModel(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
-  }
-
-  static fromScapedTag(tag: ScrapedTag): TagViewModel {
-    return new TagViewModel(tag.name, tag.category);
-  }
-}
-
-class PostViewModel {
-  name: string = "";
-  tags: TagViewModel[] = [];
-  contentUrl: string;
-  pageUrl: string;
-  contentType: ContentType;
-  rating: BooruTypes.SafetyRating;
-  source: string | undefined;
-  referrer: string | undefined;
-
-  constructor(post: ScrapedPost) {
-    this.contentUrl = post.contentUrl;
-    this.pageUrl = post.pageUrl;
-    this.contentType = post.contentType;
-    this.rating = post.rating;
-    this.source = post.source;
-    this.referrer = post.referrer;
-    this.tags = post.tags.map((x) => TagViewModel.fromScapedTag(x));
-  }
-}
+import { PostViewModel, TagViewModel } from "../ViewModels";
 
 export default Vue.extend({
   data() {
@@ -391,7 +347,6 @@ export default Vue.extend({
     },
     async loadTagCounts() {
       const allTags = this.posts.flatMap((x) => x.tags);
-      console.log(allTags);
 
       for (let i = 0; i < allTags.length; i += 100) {
         const query = allTags

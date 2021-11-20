@@ -688,6 +688,11 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
+domino@^2.1.6:
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/domino/-/domino-2.1.6.tgz#fe4ace4310526e5e7b9d12c7de01b7f485a57ffe"
+  integrity sha512-3VdM/SXBZX2omc9JF9nOPCtDaYQ67BGp5CoLpIQlO2KCAPETs8TcDHacF26jXadGbvUteZzRTeos2fhID5+ucQ==
+
 ecc-jsbn@~0.1.1:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/ecc-jsbn/-/ecc-jsbn-0.1.2.tgz#3a83a904e54353287874c564b7549386849a98c9"
@@ -1417,10 +1422,12 @@ neo-async@^2.6.2:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-neo-scraper@^0.4.7:
-  version "0.4.7"
-  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.4.7.tgz#bee74ce7a80e794b7d1dd3e3eed52d91931dbfcf"
-  integrity sha512-Tmv+3xrFTk1c2/vnY2qLmft3KT0IXIOglsSC7ai3+lgmC+1LCVjSqlnWBlIPqTIHCOFnIFhb06H00znN/uAptw==
+neo-scraper@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.5.0.tgz#8af59253a1dead386a906dc7281c024ae7938e25"
+  integrity sha512-SUh9kQC/uI2rTSity+cG7kTwDdlQ9XjEEdqw7hkh0AIjB2yi2X9jHe8mVq0VFC/VLaoBU8QlWUstobmfspipGA==
+  dependencies:
+    turndown "^7.1.1"
 
 node-releases@^2.0.0:
   version "2.0.0"
@@ -2017,6 +2024,13 @@ tunnel-agent@^0.6.0:
   integrity sha1-J6XeoGs2sEoKmWZ3SykIaPD8QP0=
   dependencies:
     safe-buffer "^5.0.1"
+
+turndown@^7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/turndown/-/turndown-7.1.1.tgz#96992f2d9b40a1a03d3ea61ad31b5a5c751ef77f"
+  integrity sha512-BEkXaWH7Wh7e9bd2QumhfAXk5g34+6QUmmWx+0q6ThaVOLuLUqsnkq35HQ5SBHSaxjSfSM7US5o4lhJNH7B9MA==
+  dependencies:
+    domino "^2.1.6"
 
 tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"

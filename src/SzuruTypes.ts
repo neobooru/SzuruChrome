@@ -97,6 +97,11 @@ export interface Post {
   comments: any[]; // Comment resource
 }
 
+export interface SzuruNote {
+  polygon: number[][];
+  text: string;
+}
+
 export interface SimilarPost {
   distance: number;
   post: Post;

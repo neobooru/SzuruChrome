@@ -1,7 +1,16 @@
 import axios, { AxiosRequestConfig, CancelToken } from "axios";
-import { ScrapedPost } from "neo-scraper";
 import { SzuruSiteConfig } from "./Config";
-import { TagsResult, TagCategoriesResult, Post, Tag, SzuruError, ImageSearchResult, TagFields } from "./SzuruTypes";
+import {
+  TagsResult,
+  TagCategoriesResult,
+  Post,
+  Tag,
+  SzuruError,
+  ImageSearchResult,
+  TagFields,
+  SzuruNote
+} from "./SzuruTypes";
+import { PostViewModel } from "./ViewModels";
 
 /**
  * A 1:1 wrapper around the szurubooru API.
@@ -61,11 +70,12 @@ export default class SzuruWrapper {
     return (await this.apiGet("tag-categories")).data;
   }
 
-  async createPost(post: ScrapedPost): Promise<Post> {
+  async createPost(post: PostViewModel): Promise<Post> {
     var obj = {
       tags: post.tags.map(x => x.name),
       safety: post.rating,
       source: post.source,
+      notes: post.notes.map(note => <SzuruNote>{ polygon: note.polygons, text: note.text }),
       contentUrl: post.contentUrl
     };
 
@@ -81,6 +91,10 @@ export default class SzuruWrapper {
     };
 
     return (await this.apiPost("posts/reverse-search", obj)).data;
+  }
+
+  static async createFromConfig(siteConfig: SzuruSiteConfig): Promise<SzuruWrapper | null> {
+    return new SzuruWrapper(siteConfig.domain, siteConfig.username, siteConfig.authToken);
   }
 
   private async apiGet(
@@ -136,9 +150,5 @@ export default class SzuruWrapper {
       const error = ex.response?.data as SzuruError | undefined;
       throw error ? error : ex;
     }
-  }
-
-  static async createFromConfig(siteConfig: SzuruSiteConfig): Promise<SzuruWrapper | null> {
-    return new SzuruWrapper(siteConfig.domain, siteConfig.username, siteConfig.authToken);
   }
 }
