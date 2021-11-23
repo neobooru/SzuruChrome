@@ -54,6 +54,15 @@ select {
   display: inline;
 }
 
+.compact-tags > li {
+  /*
+  Ident each newline but not the first line.
+  This makes tagName line breaks look better, though it is a bit hacky.
+  */
+  text-indent: -1.5ch;
+  padding-left: 1.5ch;
+}
+
 .tag-general {
   color: #24aadd;
 }
@@ -94,6 +103,8 @@ a.remove-tag {
 
 .tag-usages {
   font-size: 90%;
+  /* Reset text-indent set by ".compact-tags > li" because it clashes with our margin */
+  text-indent: initial;
   margin-left: 0.7em;
 }
 

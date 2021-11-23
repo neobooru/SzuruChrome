@@ -46,7 +46,7 @@ export default class SzuruWrapper {
   }
 
   async updateTag(tag: Tag): Promise<any> {
-    return (await this.apiPut("tag/" + tag.names[0], tag)).data;
+    return (await this.apiPut("tag/" + encodeURIComponent(tag.names[0]), tag)).data;
   }
 
   async getTags(
@@ -75,7 +75,7 @@ export default class SzuruWrapper {
       tags: post.tags.map(x => x.name),
       safety: post.rating,
       source: post.source,
-      notes: post.notes.map(note => <SzuruNote>{ polygon: note.polygons, text: note.text }),
+      notes: post.notes,
       contentUrl: post.contentUrl
     };
 
@@ -86,10 +86,7 @@ export default class SzuruWrapper {
   }
 
   async reverseSearch(contentUrl: string): Promise<ImageSearchResult> {
-    var obj = {
-      contentUrl: contentUrl
-    };
-
+    var obj = { contentUrl };
     return (await this.apiPost("posts/reverse-search", obj)).data;
   }
 

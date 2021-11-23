@@ -82,7 +82,7 @@
           <ul class="compact-tags">
             <li v-for="tag in selectedPost.tags" :key="tag.name">
               <a class="remove-tag" @click="removeTag(tag)">x</a>
-              <span :class="getTagClasses(tag)">{{ tag.name }}</span>
+              <span :class="getTagClasses(tag)" v-html="breakTagName(tag.name)"></span>
               <span
                 v-if="showTagUsages"
                 class="tag-usages tag-usages-reserve-space"
@@ -231,6 +231,10 @@ export default Vue.extend({
       }
 
       return classes;
+    },
+    breakTagName(tagName: string) {
+      // Based on https://stackoverflow.com/a/6316913
+      return tagName.replace(/\_/g, "_<wbr>");
     },
     // Remove tag from post's taglist
     removeTag(tag: TagViewModel) {
