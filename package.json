@@ -12,7 +12,8 @@
     "build:dev": "webpack --config webpack.dev.js",
     "build-zip": "node scripts/build-zip.js",
     "sign-xpi": "node scripts/sign-xpi.js",
-    "watch": "webpack --watch --config webpack.dev.js"
+    "watch": "webpack --watch --config webpack.dev.js",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "axios": "^0.23.0",

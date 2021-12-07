@@ -90,7 +90,7 @@ export default class SzuruWrapper {
     return (await this.apiPost("posts/reverse-search", obj)).data;
   }
 
-  static async createFromConfig(siteConfig: SzuruSiteConfig): Promise<SzuruWrapper | null> {
+  static createFromConfig(siteConfig: SzuruSiteConfig): SzuruWrapper | null {
     return new SzuruWrapper(siteConfig.domain, siteConfig.username, siteConfig.authToken);
   }
 

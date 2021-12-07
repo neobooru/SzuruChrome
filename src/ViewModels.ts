@@ -35,6 +35,7 @@ export class PostViewModel {
   rating: BooruTypes.SafetyRating;
   source: string | undefined;
   referrer: string | undefined;
+  resolution: [number, number] | undefined;
 
   constructor(post: ScrapedPost) {
     this.contentUrl = post.contentUrl;
@@ -45,5 +46,6 @@ export class PostViewModel {
     this.referrer = post.referrer;
     this.tags = post.tags.map(x => TagViewModel.fromScapedTag(x));
     this.notes = post.notes;
+    this.resolution = post.resolution;
   }
 }

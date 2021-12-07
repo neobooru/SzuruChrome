@@ -19,6 +19,12 @@
         </div>
 
         <div class="section-row">
+          <ul class="compact">
+            <li>Resolution: {{ resolutionToString(selectedPost.resolution) }}</li>
+          </ul>
+        </div>
+
+        <div class="section-row">
           <span class="section-label">Safety</span>
 
           <label class="container">
@@ -236,6 +242,12 @@ export default Vue.extend({
       // Based on https://stackoverflow.com/a/6316913
       return tagName.replace(/\_/g, "_<wbr>");
     },
+    resolutionToString(resolution: [number, number]) {
+      if (resolution && resolution.length == 2) {
+        return resolution[0] + "x" + resolution[1];
+      }
+      return "";
+    },
     // Remove tag from post's taglist
     removeTag(tag: TagViewModel) {
       if (this.selectedPost) {
@@ -442,8 +454,10 @@ export default Vue.extend({
     if (!this.activeSite) {
       this.pushError("No szurubooru server configured!");
     } else {
-      this.szuru = await SzuruWrapper.createFromConfig(this.activeSite);
+      this.szuru = SzuruWrapper.createFromConfig(this.activeSite);
     }
+
+    console.log("hello")
 
     browser.runtime.onMessage.addListener((cmd: BrowserCommand, sender: Runtime.MessageSender) => {
       switch (cmd.name) {
@@ -486,7 +500,7 @@ export default Vue.extend({
     );
 
     // Always call grabPost, even when there is no activeSite
-    await this.grabPost();
+    // await this.grabPost();
   },
 });
 </script>
@@ -554,6 +568,10 @@ video {
 .section-label {
   display: block;
   margin: 0 0 5px 0;
+}
+
+.section-block {
+  display: block;
 }
 
 .cursor-pointer {

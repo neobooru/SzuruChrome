@@ -48,6 +48,7 @@ select {
   width: 100%;
 }
 
+ul.compact,
 .compact-tags {
   list-style-type: none;
   padding: 0;
