@@ -457,8 +457,6 @@ export default Vue.extend({
       this.szuru = SzuruWrapper.createFromConfig(this.activeSite);
     }
 
-    console.log("hello")
-
     browser.runtime.onMessage.addListener((cmd: BrowserCommand, sender: Runtime.MessageSender) => {
       switch (cmd.name) {
         case "push_message":
@@ -500,7 +498,7 @@ export default Vue.extend({
     );
 
     // Always call grabPost, even when there is no activeSite
-    // await this.grabPost();
+    await this.grabPost();
   },
 });
 </script>
