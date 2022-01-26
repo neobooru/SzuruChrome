@@ -872,9 +872,9 @@ find-up@^4.0.0:
     path-exists "^4.0.0"
 
 follow-redirects@^1.14.4:
-  version "1.14.4"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.4.tgz#838fdf48a8bbdd79e52ee51fb1c94e3ed98b9379"
-  integrity sha512-zwGkiSXC1MUJG/qmeIFH2HBJx9u0V46QGUe3YR1fXG8bXQxq7fLj0RjLZQ5nubr9qNJUZrH+xUcwXEoXNpfS+g==
+  version "1.14.7"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.7.tgz#2004c02eb9436eee9a21446a6477debf17e81685"
+  integrity sha512-+hbxoLbFMbRKDwohX8GkTataGqO6Jb7jGwpAlwgy2bIz25XtRm7KEzJM76R1WiNT5SwZkX4Y75SwBolkpmE7iQ==
 
 forever-agent@~0.6.1:
   version "0.6.1"
@@ -1413,19 +1413,19 @@ mz@2.7.0:
     thenify-all "^1.0.0"
 
 nanoid@^3.1.28:
-  version "3.1.30"
-  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.1.30.tgz#63f93cc548d2a113dc5dfbc63bfa09e2b9b64362"
-  integrity sha512-zJpuPDwOv8D2zq2WRoMe1HsfZthVewpel9CAvTfc/2mBD1uUT/agc5f7GHGWXlYkFvi1mVxe4IjvP2HNrop7nQ==
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.2.0.tgz#62667522da6673971cca916a6d3eff3f415ff80c"
+  integrity "sha1-YmZ1Itpmc5ccypFqbT7/P0Ff+Aw= sha512-fmsZYa9lpn69Ad5eDn7FMcnnSR+8R34W9qJEijxYhTbfOWzr22n1QxCMzXLK+ODyW2973V3Fux959iQoUxzUIA=="
 
 neo-async@^2.6.2:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-neo-scraper@^0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.5.0.tgz#8af59253a1dead386a906dc7281c024ae7938e25"
-  integrity sha512-SUh9kQC/uI2rTSity+cG7kTwDdlQ9XjEEdqw7hkh0AIjB2yi2X9jHe8mVq0VFC/VLaoBU8QlWUstobmfspipGA==
+neo-scraper@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.5.2.tgz#2ed16d94fad9da3ca5d7ee1e9a0a6ffa995c1e41"
+  integrity "sha1-LtFtlPrZ2jyl1+4emgpv+plcHkE= sha512-XTEYEs6gV8qqmtvAgOE5qWBIvNVUJvVHFs1SnA/8qmeoTJ4HYXzaS+mTnrRJORBpIiL0mf3clxZeeX+yKTzpRw=="
   dependencies:
     turndown "^7.1.1"
 
