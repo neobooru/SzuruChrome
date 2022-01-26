@@ -2,7 +2,7 @@ const webpack = require("webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const ExtensionReloader = require("webpack-extension-reloader");
+// const ExtensionReloader = require("webpack-ext-reloader");
 const { VueLoaderPlugin } = require("vue-loader");
 const { version } = require("./package.json");
 
