@@ -66,7 +66,7 @@
               @keydown="onAddTagKeyDown"
               autocomplete="off"
             />
-            <button class="primary" style="margin-left: 5px" @click="addTag">Add</button>
+            <button class="primary" style="margin-left: 5px" @click="addTagFromCurrentInput">Add</button>
           </div>
 
           <div class="autocomplete-items" v-bind:class="{ show: autocompleteShown }">
@@ -384,7 +384,19 @@ export default Vue.extend({
       }
     },
     async onAddTagKeyUp(e: KeyboardEvent) {
-      await this.autoCompletePopulator((<HTMLInputElement>e.target).value);
+      await this.autocompletePopulator((<HTMLInputElement>e.target).value);
+    },
+    addTagFromCurrentInput() {
+      this.addTag(new TagViewModel(this.addTagInput));
+      this.addTagInput = ""; // Reset input
+
+      // Only needed when the button is clicked
+      // When this is triggered by the enter key the `onAddTagKeyUp` will internally also hide the autocomplete.
+      // Though hiding it twice doesn't hurt so we don't care.
+      this.hideAutocomplete();
+
+      // TODO: Do we also want to add the implications?
+      // Answer: Probably not, because if the user wanted to have implications they should've clicked/selected the autocomplete entry.
     },
     onAddTagKeyDown(e: KeyboardEvent) {
       if (e.code == "ArrowDown") {
@@ -399,10 +411,7 @@ export default Vue.extend({
         }
       } else if (e.code == "Enter") {
         if (this.autocompleteIndex == -1) {
-          this.addTag(new TagViewModel(this.addTagInput));
-          this.addTagInput = ""; // Reset input
-
-          // TODO: Do we also want to add the implications?
+          this.addTagFromCurrentInput();
         } else {
           // Add auto completed tag
           const tagToAdd = this.autocompleteTags[this.autocompleteIndex];
@@ -416,14 +425,17 @@ export default Vue.extend({
       this.addTagInput = ""; // Reset input
       this.autocompleteShown = false; // Hide autocomplete list
     },
-    async autoCompletePopulator(input: string) {
+    hideAutocomplete() {
+      this.autocompleteIndex = -1;
+      this.autocompleteShown = false;
+    },
+    async autocompletePopulator(input: string) {
       // Based on https://www.w3schools.com/howto/howto_js_autocomplete.asp
       // TODO: Put this in a separate component
 
       // Hide autocomplete when the input is empty, and don't do anything else.
       if (input.length == 0) {
-        this.autocompleteIndex = -1;
-        this.autocompleteShown = false;
+        this.hideAutocomplete();
         return;
       }
 
