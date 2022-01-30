@@ -1503,10 +1503,10 @@ neo-async@^2.6.2:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-neo-scraper@^0.5.2:
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.5.2.tgz#2ed16d94fad9da3ca5d7ee1e9a0a6ffa995c1e41"
-  integrity "sha1-LtFtlPrZ2jyl1+4emgpv+plcHkE= sha512-XTEYEs6gV8qqmtvAgOE5qWBIvNVUJvVHFs1SnA/8qmeoTJ4HYXzaS+mTnrRJORBpIiL0mf3clxZeeX+yKTzpRw=="
+neo-scraper@^0.5.3:
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.5.3.tgz#81219e05cee5872ab6a0032b2338b26fbfe337e5"
+  integrity sha512-j19GBOmEFq8KEi9ptB3rfcdRaRMzigqH0UYJ3Gh0TMBVvqA4zFJV1bDEKglf+OcwWiHTciQ35TKGyjkxK7kGZQ==
   dependencies:
     turndown "^7.1.1"
 

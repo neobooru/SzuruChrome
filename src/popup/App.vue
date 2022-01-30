@@ -18,7 +18,7 @@
           <i class="fas fa-cog cursor-pointer" @click="openSettings"></i>
         </div>
 
-        <div class="section-row">
+        <div class="section-row" v-if="selectedPost.resolution != undefined">
           <ul class="compact">
             <li>Resolution: {{ resolutionToString(selectedPost.resolution) }}</li>
           </ul>
