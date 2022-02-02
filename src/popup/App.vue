@@ -2,12 +2,7 @@
   <div class="popup-container">
     <div class="popup-messages">
       <ul class="messages">
-        <li
-          v-for="msg in messages"
-          :key="msg.content"
-          :class="getMessageClasses(msg)"
-          v-html="msg.content"
-        ></li>
+        <li v-for="msg in messages" :key="msg.content" :class="getMessageClasses(msg)" v-html="msg.content"></li>
       </ul>
     </div>
 
@@ -89,10 +84,9 @@
             <li v-for="tag in selectedPost.tags" :key="tag.name">
               <a class="remove-tag" @click="removeTag(tag)">x</a>
               <span :class="getTagClasses(tag)" v-html="breakTagName(tag.name)"></span>
-              <span
-                v-if="showTagUsages"
-                class="tag-usages tag-usages-reserve-space"
-              >{{ tag.usages ? tag.usages : "" }}</span>
+              <span v-if="showTagUsages" class="tag-usages tag-usages-reserve-space">{{
+                tag.usages ? tag.usages : ""
+              }}</span>
             </li>
           </ul>
         </div>
@@ -115,9 +109,9 @@
       </div>
 
       <div class="popup-section">
-        <div style="display: flex">
-          <button class="primary" @click="findSimilar">Find similar</button>
-          <button class="primary full" style="margin-left: 5px" @click="upload">Import</button>
+        <div style="display: flex; gap: 5px">
+          <button v-if="showFindSimilarButton" class="primary" @click="findSimilar">Find similar</button>
+          <button class="primary full" @click="upload">Import</button>
         </div>
       </div>
 
@@ -137,7 +131,7 @@ import axios, { CancelTokenSource } from "axios";
 import { browser, Runtime, WebRequest } from "webextension-polyfill-ts";
 import { ScrapedPost, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
-import { Post, } from "../SzuruTypes";
+import { Post } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
 import { BrowserCommand, Message, getUrl, isChrome, encodeTagName } from "../Common";
 import { PostViewModel, TagViewModel } from "../ViewModels";
@@ -157,6 +151,7 @@ export default Vue.extend({
       cancelSource: null as CancelTokenSource | null,
       autocompleteIndex: -1,
       showTagUsages: false,
+      showFindSimilarButton: true,
     };
   },
   watch: {
@@ -461,6 +456,7 @@ export default Vue.extend({
   async mounted() {
     this.config = await Config.load();
     this.showTagUsages = this.config.loadTagCounts;
+    this.showFindSimilarButton = !this.config.autoSearchSimilar;
     this.activeSite = this.config.sites.length > 0 ? this.config.sites[0] : null;
 
     if (!this.activeSite) {
