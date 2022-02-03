@@ -8,7 +8,7 @@ import {
   SzuruError,
   ImageSearchResult,
   TagFields,
-  SzuruNote
+  TemporaryFileUploadResult
 } from "./SzuruTypes";
 import { PostViewModel } from "./ViewModels";
 
@@ -71,13 +71,18 @@ export default class SzuruWrapper {
   }
 
   async createPost(post: PostViewModel): Promise<Post> {
-    var obj = {
+    var obj = <any>{
       tags: post.tags.map(x => x.name),
       safety: post.rating,
       source: post.source,
-      notes: post.notes,
-      contentUrl: post.contentUrl
+      notes: post.notes
     };
+
+    if (post.contentToken) {
+      obj.contentToken = post.contentToken;
+    } else {
+      obj.contentUrl = post.contentUrl;
+    }
 
     console.log("Create new post object");
     console.dir(obj);
@@ -88,6 +93,16 @@ export default class SzuruWrapper {
   async reverseSearch(contentUrl: string): Promise<ImageSearchResult> {
     var obj = { contentUrl };
     return (await this.apiPost("posts/reverse-search", obj)).data;
+  }
+
+  async reverseSearchToken(contentToken: string): Promise<ImageSearchResult> {
+    var obj = { contentToken };
+    return (await this.apiPost("posts/reverse-search", obj)).data;
+  }
+
+  async uploadTempFile(contentUrl: string): Promise<TemporaryFileUploadResult> {
+    var obj = { contentUrl };
+    return (await this.apiPost("uploads", obj)).data;
   }
 
   static createFromConfig(siteConfig: SzuruSiteConfig): SzuruWrapper | null {

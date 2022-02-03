@@ -30,6 +30,7 @@ export class PostViewModel {
   tags: TagViewModel[] = [];
   notes: ScrapedNote[];
   contentUrl: string;
+  contentToken: string | undefined;
   pageUrl: string;
   contentType: ContentType;
   rating: BooruTypes.SafetyRating;

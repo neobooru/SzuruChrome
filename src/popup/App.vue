@@ -131,7 +131,7 @@ import axios, { CancelTokenSource } from "axios";
 import { browser, Runtime, WebRequest } from "webextension-polyfill-ts";
 import { ScrapedPost, ScrapeResults } from "neo-scraper";
 import SzuruWrapper from "../SzuruWrapper";
-import { Post } from "../SzuruTypes";
+import { ImageSearchResult, Post } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
 import { BrowserCommand, Message, getUrl, isChrome, encodeTagName } from "../Common";
 import { PostViewModel, TagViewModel } from "../ViewModels";
@@ -320,7 +320,18 @@ export default Vue.extend({
       const msg = this.pushInfo("Searching for similar posts...", "FIND_SIMILAR");
 
       try {
-        const res = await this.szuru.reverseSearch(this.selectedPost.contentUrl);
+        let res: ImageSearchResult | undefined;
+
+        if (this.config?.useContentTokens) {
+          let tmpRes = await this.szuru.uploadTempFile(this.selectedPost.contentUrl);
+          // TODO: Error handling?
+          // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
+          this.selectedPost.contentToken = tmpRes.token;
+
+          res = await this.szuru.reverseSearchToken(tmpRes.token);
+        } else {
+          res = await this.szuru.reverseSearch(this.selectedPost.contentUrl);
+        }
 
         if (!res.exactPost && res.similarPosts.length == 0) {
           msg.content = "No similar posts found";
@@ -493,7 +504,7 @@ export default Vue.extend({
         if (post != undefined && post.referrer) {
           console.log(`Setting referrer to '${post.referrer}' for request to '${post.contentUrl}'.`);
           // TODO: If the headers already have a 'Referer' header this will _not_ override that.
-          // Though as far as I am aware the 'img' tag doesn't set this header.
+          // As far as I am aware the 'img' tag doesn't set this header, so it shouldn't be a problem.
           requestHeaders.push({ name: "Referer", value: post.referrer });
         }
 

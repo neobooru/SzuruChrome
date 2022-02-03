@@ -13,6 +13,7 @@ export class Config {
   useOriginalSource: boolean = true;
   autoSearchSimilar: boolean = false;
   loadTagCounts: boolean = true;
+  useContentTokens: boolean = true;
   sites: Array<SzuruSiteConfig> = [];
 
   public async save() {

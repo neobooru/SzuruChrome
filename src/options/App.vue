@@ -19,7 +19,7 @@
       <ul class="input">
         <li>
           <label>
-            <input type="checkbox" name="autoSearchSimilar" v-model="autoSearchSimilar" />
+            <input type="checkbox" v-model="autoSearchSimilar" />
             Automatically search for similar posts
           </label>
           <p class="hint">
@@ -29,7 +29,7 @@
         </li>
         <li>
           <label>
-            <input type="checkbox" name="useOriginalSource" v-model="useOriginalSource" />
+            <input type="checkbox" v-model="useOriginalSource" />
             Use original image source when available
           </label>
           <p class="hint">
@@ -39,12 +39,22 @@
         </li>
         <li>
           <label>
-            <input type="checkbox" name="loadTagCounts" v-model="loadTagCounts" />
+            <input type="checkbox" v-model="loadTagCounts" />
             Show how often a tag is used in the selected szurubooru instance
           </label>
           <p class="hint">
             Shows how often a given tag is used in the selected szurubooru instance. No number will be displayed when
             the tag does not yet exist.
+          </p>
+        </li>
+        <li>
+          <label>
+            <input type="checkbox" v-model="loadTagCounts" />
+            Use temporary files when reverse searching and creating posts
+          </label>
+          <p class="hint">
+            When reverse searching for a post this will (temporarily) upload the post to the server. This makes creating
+            the post faster because then the file already exists on the server.
           </p>
         </li>
       </ul>
@@ -75,6 +85,7 @@ export default Vue.extend({
       autoSearchSimilar: false,
       loadTagCounts: false,
       useOriginalSource: false,
+      useContentTokens: false,
       statusText: "",
       statusType: "",
     };
@@ -114,6 +125,7 @@ export default Vue.extend({
       config.autoSearchSimilar = this.autoSearchSimilar;
       config.loadTagCounts = this.loadTagCounts;
       config.useOriginalSource = this.useOriginalSource;
+      config.useContentTokens = this.useContentTokens;
 
       await config.save();
 
@@ -139,6 +151,7 @@ export default Vue.extend({
     this.autoSearchSimilar = config.autoSearchSimilar;
     this.loadTagCounts = config.loadTagCounts;
     this.useOriginalSource = config.useOriginalSource;
+    this.useContentTokens = config.useContentTokens;
   },
 });
 </script>

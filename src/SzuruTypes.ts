@@ -111,3 +111,7 @@ export interface ImageSearchResult {
   exactPost: Post | null;
   similarPosts: SimilarPost[];
 }
+
+export interface TemporaryFileUploadResult {
+  token: string;
+}

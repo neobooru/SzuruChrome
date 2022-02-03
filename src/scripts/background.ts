@@ -72,7 +72,8 @@ async function uploadPost(post: PostViewModel) {
   } catch (ex) {
     browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
     let error = ex as SzuruError;
-    if (error) {
+    // TODO: Actual good error handling/messaging
+    if (error.name) {
       console.error(error);
       switch (error.name) {
         case "PostAlreadyUploadedError":
@@ -82,7 +83,7 @@ async function uploadPost(post: PostViewModel) {
           browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(msg, "error")));
           break;
         default:
-          browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex.message, "error")));
+          browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex?.message ?? ex, "error")));
           break;
       }
     } else {
