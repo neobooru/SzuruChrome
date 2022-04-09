@@ -70,7 +70,7 @@
               @click="onClickAutocompleteTagItem(tag)"
               :key="tag.name"
               :class="{
-                active: idx == autocompleteIndex,
+                active: idx == autocompleteIndex
               }"
             >
               <span :class="getTagClasses(tag)">{{ tag.name }}</span>
@@ -116,10 +116,15 @@
       </div>
 
       <div class="popup-section">
-        <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
-        <video v-if="selectedPost.contentType == 'video'" controls>
-          <source :src="selectedPost.contentUrl" />
-        </video>
+        <div class="post-container">
+          <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
+          <video v-if="selectedPost.contentType == 'video'" controls>
+            <source :src="selectedPost.contentUrl" />
+          </video>
+          <div class="post-overlay">
+            <PostNotes :notes="selectedPost.notes" />
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -135,8 +140,10 @@ import { ImageSearchResult, Post } from "../SzuruTypes";
 import { Config, SzuruSiteConfig } from "../Config";
 import { BrowserCommand, Message, getUrl, isChrome, encodeTagName } from "../Common";
 import { PostViewModel, TagViewModel } from "../ViewModels";
+import PostNotes from "./components/PostNotes.vue";
 
 export default Vue.extend({
+  components: { PostNotes },
   data() {
     return {
       config: null as Config | null,
@@ -151,7 +158,7 @@ export default Vue.extend({
       cancelSource: null as CancelTokenSource | null,
       autocompleteIndex: -1,
       showTagUsages: false,
-      showFindSimilarButton: true,
+      showFindSimilarButton: true
     };
   },
   watch: {
@@ -160,13 +167,13 @@ export default Vue.extend({
         // No need to check if any vars are unset, findSimilar does that internally
         this.findSimilar();
       }
-    },
+    }
   },
   methods: {
     async getActiveTabId() {
       const activeTabs = await browser.tabs.query({
         active: true,
-        currentWindow: true,
+        currentWindow: true
       });
 
       if (activeTabs.length > 0) return activeTabs[0].id!;
@@ -301,7 +308,7 @@ export default Vue.extend({
     addTag(tag: TagViewModel) {
       if (this.selectedPost) {
         // Only add tag if it doesn't already exist
-        if (tag.name.length > 0 && this.selectedPost.tags.find((x) => x.name == tag.name) == undefined) {
+        if (tag.name.length > 0 && this.selectedPost.tags.find(x => x.name == tag.name) == undefined) {
           this.selectedPost.tags.push(tag);
 
           // Add implications for the tag
@@ -368,12 +375,12 @@ export default Vue.extend({
       return undefined;
     },
     async loadTagCounts() {
-      const allTags = this.posts.flatMap((x) => x.tags);
+      const allTags = this.posts.flatMap(x => x.tags);
 
       for (let i = 0; i < allTags.length; i += 100) {
         const query = allTags
           .slice(i, i + 101)
-          .map((x) => encodeTagName(x.name))
+          .map(x => encodeTagName(x.name))
           .join();
         const resp = await this.szuru?.getTags(query);
 
@@ -460,9 +467,9 @@ export default Vue.extend({
         this.cancelSource.token
       );
 
-      this.autocompleteTags = resp!.results.map((x) => TagViewModel.fromTag(x));
+      this.autocompleteTags = resp!.results.map(x => TagViewModel.fromTag(x));
       if (this.autocompleteTags.length > 0) this.autocompleteShown = true;
-    },
+    }
   },
   async mounted() {
     this.config = await Config.load();
@@ -509,7 +516,7 @@ export default Vue.extend({
         }
 
         return <WebRequest.BlockingResponse>{
-          requestHeaders,
+          requestHeaders
         };
       },
       { urls: ["<all_urls>"] },
@@ -518,7 +525,7 @@ export default Vue.extend({
 
     // Always call grabPost, even when there is no activeSite
     await this.grabPost();
-  },
+  }
 });
 </script>
 
@@ -532,7 +539,7 @@ video {
   display: grid;
 }
 
-/* 
+/*
   Override for firefox.
   This is needed because `width: 780px` shows horizontal scrollbars, where `width: auto` does not.
   Chrome(-likes) do need the explicit `width: 780px`, which is why we need to have different rules for each of them.
@@ -633,5 +640,17 @@ video {
 .tag-usages-reserve-space {
   min-width: 5ch; /* 5 character width */
   display: inline-block;
+}
+
+.post-container {
+  position: relative;
+  display: flex;
+}
+
+.post-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  /* z-index: 2; */
 }
 </style>
