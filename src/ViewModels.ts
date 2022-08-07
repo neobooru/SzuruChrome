@@ -7,7 +7,7 @@ export class TagViewModel {
   constructor(public name: string, public category?: BooruTypes.TagCategory, public usages?: number | undefined) {}
 
   static fromTag(tag: Tag) {
-    let x = new TagViewModel(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
+    const x = new TagViewModel(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
 
     if (tag.implications) {
       x.implications = tag.implications.map(y => TagViewModel.fromMicroTag(y));
@@ -26,7 +26,7 @@ export class TagViewModel {
 }
 
 export class PostViewModel {
-  name: string = "";
+  name = "";
   tags: TagViewModel[] = [];
   notes: ScrapedNote[];
   contentUrl: string;

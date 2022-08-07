@@ -1,4 +1,4 @@
-import { browser, Runtime } from "webextension-polyfill-ts";
+import { browser } from "webextension-polyfill-ts";
 import { BrowserCommand, Message, encodeTagName, getUrl } from "../Common";
 import { Config } from "../Config";
 import SzuruWrapper from "../SzuruWrapper";
@@ -9,7 +9,7 @@ async function uploadPost(post: PostViewModel) {
   console.dir(post);
 
   const cfg = await Config.load();
-  const szuru = (await SzuruWrapper.createFromConfig(cfg.sites[0]))!;
+  const szuru = SzuruWrapper.createFromConfig(cfg.sites[0]);
 
   try {
     // Create and upload post
@@ -43,7 +43,7 @@ async function uploadPost(post: PostViewModel) {
       const existingCategories = (await szuru.getTagCategories()).results;
       let categoriesChangedCount = 0;
 
-      for (let i in tags) {
+      for (const i in tags) {
         browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
         browser.runtime.sendMessage(
           new BrowserCommand("push_message", new Message(`Updating tag ${i}/${unsetCategoryTags.length}`))
@@ -71,17 +71,18 @@ async function uploadPost(post: PostViewModel) {
     }
   } catch (ex) {
     browser.runtime.sendMessage(new BrowserCommand("remove_messages", 1));
-    let error = ex as SzuruError;
+    const error = ex as SzuruError;
     // TODO: Actual good error handling/messaging
     if (error.name) {
       console.error(error);
       switch (error.name) {
-        case "PostAlreadyUploadedError":
+        case "PostAlreadyUploadedError": {
           const otherPostId = (error as PostAlreadyUploadedError).otherPostId;
           const url = getUrl(szuru.apiUrl.replace("api", ""), "post", otherPostId.toString());
           const msg = `<a href='${url}' target='_blank'>Post already uploaded (${otherPostId})</a>`;
           browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(msg, "error")));
           break;
+        }
         default:
           browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex?.message ?? ex, "error")));
           break;
@@ -93,7 +94,7 @@ async function uploadPost(post: PostViewModel) {
   }
 }
 
-async function messageHandler(cmd: BrowserCommand, sender: Runtime.MessageSender): Promise<any> {
+async function messageHandler(cmd: BrowserCommand): Promise<any> {
   switch (cmd.name) {
     case "upload_post":
       return uploadPost(cmd.data);

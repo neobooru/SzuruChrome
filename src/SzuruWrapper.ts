@@ -51,8 +51,8 @@ export default class SzuruWrapper {
 
   async getTags(
     query: string,
-    offset: number = 0,
-    limit: number = 100,
+    offset = 0,
+    limit = 100,
     fields: TagFields[] | undefined = undefined,
     cancelToken: CancelToken | undefined = undefined
   ): Promise<TagsResult> {
@@ -71,7 +71,7 @@ export default class SzuruWrapper {
   }
 
   async createPost(post: PostViewModel): Promise<Post> {
-    var obj = <any>{
+    const obj = <any>{
       tags: post.tags.map(x => x.name),
       safety: post.rating,
       source: post.source,
@@ -91,21 +91,21 @@ export default class SzuruWrapper {
   }
 
   async reverseSearch(contentUrl: string): Promise<ImageSearchResult> {
-    var obj = { contentUrl };
+    const obj = { contentUrl };
     return (await this.apiPost("posts/reverse-search", obj)).data;
   }
 
   async reverseSearchToken(contentToken: string): Promise<ImageSearchResult> {
-    var obj = { contentToken };
+    const obj = { contentToken };
     return (await this.apiPost("posts/reverse-search", obj)).data;
   }
 
   async uploadTempFile(contentUrl: string): Promise<TemporaryFileUploadResult> {
-    var obj = { contentUrl };
+    const obj = { contentUrl };
     return (await this.apiPost("uploads", obj)).data;
   }
 
-  static createFromConfig(siteConfig: SzuruSiteConfig): SzuruWrapper | null {
+  static createFromConfig(siteConfig: SzuruSiteConfig): SzuruWrapper {
     return new SzuruWrapper(siteConfig.domain, siteConfig.username, siteConfig.authToken);
   }
 

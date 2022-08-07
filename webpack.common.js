@@ -52,7 +52,14 @@ module.exports = {
         generator: {
           filename: "fonts/[name][ext]"
         }
-      }
+      },
+      // Added because https://github.com/graphql/graphql-js/issues/2721#issuecomment-723008284 (not a GraphQL specific issue).
+      {
+        test: /\.m?js/,
+        resolve: {
+            fullySpecified: false
+        }
+      },
     ]
   },
   plugins: [

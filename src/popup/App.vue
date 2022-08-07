@@ -193,8 +193,8 @@ export default Vue.extend({
       // Clear current posts array
       this.posts = [];
 
-      for (var result of res.results) {
-        for (var i in result.posts) {
+      for (const result of res.results) {
+        for (const i in result.posts) {
           const vm = new PostViewModel(result.posts[i]);
           vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
 
@@ -483,7 +483,7 @@ export default Vue.extend({
       this.szuru = SzuruWrapper.createFromConfig(this.activeSite);
     }
 
-    browser.runtime.onMessage.addListener((cmd: BrowserCommand, sender: Runtime.MessageSender) => {
+    browser.runtime.onMessage.addListener((cmd: BrowserCommand, _sender: Runtime.MessageSender) => {
       switch (cmd.name) {
         case "push_message":
           this.messages.push(cmd.data);
@@ -502,6 +502,10 @@ export default Vue.extend({
       extraInfoSpec.push("extraHeaders" as any);
     }
 
+    // Add "Referer" header to all requests if post.referrer is set.
+    // This is needed in some rare cases where websites disallow hotlinking to images.
+    // This will probably stop working in Chrome sometime in 2023 due to the Manifest V3 webRequestBlocking bullshit.
+    // Firefox users should be fine.
     browser.webRequest.onBeforeSendHeaders.addListener(
       (details: WebRequest.OnBeforeSendHeadersDetailsType) => {
         let requestHeaders = details.requestHeaders ?? [];

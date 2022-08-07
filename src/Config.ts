@@ -1,19 +1,19 @@
 import { browser } from "webextension-polyfill-ts";
 
 export class SzuruSiteConfig {
-  domain: string = "";
-  username: string = "";
-  authToken: string = "";
+  domain = "";
+  username = "";
+  authToken = "";
 }
 
 export class Config {
-  importExistingTags: boolean = true;
-  importAllTags: boolean = false;
-  importCommentary: boolean = false;
-  useOriginalSource: boolean = true;
-  autoSearchSimilar: boolean = false;
-  loadTagCounts: boolean = true;
-  useContentTokens: boolean = true;
+  importExistingTags = true;
+  importAllTags = false;
+  importCommentary = false;
+  useOriginalSource = true;
+  autoSearchSimilar = false;
+  loadTagCounts = true;
+  useContentTokens = true;
   sites: Array<SzuruSiteConfig> = [];
 
   public async save() {
@@ -26,7 +26,7 @@ export class Config {
   }
 
   static async load(): Promise<Config> {
-    let storage = await browser.storage.local.get("config");
+    const storage = await browser.storage.local.get("config");
     let config: Config = new Config();
 
     if ("config" in storage) {
