@@ -1937,7 +1937,7 @@ neo-async@^2.6.2:
 
 "neo-scraper@git+https://github.com/neobooru/neo-scraper.git":
   version "0.5.5"
-  resolved "git+https://github.com/neobooru/neo-scraper.git#3d602869ed19ebbc781c408feaad2c8f84d94b6f"
+  resolved "git+https://github.com/neobooru/neo-scraper.git#d127ec755b4b9b718508ce4b2cba66e900b6022d"
   dependencies:
     turndown "^7.1.1"
 

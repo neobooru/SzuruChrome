@@ -23,6 +23,14 @@ This script handles the uploading of a post. It will also update a tag's categor
 
 ## F.A.Q
 
+### How to use a newer neo-scraper version?
+
+Running the below command will pull the latest neo-scraper version from github.
+
+```sh
+yarn upgrade neo-scraper
+```
+
 ### Why send the DOM to the ILoader instead of just a URL?
 
 If we send a URL to the ILoader it has to download the page again itself, which can go wrong in a dozen ways:

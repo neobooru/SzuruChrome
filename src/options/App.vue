@@ -47,16 +47,6 @@
             the tag does not yet exist.
           </p>
         </li>
-        <li>
-          <label>
-            <input type="checkbox" v-model="loadTagCounts" />
-            Use temporary files when reverse searching and creating posts
-          </label>
-          <p class="hint">
-            When reverse searching for a post this will (temporarily) upload the post to the server. This makes creating
-            the post faster because then the file already exists on the server.
-          </p>
-        </li>
       </ul>
 
       <div class="settings-footer">
