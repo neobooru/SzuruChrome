@@ -1935,9 +1935,10 @@ neo-async@^2.6.2:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-"neo-scraper@git+https://github.com/neobooru/neo-scraper.git":
-  version "0.5.5"
-  resolved "git+https://github.com/neobooru/neo-scraper.git#75f5c201b4a4779928002d8cbb0c2dac03786353"
+neo-scraper@^0.5.6:
+  version "0.5.6"
+  resolved "https://registry.yarnpkg.com/neo-scraper/-/neo-scraper-0.5.6.tgz#ebc0f38247476fc91c141caa006773f10b65d1ff"
+  integrity sha512-++rJx7wWWbV7Or0/YIXMRPNoVjJHSpAj5NFmhjTI2GrW1ekxU8ks2Of0+8grqGpn9eJ4YpUx4R7JUYVe5G4alg==
   dependencies:
     turndown "^7.1.1"
 
