@@ -43,7 +43,7 @@
 
         <div class="section-row">
           <span class="section-label">Source</span>
-          <input type="text" v-model="selectedPost.source" />
+          <textarea v-model="selectedPost.source" />
         </div>
       </div>
 
@@ -70,7 +70,7 @@
               @click="onClickAutocompleteTagItem(tag)"
               :key="tag.name"
               :class="{
-                active: idx == autocompleteIndex
+                active: idx == autocompleteIndex,
               }"
             >
               <span :class="getTagClasses(tag)">{{ tag.name }}</span>
@@ -158,7 +158,7 @@ export default Vue.extend({
       cancelSource: null as CancelTokenSource | null,
       autocompleteIndex: -1,
       showTagUsages: false,
-      showFindSimilarButton: true
+      showFindSimilarButton: true,
     };
   },
   watch: {
@@ -167,13 +167,13 @@ export default Vue.extend({
         // No need to check if any vars are unset, findSimilar does that internally
         this.findSimilar();
       }
-    }
+    },
   },
   methods: {
     async getActiveTabId() {
       const activeTabs = await browser.tabs.query({
         active: true,
-        currentWindow: true
+        currentWindow: true,
       });
 
       if (activeTabs.length > 0) return activeTabs[0].id!;
@@ -198,8 +198,11 @@ export default Vue.extend({
           const vm = new PostViewModel(result.posts[i]);
           vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
 
-          if (!this.config?.useOriginalSource || vm.source == undefined) {
-            vm.source = vm.pageUrl;
+          // Add current pageUrl to the source if either
+          // a. source is empty
+          // b. user has addPageUrlToSource set to true
+          if (this.config?.addPageUrlToSource || vm.source == "") {
+            vm.source += vm.pageUrl + "\n";
           }
 
           this.posts.push(vm);
@@ -308,7 +311,7 @@ export default Vue.extend({
     addTag(tag: TagViewModel) {
       if (this.selectedPost) {
         // Only add tag if it doesn't already exist
-        if (tag.name.length > 0 && this.selectedPost.tags.find(x => x.name == tag.name) == undefined) {
+        if (tag.name.length > 0 && this.selectedPost.tags.find((x) => x.name == tag.name) == undefined) {
           this.selectedPost.tags.push(tag);
 
           // Add implications for the tag
@@ -375,12 +378,12 @@ export default Vue.extend({
       return undefined;
     },
     async loadTagCounts() {
-      const allTags = this.posts.flatMap(x => x.tags);
+      const allTags = this.posts.flatMap((x) => x.tags);
 
       for (let i = 0; i < allTags.length; i += 100) {
         const query = allTags
           .slice(i, i + 101)
-          .map(x => encodeTagName(x.name))
+          .map((x) => encodeTagName(x.name))
           .join();
         const resp = await this.szuru?.getTags(query);
 
@@ -467,9 +470,9 @@ export default Vue.extend({
         this.cancelSource.token
       );
 
-      this.autocompleteTags = resp!.results.map(x => TagViewModel.fromTag(x));
+      this.autocompleteTags = resp!.results.map((x) => TagViewModel.fromTag(x));
       if (this.autocompleteTags.length > 0) this.autocompleteShown = true;
-    }
+    },
   },
   async mounted() {
     this.config = await Config.load();
@@ -520,7 +523,7 @@ export default Vue.extend({
         }
 
         return <WebRequest.BlockingResponse>{
-          requestHeaders
+          requestHeaders,
         };
       },
       { urls: ["<all_urls>"] },
@@ -529,7 +532,7 @@ export default Vue.extend({
 
     // Always call grabPost, even when there is no activeSite
     await this.grabPost();
-  }
+  },
 });
 </script>
 

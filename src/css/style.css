@@ -21,15 +21,28 @@ button.primary {
 }
 
 input[type="text"] {
+  height: 26px;
+}
+
+input[type="text"],
+textarea {
   background-color: #fafafa;
   border: 1px solid #eee;
-  height: 26px;
   width: 100%;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus,
+textarea:focus {
   outline: #24aadd solid 2px;
   box-sizing: content-box;
+}
+
+textarea {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll;
+  text-overflow: ellipsis;
+  resize: vertical;
 }
 
 img {

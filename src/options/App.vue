@@ -29,12 +29,13 @@
         </li>
         <li>
           <label>
-            <input type="checkbox" v-model="useOriginalSource" />
-            Use original image source when available
+            <input type="checkbox" v-model="addPageUrlToSource" />
+            Add page URL to the source list
           </label>
           <p class="hint">
-            Use the original image source when available. Usually this will mean a Twitter, DeviantArt, ArtStation, or
-            Pixiv page.
+            This will add the current page URL (e.g. the booru link) to the source list in addition to the actual source
+            (e.g. twitter/pixiv/artstation). Note: if the source is empty/not detected then the page URL will always be
+            used as fallback source.
           </p>
         </li>
         <li>
@@ -74,7 +75,7 @@ export default Vue.extend({
       authToken: "",
       autoSearchSimilar: false,
       loadTagCounts: false,
-      useOriginalSource: false,
+      addPageUrlToSource: false,
       useContentTokens: false,
       statusText: "",
       statusType: "",
@@ -114,7 +115,7 @@ export default Vue.extend({
       config.sites = [siteConfig];
       config.autoSearchSimilar = this.autoSearchSimilar;
       config.loadTagCounts = this.loadTagCounts;
-      config.useOriginalSource = this.useOriginalSource;
+      config.addPageUrlToSource = this.addPageUrlToSource;
       config.useContentTokens = this.useContentTokens;
 
       await config.save();
@@ -140,7 +141,7 @@ export default Vue.extend({
 
     this.autoSearchSimilar = config.autoSearchSimilar;
     this.loadTagCounts = config.loadTagCounts;
-    this.useOriginalSource = config.useOriginalSource;
+    this.addPageUrlToSource = config.addPageUrlToSource;
     this.useContentTokens = config.useContentTokens;
   },
 });

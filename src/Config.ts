@@ -10,7 +10,7 @@ export class Config {
   importExistingTags = true;
   importAllTags = false;
   importCommentary = false;
-  useOriginalSource = true;
+  addPageUrlToSource = true;
   autoSearchSimilar = false;
   loadTagCounts = true;
   useContentTokens = true;

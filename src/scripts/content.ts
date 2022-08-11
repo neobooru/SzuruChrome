@@ -4,7 +4,7 @@ import { BrowserCommand } from "../Common";
 
 function grabPost(): ScrapeResults {
   const scraper = new NeoScraper();
-  return scraper.scrapeDocument(document, undefined, true);
+  return scraper.scrapeDocument(document, true);
 }
 
 async function messageHandler(cmd: BrowserCommand): Promise<any> {
