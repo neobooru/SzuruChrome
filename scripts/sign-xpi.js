@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 
-const path = require("path");
-const { existsSync, renameSync } = require("fs");
-const { argv, exit } = require("process");
-const { signAddon } = require("sign-addon");
-const { version } = require("../package.json");
+import { fileURLToPath } from 'url';
+import { join } from "path";
+import { existsSync, renameSync } from "fs";
+import { argv, exit } from "process";
+import { signAddon } from 'sign-addon';
+import info from "../package.json" assert { type: "json" };
 
-const RELEASE_DIR = path.join(__dirname, "../release");
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const version = info.version;
+const RELEASE_DIR = join(__dirname, "../release");
 
 async function main() {
-  const args = process.argv.slice(2);
+  const args = argv.slice(2);
   if (args.length != 3) {
     console.log("USAGE: yarn sign-zip <extension_id> <api_key> <api_secret>");
     exit(1);
@@ -19,8 +22,8 @@ async function main() {
   const apiKey = args[1];
   const apiSecret = args[2];
 
-  const zipPath = path.join(RELEASE_DIR, `SzuruChrome-${version}.zip`);
-  const xpiPath = path.join(RELEASE_DIR, `SzuruChrome-${version}.xpi`);
+  const zipPath = join(RELEASE_DIR, `SzuruChrome-${version}.zip`);
+  const xpiPath = join(RELEASE_DIR, `SzuruChrome-${version}.xpi`);
 
   // Ensure the file exists.
   if (!existsSync(zipPath)) {

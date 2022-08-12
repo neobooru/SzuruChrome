@@ -12,7 +12,7 @@
     "build": "webpack --config webpack.prod.cjs",
     "build:dev": "webpack --config webpack.dev.cjs",
     "build-zip": "node scripts/build-zip.cjs",
-    "sign-xpi": "node scripts/sign-xpi.cjs",
+    "sign-xpi": "node scripts/sign-xpi.js",
     "watch": "webpack --watch --config webpack.dev.cjs",
     "lint": "eslint src"
   },
