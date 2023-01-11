@@ -4,8 +4,11 @@ import "../css/solid.css";
 
 import Vue from "vue";
 import App from "./App.vue";
+import { applyTheme } from "../Common";
+
+applyTheme();
 
 new Vue({
   el: "#app",
-  render: h => h(App)
+  render: (h) => h(App),
 });

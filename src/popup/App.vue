@@ -580,7 +580,7 @@ video {
 .section-header {
   height: 30px;
   padding: 0 6px 0 10px;
-  background-color: #eee;
+  background-color: var(--section-header-bg-color);
 
   display: flex;
   justify-content: space-between;
@@ -590,6 +590,7 @@ video {
 .section-header > span {
   font-size: 1.2em;
   vertical-align: middle;
+  color: var(--section-header-fg-color);
 }
 
 .section-row {
@@ -612,8 +613,8 @@ video {
 .autocomplete-items {
   position: absolute;
   z-index: 10;
-  background-color: white;
-  border: 2px solid #24aadd;
+  background-color: var(--bg-main-color);
+  border: 2px solid var(--primary-color);
   margin-top: 34px;
   display: none;
 }
@@ -628,19 +629,19 @@ video {
 }
 
 .autocomplete-items > div:hover {
-  background: #24aadd;
+  background: var(--primary-color);
 }
 
 .autocomplete-items > div:hover > span {
-  color: #fff;
+  color: var(--text-color);
 }
 
 .autocomplete-items > div.active {
-  background: #24aadd;
+  background: var(--primary-color);
 }
 
 .autocomplete-items > div.active > span {
-  color: #fff;
+  color: var(--text-color);
 }
 
 /* Hacky way to stop the layout from resizing when we lazy load the usage count. */

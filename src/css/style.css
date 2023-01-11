@@ -1,3 +1,31 @@
+:root {
+  --button-bg-color: #a2a2a2;
+  --primary-color: #24aadd;
+  --bg-main-color: #fff;
+  --bg-secondary-color: #fafafa;
+  --border-color: #eee;
+  --secondary-text: #888;
+  --error-color: #f44336;
+  --success-color: #4caf50;
+  --section-header-fg-color: #4c4c4c;
+  --section-header-bg-color: #eee;
+  --text-color: #111;
+}
+
+html[data-theme="dark"] {
+  --button-bg-color: #666;
+  --primary-color: #1b87b0;
+  --bg-main-color: #1a1a1a;
+  --bg-secondary-color: #3e3e3e;
+  --border-color: #474747;
+  --section-header-fg-color: #d9d9d9;
+  --section-header-bg-color: #272727;
+  --text-color: #e6e6e6;
+
+  color: var(--text-color);
+  background-color: var(--bg-main-color);
+}
+
 body {
   margin: 0px;
   font-family: "Open Sans", sans-serif;
@@ -6,7 +34,7 @@ body {
 }
 
 button {
-  background-color: #a2a2a2;
+  background-color: var(--button-bg-color);
   border: none;
   color: white;
   font-family: "Open Sans", sans-serif;
@@ -17,7 +45,7 @@ button {
 }
 
 button.primary {
-  background-color: #24aadd;
+  background-color: var(--primary-color);
 }
 
 input[type="text"] {
@@ -26,14 +54,15 @@ input[type="text"] {
 
 input[type="text"],
 textarea {
-  background-color: #fafafa;
-  border: 1px solid #eee;
+  color: var(--text-color);
+  background-color: var(--bg-secondary-color);
+  border: 1px solid var(--border-color);
   width: 100%;
 }
 
 input[type="text"]:focus,
 textarea:focus {
-  outline: #24aadd solid 2px;
+  outline: var(--primary-color) solid 2px;
   box-sizing: content-box;
 }
 
@@ -55,8 +84,9 @@ img {
 }
 
 select {
-  background-color: #fafafa;
-  border: 1px solid #eee;
+  color: var(--text-color);
+  background-color: var(--bg-secondary-color);
+  border: 1px solid var(--border-color);
   height: 30px;
   width: 100%;
 }
@@ -78,7 +108,7 @@ ul.compact,
 }
 
 .tag-general {
-  color: #24aadd;
+  color: var(--primary-color);
 }
 
 .tag-copyright {
@@ -107,7 +137,7 @@ ul.compact,
 
 .remove-tag,
 .tag-usages {
-  color: #888;
+  color: var(--secondary-text);
 }
 
 a.remove-tag {
@@ -131,7 +161,7 @@ a.remove-tag {
 .messages > li {
   padding: 5px;
   border-radius: 2px;
-  background: #24aadd;
+  background: var(--primary-color);
   color: white;
 }
 
@@ -149,9 +179,9 @@ a.remove-tag {
 }
 
 .message-error {
-  background: #f44336 !important;
+  background: var(--error-color) !important;
 }
 
 .message-success {
-  background: #4caf50 !important;
+  background: var(--success-color) !important;
 }

@@ -1,3 +1,5 @@
+import { Config, Theme } from "./Config";
+
 export type BrowserCommandName = "grab_post" | "upload_post" | "push_message" | "remove_messages";
 export type MessageType = "error" | "info" | "success";
 
@@ -39,4 +41,15 @@ export function encodeTagName(tagName: string) {
   // Searching for posts with re:zero will show an error message about unknown named token.
   // Searching for posts with re\:zero will show posts tagged with re:zero.
   return tagName.replace(/:/g, "\\:");
+}
+
+export async function applyTheme(theme?: Theme) {
+  if (!theme) {
+    var cfg = await Config.load();
+    theme = cfg.theme;
+  }
+  if (theme == "system") {
+    theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  document.documentElement.setAttribute("data-theme", theme);
 }

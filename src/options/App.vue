@@ -7,12 +7,21 @@
 
       <ul class="input">
         <li class="full-width">
-          <label>Szurubooru URL</label><input text="Szurubooru URL" type="text" name="domain" v-model="domain" />
+          <label>Szurubooru URL</label>
+          <input text="Szurubooru URL" type="text" name="domain" v-model="domain" />
         </li>
         <li><label>Username</label><input text="Username" type="text" name="username" v-model="username" /></li>
+        <li style="min-width: 320px">
+          <label>Authentication token</label>
+          <input text="Authentication token" type="text" name="token" v-model="authToken" />
+        </li>
         <li>
-          <label>Authentication token</label
-          ><input text="Authentication token" type="text" name="token" v-model="authToken" />
+          <label>Theme</label>
+          <select v-model="theme">
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
         </li>
       </ul>
 
@@ -63,7 +72,8 @@
 <script lang="ts">
 import Vue from "vue";
 import SzuruWrapper from "../SzuruWrapper";
-import { Config, SzuruSiteConfig } from "../Config";
+import { Config, SzuruSiteConfig, Theme } from "../Config";
+import { applyTheme } from "../Common";
 
 type StatusType = "ok" | "error";
 
@@ -77,6 +87,7 @@ export default Vue.extend({
       loadTagCounts: false,
       addPageUrlToSource: false,
       useContentTokens: false,
+      theme: "system" as Theme,
       statusText: "",
       statusType: "",
     };
@@ -117,6 +128,7 @@ export default Vue.extend({
       config.loadTagCounts = this.loadTagCounts;
       config.addPageUrlToSource = this.addPageUrlToSource;
       config.useContentTokens = this.useContentTokens;
+      config.theme = this.theme;
 
       await config.save();
 
@@ -143,6 +155,10 @@ export default Vue.extend({
     this.loadTagCounts = config.loadTagCounts;
     this.addPageUrlToSource = config.addPageUrlToSource;
     this.useContentTokens = config.useContentTokens;
+    this.theme = config.theme;
+  },
+  watch: {
+    theme: (value) => applyTheme(value),
   },
 });
 </script>
@@ -165,6 +181,10 @@ export default Vue.extend({
 .content-holder > .content-wrapper:not(.transparent) {
   background: #f5f5f5;
   padding: 1.8em;
+}
+
+html[data-theme="dark"] .content-holder > .content-wrapper:not(.transparent) {
+  background: var(--section-header-bg-color);
 }
 
 .settings-footer {
@@ -195,7 +215,7 @@ export default Vue.extend({
 }
 
 .input li {
-  flex: 1 0 20em;
+  flex: 1 0 200px;
 }
 
 .input li.full-width {
@@ -210,7 +230,7 @@ export default Vue.extend({
 .hint {
   margin-top: 0.2em;
   margin-bottom: 0;
-  color: #888;
+  color: var(--secondary-text);
   font-size: 80%;
   line-height: 120%;
 }
@@ -228,10 +248,10 @@ textarea {
   text-overflow: ellipsis;
   width: 100%;
   box-sizing: border-box;
-  border: 2px solid #eee;
-  background: #fafafa;
-  color: #111;
+  border: 2px solid var(--border-color);
+  background: var(--bg-secondary-color);
+  color: var(--text-color);
   box-shadow: none;
-  transition: border-color 0.1s linear, background-color 0.1s linear;
+  /* transition: border-color 0.1s linear, background-color 0.1s linear; */
 }
 </style>
