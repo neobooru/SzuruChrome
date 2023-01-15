@@ -12,63 +12,63 @@ module.exports = {
     "scripts/background": { import: "./scripts/background.ts", dependOn: "vendor" },
     "popup/popup": { import: "./popup/popup.ts", dependOn: "vendor" },
     "options/options": { import: "./options/options.ts", dependOn: "vendor" },
-    vendor: ["axios", "neo-scraper", "vue", "webextension-polyfill-ts"]
+    vendor: ["axios", "neo-scraper", "vue", "webextension-polyfill-ts"],
   },
   output: {
     path: __dirname + "/dist",
-    filename: "[name].js"
+    filename: "[name].js",
   },
   resolve: {
-    extensions: [".ts", ".js", ".vue"]
+    extensions: [".ts", ".js", ".vue"],
   },
   module: {
     rules: [
       {
         test: /\.vue$/,
-        loader: "vue-loader"
+        loader: "vue-loader",
       },
       {
         test: /\.tsx?$/,
         loader: "ts-loader",
         exclude: /node_modules/,
         options: {
-          appendTsSuffixTo: [/\.vue$/]
-        }
+          appendTsSuffixTo: [/\.vue$/],
+        },
       },
       {
-        test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, "css-loader"]
+        test: /.s?css$/,
+        use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"],
       },
       {
         test: /\.(png|jpg|gif|svg|ico)$/,
         type: "asset/resource",
         generator: {
-          filename: "[name][ext]"
-        }
+          filename: "[name][ext]",
+        },
       },
       {
         test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
         type: "asset/resource",
         generator: {
-          filename: "fonts/[name][ext]"
-        }
+          filename: "fonts/[name][ext]",
+        },
       },
       // Added because https://github.com/graphql/graphql-js/issues/2721#issuecomment-723008284 (not a GraphQL specific issue).
       {
         test: /\.m?js/,
         resolve: {
-            fullySpecified: false
-        }
+          fullySpecified: false,
+        },
       },
-    ]
+    ],
   },
   plugins: [
     new webpack.DefinePlugin({
-      global: "window"
+      global: "window",
     }),
     new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
-      filename: "[name].css"
+      filename: "[name].css",
     }),
     new CopyPlugin({
       patterns: [
@@ -78,7 +78,7 @@ module.exports = {
         {
           from: "manifest.json",
           to: "manifest.json",
-          transform: content => {
+          transform: (content) => {
             const jsonContent = JSON.parse(content);
             jsonContent.version = version;
 
@@ -87,16 +87,16 @@ module.exports = {
             // }
 
             return JSON.stringify(jsonContent, null, 2);
-          }
-        }
-      ]
-    })
+          },
+        },
+      ],
+    }),
   ],
   optimization: {
     minimizer: [
       new TerserPlugin({
-        extractComments: false
+        extractComments: false,
       })
-    ]
-  }
+    ],
+  },
 };

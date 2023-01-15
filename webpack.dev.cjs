@@ -4,11 +4,15 @@ const common = require("./webpack.common.cjs");
 
 module.exports = merge(common, {
   mode: "development",
-  devtool: "inline-source-map",
-  // plugins: [
-  //   ...common.plugins,
-  //   new ExtensionReloader({
-  //     manifest: __dirname + "/src/manifest.json"
-  //   })
-  // ]
+  devtool: "source-map",
+  plugins: [
+    new ExtensionReloader({
+      reloadPage: true,
+      entries: {
+        contentScript: "scripts/content",
+        background: "scripts/background",
+        extensionPage: ["popup/popup", "options/options"],
+      },
+    }),
+  ],
 });

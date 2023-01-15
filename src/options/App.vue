@@ -163,24 +163,24 @@ export default Vue.extend({
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .content-holder {
   padding: 1.5em;
   display: flex;
   justify-content: center;
-}
 
-.content-holder > .content-wrapper {
-  box-sizing: border-box;
-  text-align: left;
-  display: inline-block;
-  flex: auto;
-  max-width: 1000px;
-}
+  > .content-wrapper {
+    box-sizing: border-box;
+    text-align: left;
+    display: inline-block;
+    flex: auto;
+    max-width: 1000px;
 
-.content-holder > .content-wrapper:not(.transparent) {
-  background: #f5f5f5;
-  padding: 1.8em;
+    &:not(.transparent) {
+      background: #f5f5f5;
+      padding: 1.8em;
+    }
+  }
 }
 
 html[data-theme="dark"] .content-holder > .content-wrapper:not(.transparent) {
@@ -191,40 +191,39 @@ html[data-theme="dark"] .content-holder > .content-wrapper:not(.transparent) {
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
-}
 
-.settings-footer .status {
-  flex-grow: 1;
-}
+  .status {
+    flex-grow: 1;
+  }
 
-.settings-footer > span.status-ok {
-  color: green;
-}
+  > span.status-ok {
+    color: green;
+  }
 
-.settings-footer > span.status-error {
-  color: red;
+  > span.status-error {
+    color: red;
+  }
 }
 
 .input {
   list-style-type: none;
-  margin: 0 0 2em;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-}
 
-.input li {
-  flex: 1 0 200px;
-}
+  li {
+    flex: 1 0 200px;
+  }
 
-.input li.full-width {
-  min-width: 100%;
-}
+  li.full-width {
+    min-width: 100%;
+  }
 
-.input label {
-  display: block;
-  padding: 0.3em 0;
+  label {
+    display: block;
+    padding: 0.3em 0;
+  }
 }
 
 .hint {
@@ -233,25 +232,5 @@ html[data-theme="dark"] .content-holder > .content-wrapper:not(.transparent) {
   color: var(--secondary-text);
   font-size: 80%;
   line-height: 120%;
-}
-
-input[type="email"],
-input[type="number"],
-input[type="password"],
-input[type="text"],
-select,
-textarea {
-  vertical-align: top;
-  font-family: "Droid Sans", sans-serif;
-  font-size: 100%;
-  padding: 0.2em 0.3em;
-  text-overflow: ellipsis;
-  width: 100%;
-  box-sizing: border-box;
-  border: 2px solid var(--border-color);
-  background: var(--bg-secondary-color);
-  color: var(--text-color);
-  box-shadow: none;
-  /* transition: border-color 0.1s linear, background-color 0.1s linear; */
 }
 </style>

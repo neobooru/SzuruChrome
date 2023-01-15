@@ -28,17 +28,17 @@ async function uploadPost(post: PostViewModel) {
 
     // Find tags with "default" category and update it
     // TODO: Make all these categories configurable
-    const tagsWithCategory = post.tags.filter(x => x.category);
+    const tagsWithCategory = post.tags.filter((x) => x.category);
     const unsetCategoryTags = createdPost.tags
-      .filter(x => x.category == "default")
-      .filter(x => tagsWithCategory.some(y => x.names.includes(y.name)));
+      .filter((x) => x.category == "default")
+      .filter((x) => tagsWithCategory.some((y) => x.names.includes(y.name)));
 
     if (unsetCategoryTags.length != 0) {
       browser.runtime.sendMessage(
         new BrowserCommand("push_message", new Message(`${unsetCategoryTags.length} tags need a different category`))
       );
       // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
-      const query = unsetCategoryTags.map(x => encodeTagName(x.names[0])).join();
+      const query = unsetCategoryTags.map((x) => encodeTagName(x.names[0])).join();
       const tags = (await szuru.getTags(query)).results;
       const existingCategories = (await szuru.getTagCategories()).results;
       let categoriesChangedCount = 0;
@@ -49,8 +49,8 @@ async function uploadPost(post: PostViewModel) {
           new BrowserCommand("push_message", new Message(`Updating tag ${i}/${unsetCategoryTags.length}`))
         );
 
-        const wantedCategory = tagsWithCategory.find(x => tags[i].names.includes(x.name))!.category!;
-        if (existingCategories.some(x => x.name == wantedCategory)) {
+        const wantedCategory = tagsWithCategory.find((x) => tags[i].names.includes(x.name))!.category!;
+        if (existingCategories.some((x) => x.name == wantedCategory)) {
           tags[i].category = wantedCategory;
           await szuru.updateTag(tags[i]);
           categoriesChangedCount++;

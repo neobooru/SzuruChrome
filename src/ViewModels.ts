@@ -43,13 +43,7 @@ export class PostViewModel {
     this.pageUrl = post.pageUrl;
     this.contentType = post.contentType;
     this.rating = post.rating;
-
-    if (post.sources.length > 0) {
-      // Add extra newline at the end for user convenience. This allows the user to click below the last source line to add something.
-      // But we only do this if there is at least one source, otherwise we get a blank line when there are zero sources.
-      this.source = post.sources.join("\n") + "\n";
-    }
-
+    this.source = post.sources.join("\n");
     this.referrer = post.referrer;
     this.tags = post.tags.map((x) => TagViewModel.fromScapedTag(x));
     this.notes = post.notes;

@@ -1,4 +1,5 @@
-import "../css/style.css";
+import "normalize.css";
+import "../css/style.scss";
 
 import Vue from "vue";
 import App from "./App.vue";

@@ -6,123 +6,127 @@
       </ul>
     </div>
 
-    <div class="popup-left">
-      <div class="popup-section">
-        <div class="section-header">
-          <span>Basic info</span>
-          <i class="fas fa-cog cursor-pointer" @click="openSettings"></i>
-        </div>
-
-        <div class="section-row" v-if="selectedPost.resolution != undefined">
-          <ul class="compact">
-            <li>Resolution: {{ resolutionToString(selectedPost.resolution) }}</li>
-          </ul>
-        </div>
-
-        <div class="section-row">
-          <span class="section-label">Safety</span>
-
-          <label class="container">
-            <input type="radio" value="safe" v-model="selectedPost.rating" />
-            <span class="checkmark"></span>
-            Safe
-          </label>
-
-          <label class="container">
-            <input type="radio" value="sketchy" v-model="selectedPost.rating" />
-            <span class="checkmark"></span>
-            Sketchy
-          </label>
-
-          <label class="container">
-            <input type="radio" value="unsafe" v-model="selectedPost.rating" />
-            <span class="checkmark"></span>
-            Unsafe
-          </label>
-        </div>
-
-        <div class="section-row">
-          <span class="section-label">Source</span>
-          <textarea v-model="selectedPost.source" />
-        </div>
-      </div>
-
-      <div class="popup-section">
-        <div class="section-header">
-          <span>Tags</span>
-        </div>
-
-        <div class="section-row" style="display: flex; flex-direction: column">
-          <div style="display: flex">
-            <input
-              type="text"
-              v-model="addTagInput"
-              @keyup="onAddTagKeyUp"
-              @keydown="onAddTagKeyDown"
-              autocomplete="off"
-            />
-            <button class="primary" style="margin-left: 5px" @click="addTagFromCurrentInput">Add</button>
+    <div class="popup-columns">
+      <div class="popup-left">
+        <div class="popup-section">
+          <div class="section-header">
+            <span>Basic info</span>
+            <i class="fas fa-cog cursor-pointer" @click="openSettings"></i>
           </div>
 
-          <div class="autocomplete-items" v-bind:class="{ show: autocompleteShown }">
-            <div
-              v-for="(tag, idx) in autocompleteTags"
-              @click="onClickAutocompleteTagItem(tag)"
-              :key="tag.name"
-              :class="{
-                active: idx == autocompleteIndex,
-              }"
-            >
-              <span :class="getTagClasses(tag)">{{ tag.name }}</span>
-              <span class="tag-usages">{{ tag.usages ? tag.usages : "" }}</span>
+          <div class="section-row" v-if="selectedPost.resolution != undefined">
+            <ul class="compact">
+              <li>Resolution: {{ resolutionToString(selectedPost.resolution) }}</li>
+            </ul>
+          </div>
+
+          <div class="section-row">
+            <span class="section-label">Safety</span>
+
+            <div class="flex">
+              <label>
+                <input type="radio" value="safe" v-model="selectedPost.rating" />
+                <span class="checkmark"></span>
+                Safe
+              </label>
+
+              <label>
+                <input type="radio" value="sketchy" v-model="selectedPost.rating" />
+                <span class="checkmark"></span>
+                Sketchy
+              </label>
+
+              <label>
+                <input type="radio" value="unsafe" v-model="selectedPost.rating" />
+                <span class="checkmark"></span>
+                Unsafe
+              </label>
             </div>
           </div>
+
+          <div class="section-row">
+            <span class="section-label">Source</span>
+            <textarea v-model="selectedPost.source" />
+          </div>
         </div>
 
-        <div class="section-row">
-          <ul class="compact-tags">
-            <li v-for="tag in selectedPost.tags" :key="tag.name">
-              <a class="remove-tag" @click="removeTag(tag)">x</a>
-              <span :class="getTagClasses(tag)" v-html="breakTagName(tag.name)"></span>
-              <span v-if="showTagUsages" class="tag-usages tag-usages-reserve-space">{{
-                tag.usages ? tag.usages : ""
-              }}</span>
-            </li>
-          </ul>
+        <div class="popup-section">
+          <div class="section-header">
+            <span>Tags</span>
+          </div>
+
+          <div class="section-row" style="display: flex; flex-direction: column">
+            <div style="display: flex">
+              <input
+                type="text"
+                v-model="addTagInput"
+                @keyup="onAddTagKeyUp"
+                @keydown="onAddTagKeyDown"
+                autocomplete="off"
+              />
+              <button class="primary" style="margin-left: 5px" @click="addTagFromCurrentInput">Add</button>
+            </div>
+
+            <div class="autocomplete-items" v-bind:class="{ show: autocompleteShown }">
+              <div
+                v-for="(tag, idx) in autocompleteTags"
+                @click="onClickAutocompleteTagItem(tag)"
+                :key="tag.name"
+                :class="{
+                  active: idx == autocompleteIndex,
+                }"
+              >
+                <span :class="getTagClasses(tag)">{{ tag.name }}</span>
+                <span class="tag-usages">{{ tag.usages ? tag.usages : "" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-row">
+            <ul class="compact-tags">
+              <li v-for="tag in selectedPost.tags" :key="tag.name">
+                <a class="remove-tag" @click="removeTag(tag)">x</a>
+                <span :class="getTagClasses(tag)" v-html="breakTagName(tag.name)"></span>
+                <span v-if="showTagUsages" class="tag-usages tag-usages-reserve-space">{{
+                  tag.usages ? tag.usages : ""
+                }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="popup-section">
+          <div class="section-row">
+            <select disabled>
+              <option>{{ activeSite != null ? activeSite.domain : "(no site available)" }}</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div class="popup-section">
-        <div class="section-row">
-          <select disabled>
-            <option>{{ activeSite != null ? activeSite.domain : "(no site available)" }}</option>
+      <div class="popup-right">
+        <div class="popup-section">
+          <select v-model="selectedPost">
+            <option v-for="post in posts" v-bind:key="post.name" v-bind:value="post">{{ post.name }}</option>
           </select>
         </div>
-      </div>
-    </div>
 
-    <div class="popup-right">
-      <div class="popup-section">
-        <select v-model="selectedPost">
-          <option v-for="post in posts" v-bind:key="post.name" v-bind:value="post">{{ post.name }}</option>
-        </select>
-      </div>
-
-      <div class="popup-section">
-        <div style="display: flex; gap: 5px">
-          <button v-if="showFindSimilarButton" class="primary" @click="findSimilar">Find similar</button>
-          <button class="primary full" @click="upload">Import</button>
+        <div class="popup-section">
+          <div style="display: flex; gap: 5px">
+            <button v-if="showFindSimilarButton" class="primary" @click="findSimilar">Find similar</button>
+            <button class="primary full" @click="upload">Import</button>
+          </div>
         </div>
-      </div>
 
-      <div class="popup-section">
-        <div class="post-container">
-          <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
-          <video v-if="selectedPost.contentType == 'video'" controls>
-            <source :src="selectedPost.contentUrl" />
-          </video>
-          <div class="post-overlay">
-            <PostNotes :notes="selectedPost.notes" />
+        <div class="popup-section">
+          <div class="post-container">
+            <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
+            <video v-if="selectedPost.contentType == 'video'" controls>
+              <source :src="selectedPost.contentUrl" />
+            </video>
+            <div class="post-overlay">
+              <PostNotes :notes="selectedPost.notes" />
+            </div>
           </div>
         </div>
       </div>
@@ -199,10 +203,11 @@ export default Vue.extend({
           vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
 
           // Add current pageUrl to the source if either
-          // a. source is empty
-          // b. user has addPageUrlToSource set to true
+          // a. user has addPageUrlToSource set to true
+          // b. source is empty
           if (this.config?.addPageUrlToSource || vm.source == "") {
-            vm.source += vm.pageUrl + "\n";
+            if (vm.source != "") vm.source += "\n";
+            vm.source += vm.pageUrl;
           }
 
           this.posts.push(vm);
@@ -536,27 +541,27 @@ export default Vue.extend({
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 video {
   width: 100%;
 }
 
-.popup-container {
-  width: 780px;
-  display: grid;
+textarea,
+select {
+  font-size: 90%;
 }
 
-/*
-  Override for firefox.
-  This is needed because `width: 780px` shows horizontal scrollbars, where `width: auto` does not.
-  Chrome(-likes) do need the explicit `width: 780px`, which is why we need to have different rules for each of them.
+label {
+  flex: 1 0 auto;
 
-  TODO: Firefox shows the horizontal scrollbar for a split second. Setting `overflow-x: hidden` does NOT fix this.
- */
-@supports (-moz-appearance: none) {
-  .popup-container {
-    width: auto;
+  input[type="radio"] {
+    margin: 3px 3px 0 0;
   }
+}
+
+.popup-container {
+  display: flex;
+  flex-direction: column;
 }
 
 .popup-messages {
@@ -564,13 +569,17 @@ video {
   margin: 0 10px;
 }
 
+.popup-columns {
+  display: flex;
+  flex-direction: row;
+}
+
 .popup-left {
-  grid-column: 1;
-  max-width: 400px;
+  flex: 1 0 auto;
 }
 
 .popup-right {
-  grid-column: 2;
+  flex: 1 1 auto;
 }
 
 .popup-section {
@@ -581,16 +590,15 @@ video {
   height: 30px;
   padding: 0 6px 0 10px;
   background-color: var(--section-header-bg-color);
-
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
 
-.section-header > span {
-  font-size: 1.2em;
-  vertical-align: middle;
-  color: var(--section-header-fg-color);
+  > span {
+    font-size: 1.2em;
+    vertical-align: middle;
+    color: var(--section-header-fg-color);
+  }
 }
 
 .section-row {
@@ -617,31 +625,28 @@ video {
   border: 2px solid var(--primary-color);
   margin-top: 34px;
   display: none;
-}
 
-.autocomplete-items.show {
-  display: block;
-}
+  &.show {
+    display: block;
+  }
 
-.autocomplete-items > div {
-  cursor: pointer;
-  padding: 2px 4px;
-}
+  > div {
+    cursor: pointer;
+    padding: 2px 4px;
+    &:hover {
+      background: var(--primary-color);
+      > span {
+        color: var(--text-color);
+      }
+    }
+  }
 
-.autocomplete-items > div:hover {
-  background: var(--primary-color);
-}
-
-.autocomplete-items > div:hover > span {
-  color: var(--text-color);
-}
-
-.autocomplete-items > div.active {
-  background: var(--primary-color);
-}
-
-.autocomplete-items > div.active > span {
-  color: var(--text-color);
+  > div.active {
+    background: var(--primary-color);
+    > span {
+      color: var(--text-color);
+    }
+  }
 }
 
 /* Hacky way to stop the layout from resizing when we lazy load the usage count. */
@@ -659,6 +664,5 @@ video {
   position: absolute;
   width: 100%;
   height: 100%;
-  /* z-index: 2; */
 }
 </style>
