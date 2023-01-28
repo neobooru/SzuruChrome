@@ -1,16 +1,32 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
-    "sourceMap": true,
+    "baseUrl": ".",
+    "module": "ESNext",
+    "target": "es2016",
+    "lib": [
+      "DOM",
+      "ESNext"
+    ],
     "strict": true,
-    "module": "es2020",
-    "moduleResolution": "node",
-    "target": "es2019",
-    "skipLibCheck": true,
     "esModuleInterop": true,
-    "experimentalDecorators": true,
-    "useUnknownInCatchVariables": false,
-    "lib": ["es2019", "dom"]
+    "incremental": false,
+    "skipLibCheck": true,
+    "jsx": "preserve",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "noUnusedLocals": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": [
+      "vite/client"
+    ],
+    "paths": {
+      "~/*": [
+        "src/*"
+      ]
+    }
   },
-  "include": ["./src/**/*"]
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

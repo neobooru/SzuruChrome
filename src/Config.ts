@@ -1,7 +1,3 @@
-import { browser } from "webextension-polyfill-ts";
-
-export type Theme = "system" | "light" | "dark";
-
 export class SzuruSiteConfig {
   domain = "";
   username = "";
@@ -16,7 +12,6 @@ export class Config {
   autoSearchSimilar = false;
   loadTagCounts = true;
   useContentTokens = true;
-  theme: Theme = "system";
   sites: Array<SzuruSiteConfig> = [];
 
   public async save() {

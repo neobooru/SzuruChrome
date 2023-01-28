@@ -1,0 +1,211 @@
+/* open-sans-regular - latin */
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 400;
+  src: local(""), url("/assets/open-sans-v34-latin-regular.woff2") format("woff2");
+}
+
+body {
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+}
+
+:root {
+  --button-bg-color: #a2a2a2;
+  --primary-color: #24aadd;
+  --bg-main-color: #fff;
+  --bg-secondary-color: #fafafa;
+  --border-color: #eee;
+  --secondary-text: #888;
+  --error-color: #f44336;
+  --success-color: #4caf50;
+  --section-header-fg-color: #4c4c4c;
+  --section-header-bg-color: #eee;
+  --text-color: #111;
+}
+
+html.dark {
+  --button-bg-color: #666;
+  --primary-color: #1b87b0;
+  --bg-main-color: #1a1a1a;
+  --bg-secondary-color: #3e3e3e;
+  --border-color: #474747;
+  --section-header-fg-color: #d9d9d9;
+  --section-header-bg-color: #272727;
+  --text-color: #e6e6e6;
+  color: var(--text-color);
+  background-color: var(--bg-main-color);
+}
+
+body {
+  margin: 0px;
+  display: block;
+}
+
+select,
+button {
+  height: 30px;
+}
+
+button {
+  background-color: var(--button-bg-color);
+  border: none;
+  color: #fff;
+
+  cursor: pointer;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+button.primary {
+  background-color: var(--primary-color);
+}
+
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="text"],
+select {
+  color: var(--text-color);
+  background-color: var(--bg-secondary-color);
+  border: 1px solid var(--border-color);
+
+  padding: 0.2em 0.3em;
+  box-sizing: border-box;
+
+  width: 100%;
+
+  &:focus {
+    outline: var(--primary-color) solid 2px;
+  }
+}
+
+input[type="radio"] {
+  margin: 3px 3px 0 5px;
+}
+
+textarea {
+  color: var(--text-color);
+  background-color: var(--bg-secondary-color);
+  border: 1px solid var(--border-color);
+  width: 100%;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll;
+  text-overflow: ellipsis;
+  resize: vertical;
+
+  &:focus {
+    outline: var(--primary-color) solid 2px;
+    box-sizing: content-box;
+  }
+}
+
+img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.flex {
+  display: flex;
+}
+
+.full {
+  width: 100%;
+}
+
+ul.compact {
+  list-style-type: none;
+  padding: 0;
+  display: inline;
+}
+
+.compact-tags {
+  list-style-type: none;
+  padding: 0;
+  display: inline;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+}
+
+.tag-general {
+  color: var(--primary-color);
+}
+
+.tag-copyright {
+  color: rgb(170, 0, 170);
+}
+
+.tag-character {
+  color: rgb(0, 170, 0);
+}
+
+.tag-artist {
+  color: rgb(170, 0, 0);
+}
+
+.tag-meta {
+  color: rgb(255, 128, 0);
+}
+
+.tag-species {
+  color: rgb(17, 14, 247);
+}
+
+.tag-lore {
+  color: rgb(48, 48, 48);
+}
+
+.remove-tag {
+  color: var(--secondary-text);
+}
+
+.tag-usages {
+  color: var(--secondary-text);
+  font-size: 90%;
+  text-indent: initial;
+}
+
+a.remove-tag {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.messages {
+  list-style-type: none;
+  padding: 0;
+  display: inline;
+
+  > li {
+    padding: 5px;
+    border-radius: 2px;
+    background: var(--primary-color);
+    color: #fff;
+
+    > a {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    &:first-child {
+      margin-top: 10px;
+    }
+
+    &:not(:last-child) {
+      margin-bottom: 5px;
+    }
+  }
+}
+
+.message-error {
+  background: var(--error-color) !important;
+}
+
+.message-success {
+  background: var(--success-color) !important;
+}
