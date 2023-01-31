@@ -11,7 +11,7 @@ export async function getManifest() {
   const manifest: Manifest.WebExtensionManifest = {
     name: pkg.displayName,
     description: pkg.description,
-    version: pkg.version,
+    version: process.env.SZ_VERSION || pkg.version,
     manifest_version: 2,
     icons: {
       16: "./assets/icon-128.png",
@@ -38,6 +38,11 @@ export async function getManifest() {
         js: ["./dist/contentScripts/index.global.js"],
       },
     ],
+    browser_specific_settings: {
+      gecko: {
+        id: "{13372607-2257-4360-8f51-5ce66fa73350}",
+      },
+    },
   };
 
   if (isDev) {

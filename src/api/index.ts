@@ -149,7 +149,7 @@ export default class SzurubooruApi {
     if (this.username && this.authToken) {
       const token = "Token " + btoa(`${this.username}:${this.authToken}`);
       if (!config.headers) config.headers = {};
-      // @ts-expect-error
+      // @ts-expect-error xxx
       config.headers["Authorization"] = token;
     }
 

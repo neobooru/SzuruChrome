@@ -117,11 +117,11 @@ const hoverNoteStyle = computed(() => {
     box-sizing: border-box;
   }
 
-  & :deep(p:last-of-type) {
+  &:deep(p:last-of-type) {
     margin-bottom: 0;
   }
 
-  & :deep(p:first-of-type) {
+  &:deep(p:first-of-type) {
     margin-top: 0;
   }
 }
