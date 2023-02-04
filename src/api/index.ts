@@ -157,7 +157,7 @@ export default class SzurubooruApi {
       return await axios(config);
     } catch (ex: any) {
       const error = ex.response?.data as SzuruError | undefined;
-      throw error ? error : ex;
+      throw error?.name ? error : ex;
     }
   }
 }

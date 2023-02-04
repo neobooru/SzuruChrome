@@ -1,5 +1,5 @@
 import { encodeTagName, getUrl } from "~/utils";
-import { BrowserCommand, Message, PostDetails } from "~/models";
+import { BrowserCommand, Message, PostUploadCommandData } from "~/models";
 import { PostAlreadyUploadedError, SzuruError } from "~/api/models";
 import SzurubooruApi from "~/api";
 import { Config } from "~/config";
@@ -12,24 +12,27 @@ if (import.meta.hot) {
   import("./contentScriptHMR");
 }
 
-async function uploadPost(post: PostDetails) {
-  console.dir(post);
+async function uploadPost(data: PostUploadCommandData) {
+  console.dir(data.post);
 
   const cfg = await Config.load();
+  const selectedSite = cfg.sites.find((x) => x.id == data.siteId);
 
-  if (cfg.sites.length == 0) {
+  if (!selectedSite) {
     // TODO: Generic error handler which also shows the message in the popup frontend.
-    browser.runtime.sendMessage(new BrowserCommand("push_message", new Message("cfg.sites.length == 0", "error")));
+    browser.runtime.sendMessage(
+      new BrowserCommand("push_message", new Message("Selected instance not found in config!", "error"))
+    );
     return;
   }
 
-  const szuru = SzurubooruApi.createFromConfig(cfg.sites[0]);
+  const szuru = SzurubooruApi.createFromConfig(selectedSite);
 
   try {
     // Create and upload post
     browser.runtime.sendMessage(new BrowserCommand("pop_messages", 10));
     browser.runtime.sendMessage(new BrowserCommand("push_message", new Message("Uploading...")));
-    const createdPost = await szuru.createPost(post);
+    const createdPost = await szuru.createPost(data.post);
     browser.runtime.sendMessage(new BrowserCommand("pop_messages", 1));
     browser.runtime.sendMessage(
       new BrowserCommand("push_message", new Message("Uploaded post " + createdPost.id, "success"))
@@ -42,7 +45,7 @@ async function uploadPost(post: PostDetails) {
 
     // Find tags with "default" category and update it
     // TODO: Make all these categories configurable
-    const tagsWithCategory = post.tags.filter((x) => x.category);
+    const tagsWithCategory = data.post.tags.filter((x) => x.category);
     const unsetCategoryTags = createdPost.tags
       .filter((x) => x.category == "default")
       .filter((x) => tagsWithCategory.some((y) => x.names.includes(y.name)));

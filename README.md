@@ -40,11 +40,13 @@ You can download a .zip containing the needed files from the [release tab](https
 
 ```sh
 # Install node modules
-yarn install
+pnpm install
 
-# Use any of the following commands to build
-yarn build
-yarn build:dev
+# Live dev build (watch)
+pnpm dev
+
+# Production build
+pnpm build
 ```
 
 After this you can load them in your browser.  
@@ -61,5 +63,3 @@ These are some things I might work on. Though honestly I don't expect this exten
 - Right click any image on a page to import it
 - Configurable list of tags to always ignore (e.g. tagme, highres)
 - [low priority] Import artist commentary
-- [lowest priority] Move from 'options_page' to 'options_ui'
-- [lowest priority] Multiple szurubooru instances (where you can choose to which one you want to upload the post)

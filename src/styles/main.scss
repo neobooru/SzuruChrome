@@ -1,3 +1,50 @@
+@use "sass:color";
+
+@import "basscss/css/basscss-cp.css";
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 2rem;
+}
+
+.flex-fit {
+  flex: 0 0 100%;
+}
+
+.gap-1 {
+  gap: var(--space-1);
+}
+
+.gap-2 {
+  gap: var(--space-2);
+}
+
+.gap-3 {
+  gap: var(--space-3);
+}
+
+.gap-4 {
+  gap: var(--space-4);
+}
+
+.gapx-1 {
+  column-gap: var(--space-1);
+}
+
+.gapx-2 {
+  column-gap: var(--space-2);
+}
+
+.gapx-3 {
+  column-gap: var(--space-3);
+}
+
+.gapx-4 {
+  column-gap: var(--space-4);
+}
+
 /* open-sans-regular - latin */
 @font-face {
   font-family: "Open Sans";
@@ -11,14 +58,21 @@ body {
   font-size: 16px;
 }
 
+$primary-color: #24aadd;
+$danger-color: #f44336;
+
+$primary-color-dark: color.scale($primary-color, $lightness: -40%);
+$danger-color-dark: color.scale($danger-color, $lightness: -50%);
+// TODO: Darker success color
+
 :root {
   --button-bg-color: #a2a2a2;
-  --primary-color: #24aadd;
+  --primary-color: #{$primary-color};
   --bg-main-color: #fff;
   --bg-secondary-color: #fafafa;
   --border-color: #eee;
   --secondary-text: #888;
-  --error-color: #f44336;
+  --danger-color: #{$danger-color};
   --success-color: #4caf50;
   --section-header-fg-color: #4c4c4c;
   --section-header-bg-color: #eee;
@@ -27,10 +81,11 @@ body {
 
 html.dark {
   --button-bg-color: #666;
-  --primary-color: #1b87b0;
+  --primary-color: #{$primary-color-dark};
   --bg-main-color: #1a1a1a;
   --bg-secondary-color: #3e3e3e;
   --border-color: #474747;
+  --danger-color: #{$danger-color-dark};
   --section-header-fg-color: #d9d9d9;
   --section-header-bg-color: #272727;
   --text-color: #e6e6e6;
@@ -207,10 +262,10 @@ a.remove-tag {
   }
 }
 
-.message-error {
-  background: var(--error-color) !important;
+.bg-danger {
+  background: var(--danger-color) !important;
 }
 
-.message-success {
+.bg-success {
   background: var(--success-color) !important;
 }

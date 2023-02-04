@@ -1,6 +1,7 @@
 export class SzuruSiteConfig {
-  domain = "";
-  username = "";
+  id = window.crypto.randomUUID();
+  domain = "https://example.com";
+  username = "user";
   authToken = "";
 }
 
@@ -13,6 +14,7 @@ export class Config {
   loadTagCounts = true;
   useContentTokens = true;
   sites: Array<SzuruSiteConfig> = [];
+  selectedSiteId: string | undefined = undefined;
 
   public async save() {
     await browser.storage.local.set({

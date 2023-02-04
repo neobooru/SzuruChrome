@@ -25,7 +25,7 @@ export class TagDetails {
   }
 }
 
-export class PostDetails {
+export class ScrapedPostDetails {
   name = "";
   tags: TagDetails[] = [];
   notes: ScrapedNote[];
@@ -72,4 +72,8 @@ export class BrowserCommand<T = any> {
     this.name = name;
     this.data = data;
   }
+}
+
+export class PostUploadCommandData {
+  constructor(public readonly post: ScrapedPostDetails, public readonly siteId: string) {}
 }

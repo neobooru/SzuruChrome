@@ -3,31 +3,49 @@ import { useDark } from "@vueuse/core";
 import axios, { CancelTokenSource } from "axios";
 import { ScrapedPost, ScrapeResults } from "neo-scraper";
 import { getUrl, encodeTagName } from "~/utils";
-import { BrowserCommand, Message, PostDetails, TagDetails, MessageCategory } from "~/models";
+import {
+  BrowserCommand,
+  Message,
+  ScrapedPostDetails,
+  TagDetails,
+  MessageCategory,
+  PostUploadCommandData,
+} from "~/models";
 import SzuruWrapper from "~/api";
 import { ImageSearchResult, Post } from "~/api/models";
 import { isChrome } from "~/env";
 import { Runtime, WebRequest } from "webextension-polyfill";
 import { Ref } from "vue";
-import { Config, SzuruSiteConfig } from "~/config";
+import { Config } from "~/config";
 
 let config = new Config();
-let activeSite = ref<SzuruSiteConfig | undefined>(undefined);
-let posts = reactive([] as PostDetails[]);
-let selectedPost = ref(new PostDetails(new ScrapedPost()));
+let posts = reactive([] as ScrapedPostDetails[]);
+let selectedPost = ref(new ScrapedPostDetails(new ScrapedPost()));
 let messages = reactive<Message[]>([]);
 let addTagInput = ref("");
 let autocompleteShown = ref(false);
 let autocompleteTags = ref<TagDetails[]>([]);
 let cancelSource = ref<CancelTokenSource | undefined>(undefined);
 let autocompleteIndex = ref(-1);
+let selectedSiteId = ref<string | undefined>(undefined);
 
-let szuru = computed(() => {
+const activeSite = computed(() => {
+  if (selectedSiteId.value) {
+    return config.sites.find((x) => x.id == selectedSiteId.value);
+  }
+});
+
+const szuru = computed(() => {
   return activeSite.value ? SzuruWrapper.createFromConfig(activeSite.value) : undefined;
 });
 
 watch(selectedPost, () => {
   findSimilar(selectedPost);
+});
+
+watch(selectedSiteId, async (x) => {
+  config.selectedSiteId = x;
+  await config.save();
 });
 
 function openOptionsPage() {
@@ -61,7 +79,7 @@ async function grabPost() {
 
   for (const result of res.results) {
     for (const i in result.posts) {
-      const vm = new PostDetails(result.posts[i]);
+      const vm = new ScrapedPostDetails(result.posts[i]);
       vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
 
       // Add current pageUrl to the source if either
@@ -87,13 +105,19 @@ async function grabPost() {
 }
 
 async function upload() {
+  if (!selectedSiteId.value) {
+    pushError("No site selected!");
+    return;
+  }
+
   window.scrollTo(0, 0);
 
   // Outsource to background.ts
 
   // TODO: Terrible code.
-  const x = JSON.parse(JSON.stringify(selectedPost.value));
-  const cmd = new BrowserCommand("upload_post", x);
+  const post = JSON.parse(JSON.stringify(selectedPost.value));
+  const cmdData = new PostUploadCommandData(post, selectedSiteId.value);
+  const cmd = new BrowserCommand("upload_post", cmdData);
   await browser.runtime.sendMessage(cmd);
   // TODO: Handle errors/status update
 }
@@ -136,23 +160,23 @@ function getMessageClasses(message: Message) {
 
   switch (message.level) {
     case "error":
-      classes.push("message-error");
+      classes.push("bg-danger");
       break;
     case "success":
-      classes.push("message-success");
+      classes.push("bg-success");
       break;
   }
 
   return classes;
 }
 
-function pushInfo(message: string, category?: MessageCategory): Message {
+function pushInfo(message: string, category: MessageCategory = "none"): Message {
   let msg = new Message(message, "info", category);
   messages.push(msg);
   return msg;
 }
 
-function pushError(message: string, category?: MessageCategory): Message {
+function pushError(message: string, category: MessageCategory = "none"): Message {
   let msg = new Message(message, "error", category);
   messages.push(msg);
   return msg;
@@ -203,7 +227,7 @@ async function clickFindSimilar() {
   return await findSimilar(selectedPost);
 }
 
-async function findSimilar(post: Ref<PostDetails | undefined>) {
+async function findSimilar(post: Ref<ScrapedPostDetails | undefined>) {
   if (!post.value || !szuru.value) {
     return;
   }
@@ -255,7 +279,7 @@ async function findSimilar(post: Ref<PostDetails | undefined>) {
   }
 }
 
-function getPostForUrl(contentUrl: string): PostDetails | undefined {
+function getPostForUrl(contentUrl: string): ScrapedPostDetails | undefined {
   for (const post of posts) {
     if (post.contentUrl == contentUrl) return post;
   }
@@ -368,14 +392,10 @@ async function autocompletePopulator(input: string) {
 
 onMounted(async () => {
   config = await Config.load();
+  selectedSiteId.value = config.selectedSiteId;
 
-  activeSite.value = config.sites.length > 0 ? config.sites[0] : undefined;
-
-  if (!activeSite.value) {
+  if (config.sites.length == 0) {
     pushError("No szurubooru server configured!", "persistent");
-  } else {
-    // TODO: We can probably delete this code, because of the computed(() => ...);
-    // szuru = SzuruWrapper.createFromConfig(this.activeSite);
   }
 
   browser.runtime.onMessage.addListener((cmd: BrowserCommand, _sender: Runtime.MessageSender) => {
@@ -527,8 +547,10 @@ useDark();
 
         <div class="popup-section">
           <div class="section-row">
-            <select disabled>
-              <option>{{ activeSite ? activeSite.domain : "(no site available)" }}</option>
+            <select v-model="selectedSiteId">
+              <option v-for="site in config.sites" :key="site.id" :value="site.id">
+                {{ site.domain }}
+              </option>
             </select>
           </div>
         </div>
