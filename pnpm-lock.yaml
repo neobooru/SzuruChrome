@@ -19,7 +19,7 @@ specifiers:
   chokidar: ^3.5.3
   cross-env: ^7.0.3
   crx: ^5.0.1
-  eslint: ^8.28.0
+  eslint: ^8.32.0
   eslint-plugin-vue: ^9.9.0
   esno: ^0.16.3
   fs-extra: ^10.1.0
@@ -37,6 +37,7 @@ specifiers:
   vite: ^3.2.4
   vitest: ^0.25.3
   vue: ^3.2.45
+  vue-eslint-parser: ^9.1.0
   web-ext: ^7.5.0
   webextension-polyfill: ^0.10.0
 
@@ -79,6 +80,7 @@ devDependencies:
   vite: 3.2.5_ovmyjmuuyckt3r3gpaexj2onji
   vitest: 0.25.8_jsdom@20.0.3+sass@1.57.1
   vue: 3.2.45
+  vue-eslint-parser: 9.1.0_eslint@8.32.0
   web-ext: 7.5.0
   webextension-polyfill: 0.10.0
 
