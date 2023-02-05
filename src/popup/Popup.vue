@@ -8,11 +8,11 @@ import {
   Message,
   ScrapedPostDetails,
   TagDetails,
-  MessageCategory,
   PostUploadCommandData,
+  SimilarPostInfo,
 } from "~/models";
 import SzuruWrapper from "~/api";
-import { ImageSearchResult, Post } from "~/api/models";
+import { ImageSearchResult } from "~/api/models";
 import { isChrome } from "~/env";
 import { Runtime, WebRequest } from "webextension-polyfill";
 import { Ref } from "vue";
@@ -28,6 +28,8 @@ let autocompleteTags = ref<TagDetails[]>([]);
 let cancelSource = ref<CancelTokenSource | undefined>(undefined);
 let autocompleteIndex = ref(-1);
 let selectedSiteId = ref<string | undefined>(undefined);
+let isSearchingForSimilarPosts = ref<boolean>(false);
+let genericError = ref<string | undefined>(undefined);
 
 const activeSite = computed(() => {
   if (selectedSiteId.value) {
@@ -44,21 +46,23 @@ watch(selectedPost, () => {
 });
 
 watch(selectedSiteId, async (x) => {
-  config.selectedSiteId = x;
-  await config.save();
+  if (config.selectedSiteId != x) {
+    config.selectedSiteId = x;
+    await config.save();
+  }
 });
 
 function openOptionsPage() {
   browser.runtime.openOptionsPage();
 }
 
-async function getActiveTabId() {
+async function getActiveTabId(): Promise<number> {
   const activeTabs = await browser.tabs.query({
     active: true,
     currentWindow: true,
   });
 
-  if (activeTabs.length > 0) return activeTabs[0].id!;
+  if (activeTabs.length > 0 && activeTabs[0].id) return activeTabs[0].id;
   throw new Error("No active tab.");
 }
 
@@ -100,15 +104,12 @@ async function grabPost() {
       loadTagCounts();
     }
   } else {
-    pushInfo("No posts found.");
+    // pushInfo("No posts found.");
   }
 }
 
 async function upload() {
-  if (!selectedSiteId.value) {
-    pushError("No site selected!");
-    return;
-  }
+  if (!selectedSiteId.value) return;
 
   window.scrollTo(0, 0);
 
@@ -125,7 +126,7 @@ async function upload() {
 function getTagClasses(tag: TagDetails): string[] {
   let classes: string[] = [];
 
-  if (tag.category && <any>tag.category != "default") {
+  if (tag.category && tag.category != "default") {
     classes.push("tag-" + tag.category);
   } else {
     classes.push("tag-general");
@@ -136,7 +137,7 @@ function getTagClasses(tag: TagDetails): string[] {
 
 function breakTagName(tagName: string) {
   // Based on https://stackoverflow.com/a/6316913
-  return tagName.replace(/\_/g, "_<wbr>");
+  return tagName.replace(/_/g, "_<wbr>");
 }
 
 function resolutionToString(resolution: [number, number]) {
@@ -170,45 +171,25 @@ function getMessageClasses(message: Message) {
   return classes;
 }
 
-function pushInfo(message: string, category: MessageCategory = "none"): Message {
-  let msg = new Message(message, "info", category);
-  messages.push(msg);
-  return msg;
-}
-
-function pushError(message: string, category: MessageCategory = "none"): Message {
-  let msg = new Message(message, "error", category);
-  messages.push(msg);
-  return msg;
-}
-
-function removeMessage(message: Message) {
-  for (let i = 0; i < messages.length; i++) {
-    if (messages[i].id == message.id) {
-      messages.splice(i, 1);
-      break;
-    }
-  }
-}
-
-function clearMessages(category?: MessageCategory) {
-  if (category) {
-    for (let i = 0; i < messages.length; i++) {
-      if (messages[i].category == category) {
-        // Decrement i to negate the i++, because if we remove one object the items
-        // shift one place to the left, aka index--
-        // If we don't do i-- we'll skip the next item in our for loop
-        messages.splice(i--, 1);
-      }
-    }
-  } else {
-    messages.splice(0);
-  }
-}
-
-function getPostUrl(post: Post): string {
+function getActiveSitePostUrl(postId: number): string {
   if (!activeSite.value) return "";
-  return getUrl(activeSite.value.domain, "post", post.id.toString());
+  return getUrl(activeSite.value.domain, "post", postId.toString());
+}
+
+function getSimilarPosts(data: ImageSearchResult | undefined): SimilarPostInfo[] {
+  if (!data) return [];
+
+  const lst: SimilarPostInfo[] = [];
+
+  for (const similarPost of data.similarPosts) {
+    if (data.exactPost && data.exactPost.id == similarPost.post.id) {
+      continue;
+    }
+
+    lst.push(new SimilarPostInfo(similarPost.post.id, Math.round(100 - similarPost.distance * 100)));
+  }
+
+  return lst;
 }
 
 function addTag(tag: TagDetails) {
@@ -228,13 +209,12 @@ async function clickFindSimilar() {
 }
 
 async function findSimilar(post: Ref<ScrapedPostDetails | undefined>) {
-  if (!post.value || !szuru.value) {
-    return;
-  }
+  if (!post.value || !szuru.value) return;
 
-  clearMessages("find_similar");
+  // Don't load this again if it is already loaded.
+  if (post.value.reverseSearchResult) return;
 
-  const msg = pushInfo("Searching for similar posts...", "find_similar");
+  isSearchingForSimilarPosts.value = true;
 
   try {
     let res: ImageSearchResult | undefined;
@@ -250,40 +230,16 @@ async function findSimilar(post: Ref<ScrapedPostDetails | undefined>) {
       res = await szuru.value.reverseSearch(post.value.contentUrl);
     }
 
-    if (!res.exactPost && res.similarPosts.length == 0) {
-      msg.content = "No similar posts found";
-    } else {
-      if (res.exactPost) {
-        msg.content = `<a href='${getPostUrl(res.exactPost)}' target='_blank'>Post already uploaded (${
-          res.exactPost.id
-        })</a>`;
-        msg.level = "error";
-      }
-
-      for (const similarPost of res.similarPosts) {
-        // Don't show this message for the exactPost (because we have a different message for that)
-        if (res.exactPost && res.exactPost.id == similarPost.post.id) {
-          continue;
-        }
-
-        pushInfo(
-          `<a href='${getPostUrl(similarPost.post)}' target='_blank'>Post ${similarPost.post.id}
-                        looks ${Math.round(100 - similarPost.distance * 100)}% similar</a>`,
-          "find_similar"
-        );
-      }
-    }
+    post.value.reverseSearchResult = res;
   } catch (ex) {
-    clearMessages();
-    pushError("Error: couldn't reverse search.");
+    genericError.value = "Couldn't reverse search";
   }
+
+  isSearchingForSimilarPosts.value = false;
 }
 
 function getPostForUrl(contentUrl: string): ScrapedPostDetails | undefined {
-  for (const post of posts) {
-    if (post.contentUrl == contentUrl) return post;
-  }
-  return undefined;
+  return posts.find((x) => x.contentUrl == contentUrl);
 }
 
 async function loadTagCounts() {
@@ -378,7 +334,7 @@ async function autocompletePopulator(input: string) {
   cancelSource.value = axios.CancelToken.source();
 
   const query = decodeURIComponent(`*${encodeTagName(input)}* sort:usages`);
-  const resp = await szuru.value?.getTags(
+  const res = await szuru.value?.getTags(
     query,
     0,
     100,
@@ -386,20 +342,21 @@ async function autocompletePopulator(input: string) {
     cancelSource.value.token
   );
 
-  autocompleteTags.value = resp!.results.map((x) => TagDetails.fromTag(x));
-  if (autocompleteTags.value.length > 0) autocompleteShown.value = true;
+  if (res) {
+    autocompleteTags.value = res.results.map((x) => TagDetails.fromTag(x));
+    if (autocompleteTags.value.length > 0) autocompleteShown.value = true;
+  } else {
+    autocompleteTags.value = [];
+  }
 }
 
 onMounted(async () => {
   config = await Config.load();
   selectedSiteId.value = config.selectedSiteId;
 
-  if (config.sites.length == 0) {
-    pushError("No szurubooru server configured!", "persistent");
-  }
-
   browser.runtime.onMessage.addListener((cmd: BrowserCommand, _sender: Runtime.MessageSender) => {
     switch (cmd.name) {
+      // TODO: Replace with set_upload_state (or something like that)
       case "push_message":
         messages.push(cmd.data);
         break;
@@ -413,7 +370,7 @@ onMounted(async () => {
 
   let extraInfoSpec: WebRequest.OnBeforeSendHeadersOptions[] = ["requestHeaders", "blocking"];
   if (isChrome) {
-    extraInfoSpec.push("extraHeaders" as any);
+    extraInfoSpec.push("extraHeaders");
   }
 
   // Add "Referer" header to all requests if post.referrer is set.
@@ -451,6 +408,36 @@ useDark();
   <div class="popup-container">
     <div class="popup-messages">
       <ul class="messages">
+        <!-- 
+          Error messages
+        -->
+
+        <li v-if="config.sites.length == 0" class="bg-danger">No szurubooru server configured!</li>
+
+        <li v-if="!activeSite" class="bg-danger">No target server selected!</li>
+
+        <li v-if="selectedPost.reverseSearchResult?.exactPost" class="bg-danger">
+          <a :href="getActiveSitePostUrl(selectedPost.reverseSearchResult?.exactPost.id)"
+            >Post already uploaded ({{ selectedPost.reverseSearchResult.exactPost.id }})</a
+          >
+        </li>
+
+        <li v-if="genericError" class="bg-danger">{{ genericError }}</li>
+
+        <!--
+          Info messages
+        -->
+
+        <li v-if="isSearchingForSimilarPosts">Searching for similar posts...</li>
+
+        <li v-if="selectedPost.reverseSearchResult?.similarPosts.length == 0">No similar posts found</li>
+
+        <li v-for="similarPost in getSimilarPosts(selectedPost.reverseSearchResult)" :key="similarPost.id">
+          <a :href="getActiveSitePostUrl(similarPost.id)"
+            >Post {{ similarPost.id }} looks {{ similarPost.percentage }}% similar</a
+          >
+        </li>
+
         <li v-for="msg in messages" :key="msg.content" :class="getMessageClasses(msg)" v-html="msg.content"></li>
       </ul>
     </div>

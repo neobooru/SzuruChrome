@@ -32,7 +32,7 @@ async function testConnection() {
 
   const api = new SzuruWrapper(selectedSite.value.domain, selectedSite.value.username, selectedSite.value.authToken);
   try {
-    const info = (await api.getInfo()) as any;
+    const info = (await api.getInfo());
     const instanceName = info?.config.name;
 
     if (instanceName == undefined) {

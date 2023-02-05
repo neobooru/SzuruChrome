@@ -1,13 +1,13 @@
 import { BooruTypes, ContentType, ScrapedNote, ScrapedPost, ScrapedTag } from "neo-scraper";
-import { MicroTag, Tag } from "~/api/models";
+import { ImageSearchResult, MicroTag, Tag } from "~/api/models";
 
 export class TagDetails {
   public implications: TagDetails[] = [];
 
-  constructor(public name: string, public category?: BooruTypes.TagCategory, public usages?: number) {}
+  constructor(public name: string, public category?: string, public usages?: number) {}
 
   static fromTag(tag: Tag) {
-    const x = new TagDetails(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
+    const x = new TagDetails(tag.names[0], tag.category, tag.usages);
 
     if (tag.implications) {
       x.implications = tag.implications.map((y) => TagDetails.fromMicroTag(y));
@@ -17,7 +17,7 @@ export class TagDetails {
   }
 
   static fromMicroTag(tag: MicroTag) {
-    return new TagDetails(tag.names[0], <BooruTypes.TagCategory>tag.category, tag.usages);
+    return new TagDetails(tag.names[0], tag.category, tag.usages);
   }
 
   static fromScapedTag(tag: ScrapedTag): TagDetails {
@@ -37,6 +37,7 @@ export class ScrapedPostDetails {
   source = "";
   referrer?: string;
   resolution?: [number, number];
+  reverseSearchResult: ImageSearchResult | undefined;
 
   constructor(post: ScrapedPost) {
     this.contentUrl = post.contentUrl;
@@ -49,6 +50,10 @@ export class ScrapedPostDetails {
     this.notes = post.notes;
     this.resolution = post.resolution;
   }
+}
+
+export class SimilarPostInfo {
+  constructor(public readonly id: number, public readonly percentage: number) {}
 }
 
 export type MessageType = "error" | "info" | "success";
