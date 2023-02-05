@@ -3,8 +3,6 @@ import App from "./App.vue";
 import { setupApp } from "~/logic/common-setup";
 import { isChrome } from "~/env";
 
-import "../styles";
-
 // Firefox automatically makes the popup as large as can be, Chrome doesn't.
 // However setting the width to 780px gives us horizontal scrollbars on Firefox.
 if (isChrome) {

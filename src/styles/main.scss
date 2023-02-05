@@ -1,6 +1,6 @@
 @use "sass:color";
 
-@import "basscss/css/basscss-cp.css";
+@use "basscss/css/basscss-cp.css";
 
 :root {
   --space-1: 0.25rem;
@@ -61,7 +61,7 @@ body {
 $primary-color: #24aadd;
 $danger-color: #f44336;
 
-$primary-color-dark: color.scale($primary-color, $lightness: -40%);
+$primary-color-dark: color.scale($primary-color, $lightness: -30%);
 $danger-color-dark: color.scale($danger-color, $lightness: -50%);
 // TODO: Darker success color
 

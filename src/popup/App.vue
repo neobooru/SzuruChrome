@@ -633,7 +633,9 @@ useDark();
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
+@use "../styles/main.scss";
+
 video {
   width: 100%;
 }
@@ -667,7 +669,7 @@ label {
 }
 
 .popup-left {
-  flex: 1 0 auto;
+  flex: 1 0 300px;
 }
 
 .popup-right {

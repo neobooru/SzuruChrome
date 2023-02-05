@@ -112,7 +112,9 @@ let mode = useColorMode({ emitAuto: true });
         <div class="fit flex flex-wrap">
           <div class="flex-fit">
             <label>Szurubooru Instances</label>
-            <div class="fit flex gapx-1 flex-fit">
+
+            <!-- This isn't perfectly responsive for very small devices. -->
+            <div class="fit flex gap-1 flex-fit">
               <select v-model="selectedSiteId">
                 <option v-for="site in sites" :key="site.id" :value="site.id">
                   {{ site.username }} @ {{ site.domain }}
@@ -195,17 +197,21 @@ let mode = useColorMode({ emitAuto: true });
         </div>
       </div>
 
-      <div class="flex-fit flex justify-end gap-1">
-        <span class="status self-center" style="margin-right: auto" :class="statusType">{{ statusText }}</span>
+      <div class="flex-fit flex flex-wrap justify-between gap-3">
+        <span class="status" :class="statusType">{{ statusText }}</span>
 
-        <button @click="testConnection">Test connection</button>
-        <button @click="saveSettings" class="primary">Save settings</button>
+        <div class="flex gap-1">
+          <button @click="testConnection">Test connection</button>
+          <button @click="saveSettings" class="primary">Save settings</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
+@use "../styles/main.scss";
+
 .content-holder {
   padding: 1.5em;
   display: flex;
@@ -259,5 +265,15 @@ label {
 
 input[type="checkbox"] {
   margin: 0 3px 0 0;
+}
+
+@media only screen and (max-width: 600px) {
+  .content-holder {
+    padding: 0;
+  }
+
+  .status {
+    flex: 0 0 100%;
+  }
 }
 </style>
