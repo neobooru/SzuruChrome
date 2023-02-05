@@ -1,5 +1,5 @@
 import { createApp } from "vue";
-import App from "./Options.vue";
+import App from "./App.vue";
 import { setupApp } from "~/logic/common-setup";
 import "../styles";
 

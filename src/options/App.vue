@@ -2,6 +2,7 @@
 import { useColorMode } from "@vueuse/core";
 import SzuruWrapper from "~/api";
 import { Config, SzuruSiteConfig } from "~/config";
+import { getErrorMessage } from "~/utils";
 
 let autoSearchSimilar = ref(false);
 let loadTagCounts = ref(false);
@@ -17,7 +18,7 @@ const selectedSite = computed(() => {
   }
 });
 
-type StatusType = "ok" | "error";
+type StatusType = "success" | "error";
 
 async function testConnection() {
   if (
@@ -32,7 +33,7 @@ async function testConnection() {
 
   const api = new SzuruWrapper(selectedSite.value.domain, selectedSite.value.username, selectedSite.value.authToken);
   try {
-    const info = (await api.getInfo());
+    const info = await api.getInfo();
     const instanceName = info?.config.name;
 
     if (instanceName == undefined) {
@@ -41,9 +42,7 @@ async function testConnection() {
       setStatus(`Connected to ${info.config.name} at ${selectedSite.value.domain}`);
     }
   } catch (ex) {
-    // TODO: This error message is not very descriptive.
-    console.dir(ex);
-    setStatus("Couldn't connect to " + selectedSite.value.domain + "\n\n" + ex, "error");
+    setStatus(`Couldn't connect to ${selectedSite.value.domain}. ${getErrorMessage(ex)}`, "error");
   }
 }
 
@@ -62,7 +61,7 @@ async function saveSettings() {
   setStatus("Settings successfully saved");
 }
 
-function setStatus(text: string, type: StatusType = "ok") {
+function setStatus(text: string, type: StatusType = "success") {
   statusText.value = text;
   statusType.value = "status-" + type;
 }
@@ -197,6 +196,8 @@ let mode = useColorMode({ emitAuto: true });
       </div>
 
       <div class="flex-fit flex justify-end gap-1">
+        <span class="status self-center" style="margin-right: auto" :class="statusType">{{ statusText }}</span>
+
         <button @click="testConnection">Test connection</button>
         <button @click="saveSettings" class="primary">Save settings</button>
       </div>
@@ -241,6 +242,14 @@ html.dark .content-wrapper {
   color: var(--secondary-text);
   font-size: 80%;
   line-height: 120%;
+}
+
+.status-error {
+  color: red;
+}
+
+.status-success {
+  color: green;
 }
 
 label {

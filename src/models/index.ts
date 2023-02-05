@@ -1,5 +1,5 @@
 import { BooruTypes, ContentType, ScrapedNote, ScrapedPost, ScrapedTag } from "neo-scraper";
-import { ImageSearchResult, MicroTag, Tag } from "~/api/models";
+import { MicroTag, Tag } from "~/api/models";
 
 export class TagDetails {
   public implications: TagDetails[] = [];
@@ -26,6 +26,7 @@ export class TagDetails {
 }
 
 export class ScrapedPostDetails {
+  id = window.crypto.randomUUID();
   name = "";
   tags: TagDetails[] = [];
   notes: ScrapedNote[];
@@ -37,7 +38,8 @@ export class ScrapedPostDetails {
   source = "";
   referrer?: string;
   resolution?: [number, number];
-  reverseSearchResult: ImageSearchResult | undefined;
+  reverseSearchResult?: SimpleImageSearchResult;
+  uploadState?: PostUploadInfo;
 
   constructor(post: ScrapedPost) {
     this.contentUrl = post.contentUrl;
@@ -52,22 +54,34 @@ export class ScrapedPostDetails {
   }
 }
 
+export interface SimpleImageSearchResult {
+  exactPostId?: number;
+  similarPosts: SimpleSimilarPost[];
+}
+
+export interface SimpleSimilarPost {
+  distance: number;
+  postId: number;
+}
+
 export class SimilarPostInfo {
   constructor(public readonly id: number, public readonly percentage: number) {}
 }
 
-export type MessageType = "error" | "info" | "success";
-export type MessageCategory = "none" | "persistent" | "find_similar";
+export type PostUploadState = "uploading" | "uploaded" | "error";
 
-export class Message {
-  id: string;
-
-  constructor(public content: string, public level: MessageType = "info", public category: MessageCategory = "none") {
-    this.id = window.crypto.randomUUID();
-  }
+export class PostUploadInfo {
+  state: PostUploadState = "uploading";
+  error?: string;
+  instancePostId?: number;
+  updateTagsState?: {
+    total: number;
+    current?: number;
+    totalChanged?: number;
+  };
 }
 
-export type BrowserCommandName = "grab_post" | "upload_post" | "push_message" | "pop_messages";
+export type BrowserCommandName = "grab_post" | "upload_post" | "set_post_upload_info" | "set_exact_post_id";
 
 export class BrowserCommand<T = any> {
   name: BrowserCommandName;
@@ -81,4 +95,12 @@ export class BrowserCommand<T = any> {
 
 export class PostUploadCommandData {
   constructor(public readonly post: ScrapedPostDetails, public readonly siteId: string) {}
+}
+
+export class SetPostUploadInfoData {
+  constructor(public readonly postId: string, public readonly info: PostUploadInfo) {}
+}
+
+export class SetExactPostId {
+  constructor(public readonly postId: string, public readonly exactPostId: number) {}
 }

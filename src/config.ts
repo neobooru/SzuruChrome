@@ -14,7 +14,7 @@ export class Config {
   loadTagCounts = true;
   useContentTokens = true;
   sites: Array<SzuruSiteConfig> = [];
-  selectedSiteId: string | undefined = undefined;
+  selectedSiteId?: string;
 
   public async save() {
     await browser.storage.local.set({

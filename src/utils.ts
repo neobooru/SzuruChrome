@@ -11,3 +11,8 @@ export function encodeTagName(tagName: string) {
   // Searching for posts with re\:zero will show posts tagged with re:zero.
   return tagName.replace(/:/g, "\\:");
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getErrorMessage(ex: any) {
+  return ex.description ?? ex.message ?? ex;
+}

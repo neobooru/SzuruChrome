@@ -1,27 +1,28 @@
 <script setup lang="ts">
 import { useDark } from "@vueuse/core";
 import axios, { CancelTokenSource } from "axios";
-import { ScrapedPost, ScrapeResults } from "neo-scraper";
-import { getUrl, encodeTagName } from "~/utils";
+import { ScrapeResults } from "neo-scraper";
+import { getUrl, encodeTagName, getErrorMessage } from "~/utils";
 import {
   BrowserCommand,
-  Message,
   ScrapedPostDetails,
   TagDetails,
   PostUploadCommandData,
   SimilarPostInfo,
+  SetPostUploadInfoData,
+  SetExactPostId,
+  SimpleSimilarPost,
+  SimpleImageSearchResult,
 } from "~/models";
 import SzuruWrapper from "~/api";
 import { ImageSearchResult } from "~/api/models";
 import { isChrome } from "~/env";
 import { Runtime, WebRequest } from "webextension-polyfill";
-import { Ref } from "vue";
 import { Config } from "~/config";
 
 let config = new Config();
 let posts = reactive([] as ScrapedPostDetails[]);
-let selectedPost = ref(new ScrapedPostDetails(new ScrapedPost()));
-let messages = reactive<Message[]>([]);
+let selectedPostId = ref<string | undefined>(undefined);
 let addTagInput = ref("");
 let autocompleteShown = ref(false);
 let autocompleteTags = ref<TagDetails[]>([]);
@@ -37,12 +38,19 @@ const activeSite = computed(() => {
   }
 });
 
+const selectedPost = computed(() => {
+  if (selectedPostId.value) {
+    return posts.find((x) => x.id == selectedPostId.value);
+  }
+});
+
 const szuru = computed(() => {
   return activeSite.value ? SzuruWrapper.createFromConfig(activeSite.value) : undefined;
 });
 
-watch(selectedPost, () => {
-  findSimilar(selectedPost);
+watch(selectedPostId, () => {
+  let selectedPost = posts.find((x) => x.id == selectedPostId.value);
+  if (selectedPost) findSimilar(selectedPost);
 });
 
 watch(selectedSiteId, async (x) => {
@@ -99,7 +107,7 @@ async function grabPost() {
   }
 
   if (posts.length > 0) {
-    selectedPost.value = posts[0];
+    selectedPostId.value = posts[0].id;
     if (config?.loadTagCounts) {
       loadTagCounts();
     }
@@ -111,9 +119,8 @@ async function grabPost() {
 async function upload() {
   if (!selectedSiteId.value) return;
 
-  window.scrollTo(0, 0);
-
-  // Outsource to background.ts
+  // Don't try to upload if an exact copy is already on the server.
+  if (selectedPost.value?.reverseSearchResult?.exactPostId) return;
 
   // TODO: Terrible code.
   const post = JSON.parse(JSON.stringify(selectedPost.value));
@@ -156,44 +163,29 @@ function removeTag(tag: TagDetails) {
   }
 }
 
-function getMessageClasses(message: Message) {
-  let classes: string[] = [];
-
-  switch (message.level) {
-    case "error":
-      classes.push("bg-danger");
-      break;
-    case "success":
-      classes.push("bg-success");
-      break;
-  }
-
-  return classes;
-}
-
 function getActiveSitePostUrl(postId: number): string {
   if (!activeSite.value) return "";
   return getUrl(activeSite.value.domain, "post", postId.toString());
 }
 
-function getSimilarPosts(data: ImageSearchResult | undefined): SimilarPostInfo[] {
+function getSimilarPosts(data?: SimpleImageSearchResult): SimilarPostInfo[] {
   if (!data) return [];
 
   const lst: SimilarPostInfo[] = [];
 
   for (const similarPost of data.similarPosts) {
-    if (data.exactPost && data.exactPost.id == similarPost.post.id) {
+    if (data.exactPostId == similarPost.postId) {
       continue;
     }
 
-    lst.push(new SimilarPostInfo(similarPost.post.id, Math.round(100 - similarPost.distance * 100)));
+    lst.push(new SimilarPostInfo(similarPost.postId, Math.round(100 - similarPost.distance * 100)));
   }
 
   return lst;
 }
 
 function addTag(tag: TagDetails) {
-  if (selectedPost) {
+  if (selectedPost.value) {
     // Only add tag if it doesn't already exist
     if (tag.name.length > 0 && selectedPost.value.tags.find((x) => x.name == tag.name) == undefined) {
       selectedPost.value.tags.push(tag);
@@ -205,14 +197,15 @@ function addTag(tag: TagDetails) {
 }
 
 async function clickFindSimilar() {
-  return await findSimilar(selectedPost);
+  let selectedPost = posts.find((x) => x.id == selectedPostId.value);
+  if (selectedPost) return await findSimilar(selectedPost);
 }
 
-async function findSimilar(post: Ref<ScrapedPostDetails | undefined>) {
-  if (!post.value || !szuru.value) return;
+async function findSimilar(post: ScrapedPostDetails | undefined) {
+  if (!post || !szuru.value) return;
 
   // Don't load this again if it is already loaded.
-  if (post.value.reverseSearchResult) return;
+  if (post.reverseSearchResult) return;
 
   isSearchingForSimilarPosts.value = true;
 
@@ -220,19 +213,22 @@ async function findSimilar(post: Ref<ScrapedPostDetails | undefined>) {
     let res: ImageSearchResult | undefined;
 
     if (config.useContentTokens) {
-      let tmpRes = await szuru.value.uploadTempFile(post.value.contentUrl);
+      let tmpRes = await szuru.value.uploadTempFile(post.contentUrl);
       // TODO: Error handling?
       // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
-      post.value.contentToken = tmpRes.token;
+      post.contentToken = tmpRes.token;
 
       res = await szuru.value.reverseSearchToken(tmpRes.token);
     } else {
-      res = await szuru.value.reverseSearch(post.value.contentUrl);
+      res = await szuru.value.reverseSearch(post.contentUrl);
     }
 
-    post.value.reverseSearchResult = res;
-  } catch (ex) {
-    genericError.value = "Couldn't reverse search";
+    post.reverseSearchResult = {
+      exactPostId: res.exactPost?.id,
+      similarPosts: res.similarPosts.map((x) => <SimpleSimilarPost>{ postId: x.post.id, distance: x.distance }),
+    };
+  } catch (ex: any) {
+    genericError.value = "Couldn't reverse search. " + getErrorMessage(ex);
   }
 
   isSearchingForSimilarPosts.value = false;
@@ -350,19 +346,34 @@ async function autocompletePopulator(input: string) {
   }
 }
 
+// Could people would use https://kazupon.github.io/vue-i18n/guide/pluralization.html
+function getUpdatedTagsText(count: number) {
+  return `Updated ${count} tag${count > 1 ? "s" : ""}`;
+}
+
 onMounted(async () => {
   config = await Config.load();
   selectedSiteId.value = config.selectedSiteId;
 
   browser.runtime.onMessage.addListener((cmd: BrowserCommand, _sender: Runtime.MessageSender) => {
     switch (cmd.name) {
-      // TODO: Replace with set_upload_state (or something like that)
-      case "push_message":
-        messages.push(cmd.data);
+      case "set_post_upload_info":
+        {
+          const data = <SetPostUploadInfoData>cmd.data;
+          let post = posts.find((x) => x.id == data.postId);
+          if (post) post.uploadState = data.info;
+        }
         break;
-      case "pop_messages":
-        for (let i = 0; i < cmd.data; i++) {
-          messages.pop();
+      case "set_exact_post_id":
+        {
+          const { postId, exactPostId } = <SetExactPostId>cmd.data;
+          let post = posts.find((x) => x.id == postId);
+          if (post) {
+            if (!post.reverseSearchResult) {
+              post.reverseSearchResult = { exactPostId, similarPosts: [] };
+            }
+            post.reverseSearchResult.exactPostId = exactPostId;
+          }
         }
         break;
     }
@@ -378,7 +389,7 @@ onMounted(async () => {
   // This will probably stop working in Chrome sometime in 2023 due to the Manifest V3 webRequestBlocking bullshit.
   // Firefox users should be fine.
   browser.webRequest.onBeforeSendHeaders.addListener(
-    (details: WebRequest.OnBeforeSendHeadersDetailsType) => {
+    (details: WebRequest.OnBeforeSendHeadersDetailsType): WebRequest.BlockingResponse => {
       let requestHeaders = details.requestHeaders ?? [];
 
       // Find which ScrapedPost this belongs to, if any.
@@ -390,7 +401,7 @@ onMounted(async () => {
         requestHeaders.push({ name: "Referer", value: post.referrer });
       }
 
-      return <WebRequest.BlockingResponse>{
+      return {
         requestHeaders,
       };
     },
@@ -416,33 +427,80 @@ useDark();
 
         <li v-if="!activeSite" class="bg-danger">No target server selected!</li>
 
-        <li v-if="selectedPost.reverseSearchResult?.exactPost" class="bg-danger">
-          <a :href="getActiveSitePostUrl(selectedPost.reverseSearchResult?.exactPost.id)"
-            >Post already uploaded ({{ selectedPost.reverseSearchResult.exactPost.id }})</a
+        <li v-if="selectedPost?.reverseSearchResult?.exactPostId" class="bg-danger">
+          <a :href="getActiveSitePostUrl(selectedPost.reverseSearchResult?.exactPostId)"
+            >Post already uploaded ({{ selectedPost.reverseSearchResult.exactPostId }})</a
           >
+        </li>
+
+        <!-- Only show error when it's not undefined and not empty. -->
+        <li v-if="selectedPost?.uploadState?.error?.length" class="bg-danger">
+          {{ selectedPost.uploadState.error }}
         </li>
 
         <li v-if="genericError" class="bg-danger">{{ genericError }}</li>
 
         <!--
+          Success messages
+        -->
+
+        <!-- TODO: Clicking a link doesn't actually open it in a new tab, see https://stackoverflow.com/questions/8915845 -->
+        <li
+          v-if="selectedPost?.uploadState?.state == 'uploaded' && selectedPost?.uploadState.instancePostId"
+          class="bg-success"
+        >
+          <a :href="getActiveSitePostUrl(selectedPost.uploadState.instancePostId)"
+            >Uploaded post {{ selectedPost.uploadState.instancePostId }}</a
+          >
+        </li>
+
+        <li v-if="selectedPost?.uploadState?.updateTagsState?.totalChanged" class="bg-success">
+          {{ getUpdatedTagsText(selectedPost.uploadState?.updateTagsState?.totalChanged) }}
+        </li>
+
+        <!--
           Info messages
         -->
 
-        <li v-if="isSearchingForSimilarPosts">Searching for similar posts...</li>
+        <li v-if="selectedPost?.uploadState?.state == 'uploading'">Uploading...</li>
 
-        <li v-if="selectedPost.reverseSearchResult?.similarPosts.length == 0">No similar posts found</li>
+        <li
+          v-if="
+            selectedPost?.uploadState?.updateTagsState?.total &&
+            selectedPost.uploadState?.updateTagsState?.current == undefined
+          "
+        >
+          {{ selectedPost.uploadState?.updateTagsState?.total }} tags need a different category
+        </li>
 
-        <li v-for="similarPost in getSimilarPosts(selectedPost.reverseSearchResult)" :key="similarPost.id">
+        <li
+          v-if="
+            selectedPost?.uploadState?.updateTagsState?.current &&
+            selectedPost?.uploadState?.updateTagsState?.totalChanged == undefined
+          "
+        >
+          Updating tag {{ selectedPost.uploadState?.updateTagsState?.current }}/{{
+            selectedPost.uploadState?.updateTagsState?.total
+          }}
+        </li>
+
+        <li v-if="isSearchingForSimilarPosts && selectedPost?.uploadState == undefined">
+          Searching for similar posts...
+        </li>
+
+        <li v-if="selectedPost?.reverseSearchResult?.similarPosts.length == 0 && selectedPost.uploadState == undefined">
+          No similar posts found
+        </li>
+
+        <li v-for="similarPost in getSimilarPosts(selectedPost?.reverseSearchResult)" :key="similarPost.id">
           <a :href="getActiveSitePostUrl(similarPost.id)"
             >Post {{ similarPost.id }} looks {{ similarPost.percentage }}% similar</a
           >
         </li>
-
-        <li v-for="msg in messages" :key="msg.content" :class="getMessageClasses(msg)" v-html="msg.content"></li>
       </ul>
     </div>
 
-    <div class="popup-columns">
+    <div v-if="selectedPost" class="popup-columns">
       <div class="popup-left">
         <div class="popup-section">
           <div class="section-header">
@@ -451,7 +509,7 @@ useDark();
             <font-awesome-icon icon="fa-solid fa-cog" class="cursor-pointer" @click="openOptionsPage" />
           </div>
 
-          <div class="section-row" v-if="selectedPost.resolution != undefined">
+          <div class="section-row" v-if="selectedPost?.resolution">
             <ul class="compact">
               <li>Resolution: {{ resolutionToString(selectedPost.resolution) }}</li>
             </ul>
@@ -463,19 +521,16 @@ useDark();
             <div style="display: flex; gap: 10px">
               <label>
                 <input type="radio" value="safe" v-model="selectedPost.rating" />
-                <span class="checkmark"></span>
                 Safe
               </label>
 
               <label>
                 <input type="radio" value="sketchy" v-model="selectedPost.rating" />
-                <span class="checkmark"></span>
                 Sketchy
               </label>
 
               <label>
                 <input type="radio" value="unsafe" v-model="selectedPost.rating" />
-                <span class="checkmark"></span>
                 Unsafe
               </label>
             </div>
@@ -483,7 +538,7 @@ useDark();
 
           <div class="section-row">
             <span class="section-label">Source</span>
-            <textarea v-model="selectedPost.source" />
+            <textarea v-model="selectedPost.source"></textarea>
           </div>
         </div>
 
@@ -545,8 +600,8 @@ useDark();
 
       <div class="popup-right">
         <div class="popup-section">
-          <select v-model="selectedPost">
-            <option v-for="post in posts" v-bind:key="post.name" v-bind:value="post">{{ post.name }}</option>
+          <select v-model="selectedPostId">
+            <option v-for="post in posts" :key="post.id" :value="post.id">{{ post.name }}</option>
           </select>
         </div>
 
@@ -569,6 +624,11 @@ useDark();
           </div>
         </div>
       </div>
+    </div>
+
+    <div v-else class="p3 flex items-center gap-3">
+      <span>No content found</span>
+      <font-awesome-icon icon="fa-solid fa-cog" class="cursor-pointer" @click="openOptionsPage" />
     </div>
   </div>
 </template>

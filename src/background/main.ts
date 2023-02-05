@@ -1,6 +1,6 @@
-import { encodeTagName, getUrl } from "~/utils";
-import { BrowserCommand, Message, PostUploadCommandData } from "~/models";
-import { PostAlreadyUploadedError, SzuruError } from "~/api/models";
+import { encodeTagName, getErrorMessage } from "~/utils";
+import { BrowserCommand, PostUploadCommandData, PostUploadInfo, SetPostUploadInfoData, SetExactPostId } from "~/models";
+import { PostAlreadyUploadedError } from "~/api/models";
 import SzurubooruApi from "~/api";
 import { Config } from "~/config";
 
@@ -20,28 +20,32 @@ async function uploadPost(data: PostUploadCommandData) {
 
   if (!selectedSite) {
     // TODO: Generic error handler which also shows the message in the popup frontend.
-    browser.runtime.sendMessage(
-      new BrowserCommand("push_message", new Message("Selected instance not found in config!", "error"))
-    );
+    // browser.runtime.sendMessage(
+    //   new BrowserCommand("push_message", new Message("Selected instance not found in config!", "error"))
+    // );
     return;
   }
 
-  const szuru = SzurubooruApi.createFromConfig(selectedSite);
+  const info: PostUploadInfo = {
+    state: "uploading",
+  };
 
   try {
+    const szuru = SzurubooruApi.createFromConfig(selectedSite);
+
     // Create and upload post
-    browser.runtime.sendMessage(new BrowserCommand("pop_messages", 10));
-    browser.runtime.sendMessage(new BrowserCommand("push_message", new Message("Uploading...")));
-    const createdPost = await szuru.createPost(data.post);
-    browser.runtime.sendMessage(new BrowserCommand("pop_messages", 1));
     browser.runtime.sendMessage(
-      new BrowserCommand("push_message", new Message("Uploaded post " + createdPost.id, "success"))
+      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
     );
 
-    // TODO: Clicking a link doesn't actually open it in a new tab,
-    // see https://stackoverflow.com/questions/8915845
-    // uploadMsg.content = `<a href='${this.getPostUrl(createdPost)}' target='_blank'>Uploaded post</a>`;
-    // uploadMsg.type = "success";
+    const createdPost = await szuru.createPost(data.post);
+
+    info.state = "uploaded";
+    info.instancePostId = createdPost.id;
+
+    browser.runtime.sendMessage(
+      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+    );
 
     // Find tags with "default" category and update it
     // TODO: Make all these categories configurable
@@ -51,9 +55,13 @@ async function uploadPost(data: PostUploadCommandData) {
       .filter((x) => tagsWithCategory.some((y) => x.names.includes(y.name)));
 
     if (unsetCategoryTags.length != 0) {
+      info.updateTagsState = {
+        total: unsetCategoryTags.length,
+      };
       browser.runtime.sendMessage(
-        new BrowserCommand("push_message", new Message(`${unsetCategoryTags.length} tags need a different category`))
+        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
       );
+
       // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
       const query = unsetCategoryTags.map((x) => encodeTagName(x.names[0])).join();
       const tags = (await szuru.getTags(query)).results;
@@ -61,53 +69,50 @@ async function uploadPost(data: PostUploadCommandData) {
       let categoriesChangedCount = 0;
 
       for (const i in tags) {
-        browser.runtime.sendMessage(new BrowserCommand("pop_messages", 1));
+        info.updateTagsState.current = parseInt(i);
         browser.runtime.sendMessage(
-          new BrowserCommand("push_message", new Message(`Updating tag ${i}/${unsetCategoryTags.length}`))
+          new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
         );
 
-        const wantedCategory = tagsWithCategory.find((x) => tags[i].names.includes(x.name))!.category!;
-        if (existingCategories.some((x) => x.name == wantedCategory)) {
-          tags[i].category = wantedCategory;
-          await szuru.updateTag(tags[i]);
-          categoriesChangedCount++;
-        } else {
-          console.log(
-            `Not adding the '${wantedCategory}' category to the tag '${tags[i].names[0]}' because the szurubooru instance does not have this category.`
-          );
+        const wantedCategory = tagsWithCategory.find((x) => tags[i].names.includes(x.name))?.category;
+        if (wantedCategory) {
+          if (existingCategories.some((x) => x.name == wantedCategory)) {
+            tags[i].category = wantedCategory;
+            await szuru.updateTag(tags[i]);
+            categoriesChangedCount++;
+          } else {
+            console.log(
+              `Not adding the '${wantedCategory}' category to the tag '${tags[i].names[0]}' because the szurubooru instance does not have this category.`
+            );
+          }
         }
       }
 
-      browser.runtime.sendMessage(new BrowserCommand("pop_messages", 1));
-
       if (categoriesChangedCount > 0) {
+        info.updateTagsState.totalChanged = categoriesChangedCount;
         browser.runtime.sendMessage(
-          new BrowserCommand("push_message", new Message(`Updated ${categoriesChangedCount} tags`, "success"))
+          new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
         );
       }
     }
   } catch (ex: any) {
-    browser.runtime.sendMessage(new BrowserCommand("pop_messages", 1));
-    const error = ex as SzuruError;
+    if (ex.name && ex.name == "PostAlreadyUploadedError") {
+      const otherPostId = (ex as PostAlreadyUploadedError).otherPostId;
+      browser.runtime.sendMessage(
+        new BrowserCommand("set_exact_post_id", new SetExactPostId(data.post.id, otherPostId))
+      );
 
-    // TODO: Actual good error handling/messaging
-    if (error.name) {
-      console.error(error);
-      switch (error.name) {
-        case "PostAlreadyUploadedError": {
-          const otherPostId = (error as PostAlreadyUploadedError).otherPostId;
-          const url = getUrl(szuru.apiUrl.replace("api", ""), "post", otherPostId.toString());
-          const msg = `<a href='${url}' target='_blank'>Post already uploaded (${otherPostId})</a>`;
-          browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(msg, "error")));
-          break;
-        }
-        default:
-          browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex?.message ?? ex, "error")));
-          break;
-      }
+      // No error message, because we have a different message for posts that are already uploaded.
+      info.state = "error";
+      browser.runtime.sendMessage(
+        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+      );
     } else {
-      console.error(ex);
-      browser.runtime.sendMessage(new BrowserCommand("push_message", new Message(ex.message, "error")));
+      info.state = "error";
+      info.error = getErrorMessage(ex);
+      browser.runtime.sendMessage(
+        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+      );
     }
   }
 }
