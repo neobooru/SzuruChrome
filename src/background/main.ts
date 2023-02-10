@@ -118,7 +118,7 @@ async function uploadPost(data: PostUploadCommandData) {
 }
 
 async function messageHandler(cmd: BrowserCommand): Promise<any> {
-  console.log("Received message");
+  console.log("Background received message:");
   console.dir(cmd);
 
   switch (cmd.name) {

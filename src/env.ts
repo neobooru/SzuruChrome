@@ -12,4 +12,7 @@ export function isForbiddenUrl(url: string): boolean {
 }
 
 export const isFirefox = navigator.userAgent.includes("Firefox");
-export const isChrome = navigator.userAgent.match(/chrome|chromium|crios/i);
+export const isChrome = navigator.userAgent.match(/Chrome|Chromium/i);
+
+// Based on https://stackoverflow.com/a/25394023
+export const isMobile = navigator.userAgent.match(/Android/i);

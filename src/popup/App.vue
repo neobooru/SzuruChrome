@@ -16,7 +16,7 @@ import {
 } from "~/models";
 import SzuruWrapper from "~/api";
 import { ImageSearchResult } from "~/api/models";
-import { isChrome } from "~/env";
+import { isChrome, isMobile } from "~/env";
 import { Runtime, WebRequest } from "webextension-polyfill";
 import { Config } from "~/config";
 
@@ -356,6 +356,9 @@ onMounted(async () => {
   selectedSiteId.value = config.selectedSiteId;
 
   browser.runtime.onMessage.addListener((cmd: BrowserCommand, _sender: Runtime.MessageSender) => {
+    console.log("Popup received message:");
+    console.dir(cmd);
+
     switch (cmd.name) {
       case "set_post_upload_info":
         {
@@ -500,7 +503,7 @@ useDark();
       </ul>
     </div>
 
-    <div v-if="selectedPost" class="popup-columns">
+    <div v-if="selectedPost" class="popup-columns" :class="{ mobile: isMobile }">
       <div class="popup-left">
         <div class="popup-section">
           <div class="section-header">
@@ -666,6 +669,10 @@ label {
 .popup-columns {
   display: flex;
   flex-direction: row;
+
+  &.mobile {
+    flex-direction: column-reverse;
+  }
 }
 
 .popup-left {
