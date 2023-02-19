@@ -25,6 +25,12 @@ export class TagDetails {
   }
 }
 
+export class InstanceSpecificData {
+  genericError?: string;
+  reverseSearchResult?: SimpleImageSearchResult;
+  uploadState?: PostUploadInfo;
+}
+
 export class ScrapedPostDetails {
   id = window.crypto.randomUUID();
   name = "";
@@ -38,8 +44,7 @@ export class ScrapedPostDetails {
   source = "";
   referrer?: string;
   resolution?: [number, number];
-  reverseSearchResult?: SimpleImageSearchResult;
-  uploadState?: PostUploadInfo;
+  instanceSpecificData = new Map<string, InstanceSpecificData>();
 
   constructor(post: ScrapedPost) {
     this.contentUrl = post.contentUrl;
@@ -98,9 +103,17 @@ export class PostUploadCommandData {
 }
 
 export class SetPostUploadInfoData {
-  constructor(public readonly postId: string, public readonly info: PostUploadInfo) {}
+  constructor(
+    public readonly instanceId: string,
+    public readonly postId: string,
+    public readonly info: PostUploadInfo
+  ) {}
 }
 
 export class SetExactPostId {
-  constructor(public readonly postId: string, public readonly exactPostId: number) {}
+  constructor(
+    public readonly instanceId: string,
+    public readonly postId: string,
+    public readonly exactPostId: number
+  ) {}
 }

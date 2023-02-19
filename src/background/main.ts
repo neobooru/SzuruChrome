@@ -35,7 +35,7 @@ async function uploadPost(data: PostUploadCommandData) {
 
     // Create and upload post
     browser.runtime.sendMessage(
-      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
     );
 
     const createdPost = await szuru.createPost(data.post);
@@ -44,7 +44,7 @@ async function uploadPost(data: PostUploadCommandData) {
     info.instancePostId = createdPost.id;
 
     browser.runtime.sendMessage(
-      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
     );
 
     // Find tags with "default" category and update it
@@ -59,7 +59,7 @@ async function uploadPost(data: PostUploadCommandData) {
         total: unsetCategoryTags.length,
       };
       browser.runtime.sendMessage(
-        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
       );
 
       // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
@@ -71,7 +71,7 @@ async function uploadPost(data: PostUploadCommandData) {
       for (const i in tags) {
         info.updateTagsState.current = parseInt(i);
         browser.runtime.sendMessage(
-          new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+          new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
         );
 
         const wantedCategory = tagsWithCategory.find((x) => tags[i].names.includes(x.name))?.category;
@@ -91,7 +91,7 @@ async function uploadPost(data: PostUploadCommandData) {
       if (categoriesChangedCount > 0) {
         info.updateTagsState.totalChanged = categoriesChangedCount;
         browser.runtime.sendMessage(
-          new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+          new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
         );
       }
     }
@@ -99,19 +99,19 @@ async function uploadPost(data: PostUploadCommandData) {
     if (ex.name && ex.name == "PostAlreadyUploadedError") {
       const otherPostId = (ex as PostAlreadyUploadedError).otherPostId;
       browser.runtime.sendMessage(
-        new BrowserCommand("set_exact_post_id", new SetExactPostId(data.post.id, otherPostId))
+        new BrowserCommand("set_exact_post_id", new SetExactPostId(data.siteId, data.post.id, otherPostId))
       );
 
       // No error message, because we have a different message for posts that are already uploaded.
       info.state = "error";
       browser.runtime.sendMessage(
-        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
       );
     } else {
       info.state = "error";
       info.error = getErrorMessage(ex);
       browser.runtime.sendMessage(
-        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.post.id, info))
+        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
       );
     }
   }

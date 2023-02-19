@@ -19,6 +19,7 @@ import { ImageSearchResult } from "~/api/models";
 import { isChrome, isMobile } from "~/env";
 import { Runtime, WebRequest } from "webextension-polyfill";
 import { Config } from "~/config";
+import { DeepReadonly } from "vue";
 
 let config = new Config();
 let posts = reactive([] as ScrapedPostDetails[]);
@@ -29,10 +30,9 @@ let autocompleteTags = ref<TagDetails[]>([]);
 let cancelSource = ref<CancelTokenSource | undefined>(undefined);
 let autocompleteIndex = ref(-1);
 let selectedSiteId = ref<string | undefined>(undefined);
-let isSearchingForSimilarPosts = ref<boolean>(false);
-let genericError = ref<string | undefined>(undefined);
+let isSearchingForSimilarPosts = ref<number>(0);
 
-const activeSite = computed(() => {
+const selectedInstance = computed(() => {
   if (selectedSiteId.value) {
     return config.sites.find((x) => x.id == selectedSiteId.value);
   }
@@ -45,18 +45,38 @@ const selectedPost = computed(() => {
 });
 
 const szuru = computed(() => {
-  return activeSite.value ? SzuruWrapper.createFromConfig(activeSite.value) : undefined;
+  return selectedInstance.value ? SzuruWrapper.createFromConfig(selectedInstance.value) : undefined;
 });
 
+// (Reactive) shorthand for `selectedPost.value.instanceSpecificData.get(selectedSiteId.value)`.
+// This should only be used as if it were readonly, because the instanceId might change.
+const instanceSpecificData = readonly(
+  computed(() => {
+    if (selectedPost.value && selectedSiteId.value) {
+      return selectedPost.value.instanceSpecificData.get(selectedSiteId.value);
+    }
+  })
+);
+
 watch(selectedPostId, () => {
-  let selectedPost = posts.find((x) => x.id == selectedPostId.value);
-  if (selectedPost) findSimilar(selectedPost);
+  // Call findSimilar if wanted.
+  if (config.autoSearchSimilar) {
+    let selectedPost = posts.find((x) => x.id == selectedPostId.value);
+    if (selectedPost) findSimilar(selectedPost);
+  }
 });
 
 watch(selectedSiteId, async (x) => {
+  // If changed
   if (config.selectedSiteId != x) {
+    // Update selectedSiteId in config
     config.selectedSiteId = x;
     await config.save();
+
+    // Call findSimilar if wanted.
+    if (config.autoSearchSimilar && selectedPost.value) {
+      findSimilar(selectedPost.value);
+    }
   }
 });
 
@@ -102,6 +122,11 @@ async function grabPost() {
         vm.source += vm.pageUrl;
       }
 
+      // Initialize instanceSpecificData with an empty object.
+      for (const site of config.sites) {
+        vm.instanceSpecificData.set(site.id, {});
+      }
+
       posts.push(vm);
     }
   }
@@ -120,7 +145,7 @@ async function upload() {
   if (!selectedSiteId.value) return;
 
   // Don't try to upload if an exact copy is already on the server.
-  if (selectedPost.value?.reverseSearchResult?.exactPostId) return;
+  if (instanceSpecificData.value?.reverseSearchResult?.exactPostId) return;
 
   // TODO: Terrible code.
   const post = JSON.parse(JSON.stringify(selectedPost.value));
@@ -164,11 +189,11 @@ function removeTag(tag: TagDetails) {
 }
 
 function getActiveSitePostUrl(postId: number): string {
-  if (!activeSite.value) return "";
-  return getUrl(activeSite.value.domain, "post", postId.toString());
+  if (!selectedInstance.value) return "";
+  return getUrl(selectedInstance.value.domain, "post", postId.toString());
 }
 
-function getSimilarPosts(data?: SimpleImageSearchResult): SimilarPostInfo[] {
+function getSimilarPosts(data?: DeepReadonly<SimpleImageSearchResult>): SimilarPostInfo[] {
   if (!data) return [];
 
   const lst: SimilarPostInfo[] = [];
@@ -202,36 +227,44 @@ async function clickFindSimilar() {
 }
 
 async function findSimilar(post: ScrapedPostDetails | undefined) {
-  if (!post || !szuru.value) return;
+  if (!post || !szuru.value || !selectedSiteId.value) return;
+
+  const selectedInstance = szuru.value;
+  let instanceSpecificData = post.instanceSpecificData.get(selectedSiteId.value);
+
+  if (!instanceSpecificData) {
+    console.error("instanceSpecificData is undefined. This should never happen!");
+    return;
+  }
 
   // Don't load this again if it is already loaded.
-  if (post.reverseSearchResult) return;
+  if (instanceSpecificData?.reverseSearchResult) return;
 
-  isSearchingForSimilarPosts.value = true;
+  isSearchingForSimilarPosts.value++;
 
   try {
     let res: ImageSearchResult | undefined;
 
     if (config.useContentTokens) {
-      let tmpRes = await szuru.value.uploadTempFile(post.contentUrl);
+      let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl);
       // TODO: Error handling?
       // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
       post.contentToken = tmpRes.token;
 
-      res = await szuru.value.reverseSearchToken(tmpRes.token);
+      res = await selectedInstance.reverseSearchToken(tmpRes.token);
     } else {
-      res = await szuru.value.reverseSearch(post.contentUrl);
+      res = await selectedInstance.reverseSearch(post.contentUrl);
     }
 
-    post.reverseSearchResult = {
+    instanceSpecificData.reverseSearchResult = {
       exactPostId: res.exactPost?.id,
       similarPosts: res.similarPosts.map((x) => <SimpleSimilarPost>{ postId: x.post.id, distance: x.distance }),
     };
   } catch (ex: any) {
-    genericError.value = "Couldn't reverse search. " + getErrorMessage(ex);
+    instanceSpecificData.genericError = "Couldn't reverse search. " + getErrorMessage(ex);
   }
 
-  isSearchingForSimilarPosts.value = false;
+  isSearchingForSimilarPosts.value--;
 }
 
 function getPostForUrl(contentUrl: string): ScrapedPostDetails | undefined {
@@ -362,20 +395,29 @@ onMounted(async () => {
     switch (cmd.name) {
       case "set_post_upload_info":
         {
-          const data = <SetPostUploadInfoData>cmd.data;
-          let post = posts.find((x) => x.id == data.postId);
-          if (post) post.uploadState = data.info;
+          const { postId, instanceId, info } = <SetPostUploadInfoData>cmd.data;
+          let post = posts.find((x) => x.id == postId);
+          if (post) {
+            let instanceSpecificData = post.instanceSpecificData.get(instanceId);
+            if (instanceSpecificData) {
+              instanceSpecificData.uploadState = info;
+            }
+          }
         }
         break;
       case "set_exact_post_id":
         {
-          const { postId, exactPostId } = <SetExactPostId>cmd.data;
+          const { postId, instanceId, exactPostId } = <SetExactPostId>cmd.data;
           let post = posts.find((x) => x.id == postId);
-          if (post) {
-            if (!post.reverseSearchResult) {
-              post.reverseSearchResult = { exactPostId, similarPosts: [] };
+          if (post && selectedPostId.value) {
+            let instanceSpecificData = post.instanceSpecificData.get(instanceId);
+            if (instanceSpecificData) {
+              if (instanceSpecificData?.reverseSearchResult) {
+                instanceSpecificData.reverseSearchResult.exactPostId = exactPostId;
+              } else {
+                instanceSpecificData.reverseSearchResult = { exactPostId, similarPosts: [] };
+              }
             }
-            post.reverseSearchResult.exactPostId = exactPostId;
           }
         }
         break;
@@ -428,20 +470,20 @@ useDark();
 
         <li v-if="config.sites.length == 0" class="bg-danger">No szurubooru server configured!</li>
 
-        <li v-if="!activeSite" class="bg-danger">No target server selected!</li>
+        <li v-if="!selectedInstance" class="bg-danger">No target server selected!</li>
 
-        <li v-if="selectedPost?.reverseSearchResult?.exactPostId" class="bg-danger">
-          <a :href="getActiveSitePostUrl(selectedPost.reverseSearchResult?.exactPostId)"
-            >Post already uploaded ({{ selectedPost.reverseSearchResult.exactPostId }})</a
+        <li v-if="instanceSpecificData?.reverseSearchResult?.exactPostId" class="bg-danger">
+          <a :href="getActiveSitePostUrl(instanceSpecificData.reverseSearchResult?.exactPostId)"
+            >Post already uploaded ({{ instanceSpecificData.reverseSearchResult.exactPostId }})</a
           >
         </li>
 
         <!-- Only show error when it's not undefined and not empty. -->
-        <li v-if="selectedPost?.uploadState?.error?.length" class="bg-danger">
-          {{ selectedPost.uploadState.error }}
+        <li v-if="instanceSpecificData?.uploadState?.error?.length" class="bg-danger">
+          Couldn't upload post. {{ instanceSpecificData.uploadState.error }}
         </li>
 
-        <li v-if="genericError" class="bg-danger">{{ genericError }}</li>
+        <li v-if="instanceSpecificData?.genericError" class="bg-danger">{{ instanceSpecificData.genericError }}</li>
 
         <!--
           Success messages
@@ -449,53 +491,60 @@ useDark();
 
         <!-- TODO: Clicking a link doesn't actually open it in a new tab, see https://stackoverflow.com/questions/8915845 -->
         <li
-          v-if="selectedPost?.uploadState?.state == 'uploaded' && selectedPost?.uploadState.instancePostId"
+          v-if="
+            instanceSpecificData?.uploadState?.state == 'uploaded' && instanceSpecificData?.uploadState.instancePostId
+          "
           class="bg-success"
         >
-          <a :href="getActiveSitePostUrl(selectedPost.uploadState.instancePostId)"
-            >Uploaded post {{ selectedPost.uploadState.instancePostId }}</a
+          <a :href="getActiveSitePostUrl(instanceSpecificData.uploadState.instancePostId)"
+            >Uploaded post {{ instanceSpecificData.uploadState.instancePostId }}</a
           >
         </li>
 
-        <li v-if="selectedPost?.uploadState?.updateTagsState?.totalChanged" class="bg-success">
-          {{ getUpdatedTagsText(selectedPost.uploadState?.updateTagsState?.totalChanged) }}
+        <li v-if="instanceSpecificData?.uploadState?.updateTagsState?.totalChanged" class="bg-success">
+          {{ getUpdatedTagsText(instanceSpecificData.uploadState?.updateTagsState?.totalChanged) }}
         </li>
 
         <!--
           Info messages
         -->
 
-        <li v-if="selectedPost?.uploadState?.state == 'uploading'">Uploading...</li>
+        <li v-if="instanceSpecificData?.uploadState?.state == 'uploading'">Uploading...</li>
 
         <li
           v-if="
-            selectedPost?.uploadState?.updateTagsState?.total &&
-            selectedPost.uploadState?.updateTagsState?.current == undefined
+            instanceSpecificData?.uploadState?.updateTagsState?.total &&
+            instanceSpecificData.uploadState?.updateTagsState?.current == undefined
           "
         >
-          {{ selectedPost.uploadState?.updateTagsState?.total }} tags need a different category
+          {{ instanceSpecificData.uploadState?.updateTagsState?.total }} tags need a different category
         </li>
 
         <li
           v-if="
-            selectedPost?.uploadState?.updateTagsState?.current &&
-            selectedPost?.uploadState?.updateTagsState?.totalChanged == undefined
+            instanceSpecificData?.uploadState?.updateTagsState?.current &&
+            instanceSpecificData?.uploadState?.updateTagsState?.totalChanged == undefined
           "
         >
-          Updating tag {{ selectedPost.uploadState?.updateTagsState?.current }}/{{
-            selectedPost.uploadState?.updateTagsState?.total
+          Updating tag {{ instanceSpecificData.uploadState?.updateTagsState?.current }}/{{
+            instanceSpecificData.uploadState?.updateTagsState?.total
           }}
         </li>
 
-        <li v-if="isSearchingForSimilarPosts && selectedPost?.uploadState == undefined">
+        <li v-if="isSearchingForSimilarPosts > 0 && instanceSpecificData?.uploadState == undefined">
           Searching for similar posts...
         </li>
 
-        <li v-if="selectedPost?.reverseSearchResult?.similarPosts.length == 0 && selectedPost.uploadState == undefined">
+        <li
+          v-if="
+            instanceSpecificData?.reverseSearchResult?.similarPosts.length == 0 &&
+            instanceSpecificData.uploadState == undefined
+          "
+        >
           No similar posts found
         </li>
 
-        <li v-for="similarPost in getSimilarPosts(selectedPost?.reverseSearchResult)" :key="similarPost.id">
+        <li v-for="similarPost in getSimilarPosts(instanceSpecificData?.reverseSearchResult)" :key="similarPost.id">
           <a :href="getActiveSitePostUrl(similarPost.id)"
             >Post {{ similarPost.id }} looks {{ similarPost.percentage }}% similar</a
           >
