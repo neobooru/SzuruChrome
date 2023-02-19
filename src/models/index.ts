@@ -26,10 +26,15 @@ export class TagDetails {
 }
 
 export class InstanceSpecificData {
+  contentToken?: string;
   genericError?: string;
   reverseSearchResult?: SimpleImageSearchResult;
   uploadState?: PostUploadInfo;
 }
+
+type MappedInstanceSpecificData = {
+  [key: string]: InstanceSpecificData;
+};
 
 export class ScrapedPostDetails {
   id = window.crypto.randomUUID();
@@ -37,14 +42,13 @@ export class ScrapedPostDetails {
   tags: TagDetails[] = [];
   notes: ScrapedNote[];
   contentUrl: string;
-  contentToken?: string;
   pageUrl: string;
   contentType: ContentType;
   rating: BooruTypes.SafetyRating;
   source = "";
   referrer?: string;
   resolution?: [number, number];
-  instanceSpecificData = new Map<string, InstanceSpecificData>();
+  instanceSpecificData: MappedInstanceSpecificData = {};
 
   constructor(post: ScrapedPost) {
     this.contentUrl = post.contentUrl;

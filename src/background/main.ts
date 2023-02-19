@@ -38,7 +38,8 @@ async function uploadPost(data: PostUploadCommandData) {
       new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
     );
 
-    const createdPost = await szuru.createPost(data.post);
+    const contentToken = data.post.instanceSpecificData[data.siteId]?.contentToken;
+    const createdPost = await szuru.createPost(data.post, contentToken);
 
     info.state = "uploaded";
     info.instancePostId = createdPost.id;

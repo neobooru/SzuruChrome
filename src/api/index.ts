@@ -9,7 +9,7 @@ import {
   TagFields,
   TemporaryFileUploadResult,
 } from "./models";
-import { PostDetails } from "~/models";
+import { ScrapedPostDetails } from "~/models";
 import { SzuruSiteConfig } from "~/config";
 
 /**
@@ -70,7 +70,7 @@ export default class SzurubooruApi {
     return (await this.apiGet("tag-categories")).data;
   }
 
-  async createPost(post: PostDetails): Promise<Post> {
+  async createPost(post: ScrapedPostDetails, contentToken?: string): Promise<Post> {
     const obj = <any>{
       tags: post.tags.map((x) => x.name),
       safety: post.rating,
@@ -78,8 +78,8 @@ export default class SzurubooruApi {
       notes: post.notes,
     };
 
-    if (post.contentToken) {
-      obj.contentToken = post.contentToken;
+    if (contentToken) {
+      obj.contentToken = contentToken;
     } else {
       obj.contentUrl = post.contentUrl;
     }

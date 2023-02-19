@@ -53,7 +53,7 @@ const szuru = computed(() => {
 const instanceSpecificData = readonly(
   computed(() => {
     if (selectedPost.value && selectedSiteId.value) {
-      return selectedPost.value.instanceSpecificData.get(selectedSiteId.value);
+      return selectedPost.value.instanceSpecificData[selectedSiteId.value];
     }
   })
 );
@@ -124,7 +124,7 @@ async function grabPost() {
 
       // Initialize instanceSpecificData with an empty object.
       for (const site of config.sites) {
-        vm.instanceSpecificData.set(site.id, {});
+        vm.instanceSpecificData[site.id] = {};
       }
 
       posts.push(vm);
@@ -229,8 +229,8 @@ async function clickFindSimilar() {
 async function findSimilar(post: ScrapedPostDetails | undefined) {
   if (!post || !szuru.value || !selectedSiteId.value) return;
 
-  const selectedInstance = szuru.value;
-  let instanceSpecificData = post.instanceSpecificData.get(selectedSiteId.value);
+  const selectedInstance = szuru.value; // Get current object, and not reactive.
+  let instanceSpecificData = post.instanceSpecificData[selectedSiteId.value];
 
   if (!instanceSpecificData) {
     console.error("instanceSpecificData is undefined. This should never happen!");
@@ -249,7 +249,7 @@ async function findSimilar(post: ScrapedPostDetails | undefined) {
       let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl);
       // TODO: Error handling?
       // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
-      post.contentToken = tmpRes.token;
+      instanceSpecificData.contentToken = tmpRes.token;
 
       res = await selectedInstance.reverseSearchToken(tmpRes.token);
     } else {
@@ -398,7 +398,7 @@ onMounted(async () => {
           const { postId, instanceId, info } = <SetPostUploadInfoData>cmd.data;
           let post = posts.find((x) => x.id == postId);
           if (post) {
-            let instanceSpecificData = post.instanceSpecificData.get(instanceId);
+            let instanceSpecificData = post.instanceSpecificData[instanceId];
             if (instanceSpecificData) {
               instanceSpecificData.uploadState = info;
             }
@@ -410,7 +410,7 @@ onMounted(async () => {
           const { postId, instanceId, exactPostId } = <SetExactPostId>cmd.data;
           let post = posts.find((x) => x.id == postId);
           if (post && selectedPostId.value) {
-            let instanceSpecificData = post.instanceSpecificData.get(instanceId);
+            let instanceSpecificData = post.instanceSpecificData[instanceId];
             if (instanceSpecificData) {
               if (instanceSpecificData?.reverseSearchResult) {
                 instanceSpecificData.reverseSearchResult.exactPostId = exactPostId;
