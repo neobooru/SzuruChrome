@@ -31,6 +31,7 @@ let cancelSource = ref<CancelTokenSource | undefined>(undefined);
 let autocompleteIndex = ref(-1);
 let selectedSiteId = ref<string | undefined>(undefined);
 let isSearchingForSimilarPosts = ref<number>(0);
+let imgEl = ref<HTMLImageElement | null>(null);
 
 const selectedInstance = computed(() => {
   if (selectedSiteId.value) {
@@ -384,6 +385,19 @@ function getUpdatedTagsText(count: number) {
   return `Updated ${count} tag${count > 1 ? "s" : ""}`;
 }
 
+// Get image width and height from the <img> element.
+// This works because we load the full-resolution image in the <img> element.
+// This code might stop showing correct resolutions if/when we implement a progressive image loading.
+function onloadImage(post: ScrapedPostDetails | undefined) {
+  // I guess post/selectedPost could have a race condition here?
+  // Seems very unlikely though, as the load event gets cancelled as soon as we change the :src attribute.
+  // A race condition might even be impossible then.
+  console.log("Setting resolution! " + imgEl.value?.naturalHeight);
+  if (post && !post.resolution && imgEl.value) {
+    post.resolution = [imgEl.value.naturalWidth, imgEl.value.naturalHeight];
+  }
+}
+
 onMounted(async () => {
   config = await Config.load();
   selectedSiteId.value = config.selectedSiteId;
@@ -666,7 +680,12 @@ useDark();
 
         <div class="popup-section">
           <div class="post-container">
-            <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
+            <img
+              v-if="selectedPost.contentType == 'image'"
+              ref="imgEl"
+              :src="selectedPost.contentUrl"
+              @load="() => onloadImage(selectedPost)"
+            />
             <video v-if="selectedPost.contentType == 'video'" controls>
               <source :src="selectedPost.contentUrl" />
             </video>
