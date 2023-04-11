@@ -1,0 +1,271 @@
+@use "sass:color";
+
+@use "basscss/css/basscss-cp.css";
+
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 2rem;
+}
+
+.flex-fit {
+  flex: 0 0 100%;
+}
+
+.gap-1 {
+  gap: var(--space-1);
+}
+
+.gap-2 {
+  gap: var(--space-2);
+}
+
+.gap-3 {
+  gap: var(--space-3);
+}
+
+.gap-4 {
+  gap: var(--space-4);
+}
+
+.gapx-1 {
+  column-gap: var(--space-1);
+}
+
+.gapx-2 {
+  column-gap: var(--space-2);
+}
+
+.gapx-3 {
+  column-gap: var(--space-3);
+}
+
+.gapx-4 {
+  column-gap: var(--space-4);
+}
+
+/* open-sans-regular - latin */
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 400;
+  src: local(""), url("/assets/open-sans-v34-latin-regular.woff2") format("woff2");
+}
+
+body {
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+}
+
+$primary-color: #24aadd;
+$danger-color: #f44336;
+
+$primary-color-dark: color.scale($primary-color, $lightness: -30%);
+$danger-color-dark: color.scale($danger-color, $lightness: -50%);
+// TODO: Darker success color
+
+:root {
+  --button-bg-color: #a2a2a2;
+  --primary-color: #{$primary-color};
+  --bg-main-color: #fff;
+  --bg-secondary-color: #fafafa;
+  --border-color: #eee;
+  --secondary-text: #888;
+  --danger-color: #{$danger-color};
+  --success-color: #4caf50;
+  --section-header-fg-color: #4c4c4c;
+  --section-header-bg-color: #eee;
+  --text-color: #111;
+}
+
+html.dark {
+  --button-bg-color: #666;
+  --primary-color: #{$primary-color-dark};
+  --bg-main-color: #1a1a1a;
+  --bg-secondary-color: #3e3e3e;
+  --border-color: #474747;
+  --danger-color: #{$danger-color-dark};
+  --section-header-fg-color: #d9d9d9;
+  --section-header-bg-color: #272727;
+  --text-color: #e6e6e6;
+  color: var(--text-color);
+  background-color: var(--bg-main-color);
+}
+
+body {
+  margin: 0px;
+  display: block;
+}
+
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="text"],
+select,
+button {
+  height: 30px;
+}
+
+button {
+  background-color: var(--button-bg-color);
+  border: none;
+  color: #fff;
+
+  cursor: pointer;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+button.primary {
+  background-color: var(--primary-color);
+}
+
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="text"],
+select {
+  color: var(--text-color);
+  background-color: var(--bg-secondary-color);
+  border: 1px solid var(--border-color);
+
+  padding: 0.2em 0.3em;
+  box-sizing: border-box;
+
+  width: 100%;
+
+  &:focus {
+    outline: var(--primary-color) solid 2px;
+  }
+}
+
+input[type="radio"] {
+  margin: 3px 3px 0 5px;
+}
+
+textarea {
+  color: var(--text-color);
+  background-color: var(--bg-secondary-color);
+  border: 1px solid var(--border-color);
+  width: 100%;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll;
+  text-overflow: ellipsis;
+  resize: vertical;
+
+  &:focus {
+    outline: var(--primary-color) solid 2px;
+    box-sizing: content-box;
+  }
+}
+
+img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.flex {
+  display: flex;
+}
+
+.full {
+  width: 100%;
+}
+
+ul.compact {
+  list-style-type: none;
+  padding: 0;
+  display: inline;
+}
+
+.compact-tags {
+  list-style-type: none;
+  padding: 0;
+  display: inline;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    line-height: 1.2rem;
+  }
+}
+
+.tag-general {
+  color: var(--primary-color);
+}
+
+.tag-copyright {
+  color: rgb(170, 0, 170);
+}
+
+.tag-character {
+  color: rgb(0, 170, 0);
+}
+
+.tag-artist {
+  color: rgb(170, 0, 0);
+}
+
+.tag-meta {
+  color: rgb(255, 128, 0);
+}
+
+.tag-species {
+  color: rgb(17, 14, 247);
+}
+
+.tag-lore {
+  color: rgb(48, 48, 48);
+}
+
+.remove-tag {
+  color: var(--secondary-text);
+}
+
+.tag-usages {
+  color: var(--secondary-text);
+  font-size: 90%;
+  text-indent: initial;
+}
+
+a.remove-tag {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.messages {
+  list-style-type: none;
+  padding: 0;
+  display: inline;
+
+  > li {
+    padding: 5px;
+    border-radius: 2px;
+    background: var(--primary-color);
+    color: #fff;
+
+    > a {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    &:first-child {
+      margin-top: 10px;
+    }
+
+    &:not(:last-child) {
+      margin-bottom: 5px;
+    }
+  }
+}
+
+.bg-danger {
+  background: var(--danger-color) !important;
+}
+
+.bg-success {
+  background: var(--success-color) !important;
+}

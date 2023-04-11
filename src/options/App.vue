@@ -1,32 +1,168 @@
+<script setup lang="ts">
+import { useColorMode } from "@vueuse/core";
+import SzuruWrapper from "~/api";
+import { Config, SzuruSiteConfig } from "~/config";
+import { getErrorMessage } from "~/utils";
+
+let autoSearchSimilar = ref(false);
+let loadTagCounts = ref(false);
+let addPageUrlToSource = ref(false);
+let useContentTokens = ref(false);
+let statusText = ref("");
+let statusType = ref("");
+let sites = reactive<SzuruSiteConfig[]>([]);
+let selectedSiteId = ref<string | undefined>(undefined);
+const selectedSite = computed(() => {
+  if (selectedSiteId.value) {
+    return sites.find((x) => x.id == selectedSiteId.value);
+  }
+});
+
+type StatusType = "success" | "error";
+
+async function testConnection() {
+  if (
+    !selectedSite.value ||
+    !selectedSite.value.domain ||
+    !selectedSite.value.username ||
+    !selectedSite.value.authToken
+  ) {
+    setStatus("Domain, username and authentication token are all required.", "error");
+    return;
+  }
+
+  const api = new SzuruWrapper(selectedSite.value.domain, selectedSite.value.username, selectedSite.value.authToken);
+  try {
+    const info = await api.getInfo();
+    const instanceName = info?.config.name;
+
+    if (instanceName == undefined) {
+      setStatus(`Connected to ${selectedSite.value.domain}, but it is not a szurubooru instance.`, "error");
+    } else {
+      setStatus(`Connected to ${info.config.name} at ${selectedSite.value.domain}`);
+    }
+  } catch (ex) {
+    setStatus(`Couldn't connect to ${selectedSite.value.domain}. ${getErrorMessage(ex)}`, "error");
+  }
+}
+
+async function saveSettings() {
+  let config = await Config.load();
+
+  config.sites = sites;
+  config.autoSearchSimilar = autoSearchSimilar.value;
+  config.loadTagCounts = loadTagCounts.value;
+  config.addPageUrlToSource = addPageUrlToSource.value;
+  config.useContentTokens = useContentTokens.value;
+  config.selectedSiteId = selectedSiteId.value;
+
+  await config.save();
+
+  setStatus("Settings successfully saved");
+}
+
+function setStatus(text: string, type: StatusType = "success") {
+  statusText.value = text;
+  statusType.value = "status-" + type;
+}
+
+function addSite() {
+  const site = new SzuruSiteConfig();
+  sites.push(site);
+  selectedSiteId.value = site.id;
+}
+
+function removeSelectedSite() {
+  if (selectedSite.value) {
+    const idx = sites.indexOf(selectedSite.value);
+    sites.splice(idx, 1);
+  }
+}
+
+onMounted(async () => {
+  let config = await Config.load();
+
+  for (let site of config.sites) {
+    // Generate IDs for sites which are missing them.
+    // This is needed to correctly import old configs.
+    if (!site.id) {
+      site.id = window.crypto.randomUUID();
+    }
+
+    // This somehow makes `site` reactive.
+    sites.push(site);
+  }
+
+  autoSearchSimilar.value = config.autoSearchSimilar;
+  loadTagCounts.value = config.loadTagCounts;
+  addPageUrlToSource.value = config.addPageUrlToSource;
+  useContentTokens.value = config.useContentTokens;
+  selectedSiteId.value = config.selectedSiteId;
+});
+
+let mode = useColorMode({ emitAuto: true });
+</script>
+
 <template>
   <div class="content-holder">
-    <div class="content-wrapper">
-      <strong>SzuruChrome Settings</strong>
+    <div class="content-wrapper flex flex-wrap gap-3">
+      <div class="flex-fit"><strong>SzuruChrome Settings</strong></div>
 
-      <p>General settings which apply to all engines.</p>
+      <div class="flex-fit">
+        <div class="fit flex flex-wrap">
+          <div class="flex-fit">
+            <label>Szurubooru Instances</label>
 
-      <ul class="input">
-        <li class="full-width">
-          <label>Szurubooru URL</label>
-          <input text="Szurubooru URL" type="text" name="domain" v-model="domain" />
-        </li>
-        <li><label>Username</label><input text="Username" type="text" name="username" v-model="username" /></li>
-        <li style="min-width: 320px">
-          <label>Authentication token</label>
-          <input text="Authentication token" type="text" name="token" v-model="authToken" />
-        </li>
-        <li>
+            <!-- This isn't perfectly responsive for very small devices. -->
+            <div class="fit flex gap-1 flex-fit">
+              <select v-model="selectedSiteId">
+                <option v-for="site in sites" :key="site.id" :value="site.id">
+                  {{ site.username }} @ {{ site.domain }}
+                </option>
+              </select>
+
+              <button class="primary" @click="addSite">Add</button>
+              <button class="bg-danger" @click="removeSelectedSite">Remove</button>
+            </div>
+          </div>
+
+          <div v-if="selectedSite" class="flex-fit flex flex-wrap gap-1 border-box pb2">
+            <div style="flex: 1 1 20ch">
+              <label>URL</label>
+              <input
+                v-if="selectedSite"
+                text="Szurubooru URL"
+                type="text"
+                name="domain"
+                v-model.lazy="selectedSite.domain"
+              />
+            </div>
+
+            <div style="flex: 1 1 12ch">
+              <label>Username</label>
+              <input text="Username" type="text" name="username" v-model="selectedSite.username" />
+            </div>
+
+            <div style="flex: 1 1 28ch">
+              <label>Authentication token</label>
+              <input text="Authentication token" type="text" name="token" v-model="selectedSite.authToken" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-fit flex flex-wrap gap-3">
+        <div class="settings-block" style="flex: 1 0 10ch">
           <label>Theme</label>
-          <select v-model="theme">
-            <option value="system">System</option>
+          <select v-model="mode">
+            <option value="auto">System</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>
-        </li>
-      </ul>
+          <p class="hint">This setting auto-saves.</p>
+        </div>
 
-      <ul class="input">
-        <li>
+        <div class="settings-block">
           <label>
             <input type="checkbox" v-model="autoSearchSimilar" />
             Automatically search for similar posts
@@ -35,8 +171,9 @@
             Automatically start searching for similar posts when opening the popup. Enabling this option will hide the
             "Find Similar" button.
           </p>
-        </li>
-        <li>
+        </div>
+
+        <div class="settings-block">
           <label>
             <input type="checkbox" v-model="addPageUrlToSource" />
             Add page URL to the source list
@@ -46,8 +183,9 @@
             (e.g. twitter/pixiv/artstation). Note: if the source is empty/not detected then the page URL will always be
             used as fallback source.
           </p>
-        </li>
-        <li>
+        </div>
+
+        <div class="settings-block">
           <label>
             <input type="checkbox" v-model="loadTagCounts" />
             Show how often a tag is used in the selected szurubooru instance
@@ -56,181 +194,86 @@
             Shows how often a given tag is used in the selected szurubooru instance. No number will be displayed when
             the tag does not yet exist.
           </p>
-        </li>
-      </ul>
+        </div>
+      </div>
 
-      <div class="settings-footer">
+      <div class="flex-fit flex flex-wrap justify-between gap-3">
         <span class="status" :class="statusType">{{ statusText }}</span>
 
-        <button @click="testConnection">Test connection</button>
-        <button @click="saveSettings" class="primary">Save settings</button>
+        <div class="flex gap-1">
+          <button @click="testConnection">Test connection</button>
+          <button @click="saveSettings" class="primary">Save settings</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import Vue from "vue";
-import SzuruWrapper from "../SzuruWrapper";
-import { Config, SzuruSiteConfig, Theme } from "../Config";
-import { applyTheme } from "../Common";
+<style lang="scss">
+@use "../styles/main.scss";
 
-type StatusType = "ok" | "error";
-
-export default Vue.extend({
-  data() {
-    return {
-      domain: "",
-      username: "",
-      authToken: "",
-      autoSearchSimilar: false,
-      loadTagCounts: false,
-      addPageUrlToSource: false,
-      useContentTokens: false,
-      theme: "system" as Theme,
-      statusText: "",
-      statusType: "",
-    };
-  },
-  methods: {
-    async testConnection() {
-      if (!this.domain || !this.username || !this.authToken) {
-        this.setStatus("Domain, username and authentication token are all required.", "error");
-        return;
-      }
-
-      const api = new SzuruWrapper(this.domain, this.username, this.authToken);
-      try {
-        const info = (await api.getInfo()) as any;
-        const instanceName = info?.config.name;
-
-        if (instanceName == undefined) {
-          this.setStatus(`Connected to ${this.domain}, but it is not a szurubooru instance.`, "error");
-        } else {
-          this.setStatus(`Connected to ${info.config.name} at ${this.domain}`);
-        }
-      } catch (ex) {
-        // TODO: This error message is not very descriptive.
-        console.dir(ex);
-        this.setStatus("Couldn't connect to " + this.domain + "\n\n" + ex, "error");
-      }
-    },
-    async saveSettings() {
-      let config = await Config.load();
-
-      // We currently only support one domain
-      let siteConfig = new SzuruSiteConfig();
-      siteConfig.domain = this.domain;
-      siteConfig.username = this.username;
-      siteConfig.authToken = this.authToken;
-      config.sites = [siteConfig];
-      config.autoSearchSimilar = this.autoSearchSimilar;
-      config.loadTagCounts = this.loadTagCounts;
-      config.addPageUrlToSource = this.addPageUrlToSource;
-      config.useContentTokens = this.useContentTokens;
-      config.theme = this.theme;
-
-      await config.save();
-
-      this.setStatus("Settings successfully saved");
-    },
-    setStatus(text: string, type: StatusType = "ok") {
-      this.statusText = text;
-      this.statusType = "status-" + type;
-    },
-  },
-  async mounted() {
-    let config = await Config.load();
-
-    // console.log(`Loaded ${config.sites.length} sites`);
-
-    // We currently only support one domain
-    if (config.sites.length > 0) {
-      this.domain = config.sites[0].domain;
-      this.username = config.sites[0].username;
-      this.authToken = config.sites[0].authToken;
-    }
-
-    this.autoSearchSimilar = config.autoSearchSimilar;
-    this.loadTagCounts = config.loadTagCounts;
-    this.addPageUrlToSource = config.addPageUrlToSource;
-    this.useContentTokens = config.useContentTokens;
-    this.theme = config.theme;
-  },
-  watch: {
-    theme: (value) => applyTheme(value),
-  },
-});
-</script>
-
-<style lang="scss" scoped>
 .content-holder {
   padding: 1.5em;
   display: flex;
   justify-content: center;
 
   > .content-wrapper {
-    box-sizing: border-box;
-    text-align: left;
-    display: inline-block;
-    flex: auto;
+    //   box-sizing: border-box;
+    // text-align: left;
+    // display: inline-block;
+    // flex: auto;
     max-width: 1000px;
-
-    &:not(.transparent) {
-      background: #f5f5f5;
-      padding: 1.8em;
-    }
+    // gap: 1rem;
+    padding: 1.8em;
+    background: #f5f5f5;
   }
 }
 
-html[data-theme="dark"] .content-holder > .content-wrapper:not(.transparent) {
+html.dark .content-wrapper {
   background: var(--section-header-bg-color);
 }
 
-.settings-footer {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-
-  .status {
-    flex-grow: 1;
-  }
-
-  > span.status-ok {
-    color: green;
-  }
-
-  > span.status-error {
-    color: red;
-  }
-}
-
-.input {
-  list-style-type: none;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-
-  li {
-    flex: 1 0 200px;
-  }
-
-  li.full-width {
-    min-width: 100%;
-  }
+.settings-block {
+  flex: 1 0 200px;
 
   label {
-    display: block;
-    padding: 0.3em 0;
+    padding: 0;
+    margin-bottom: 0.3em;
   }
 }
 
 .hint {
-  margin-top: 0.2em;
+  margin-top: 0.4em;
   margin-bottom: 0;
   color: var(--secondary-text);
   font-size: 80%;
   line-height: 120%;
+}
+
+.status-error {
+  color: red;
+}
+
+.status-success {
+  color: green;
+}
+
+label {
+  display: block;
+  padding: 0.3em 0;
+}
+
+input[type="checkbox"] {
+  margin: 0 3px 0 0;
+}
+
+@media only screen and (max-width: 600px) {
+  .content-holder {
+    padding: 0;
+  }
+
+  .status {
+    flex: 0 0 100%;
+  }
 }
 </style>

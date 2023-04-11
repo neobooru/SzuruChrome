@@ -1,20 +1,581 @@
+<script setup lang="ts">
+import { useDark } from "@vueuse/core";
+import axios, { CancelTokenSource } from "axios";
+import { ScrapeResults } from "neo-scraper";
+import { getUrl, encodeTagName, getErrorMessage } from "~/utils";
+import {
+  BrowserCommand,
+  ScrapedPostDetails,
+  TagDetails,
+  PostUploadCommandData,
+  SimilarPostInfo,
+  SetPostUploadInfoData,
+  SetExactPostId,
+  SimpleSimilarPost,
+  SimpleImageSearchResult,
+} from "~/models";
+import SzuruWrapper from "~/api";
+import { ImageSearchResult } from "~/api/models";
+import { isChrome, isMobile } from "~/env";
+import { Runtime, WebRequest } from "webextension-polyfill";
+import { Config } from "~/config";
+import { DeepReadonly } from "vue";
+
+let config = new Config();
+let posts = reactive([] as ScrapedPostDetails[]);
+let selectedPostId = ref<string | undefined>(undefined);
+let addTagInput = ref("");
+let autocompleteShown = ref(false);
+let autocompleteTags = ref<TagDetails[]>([]);
+let cancelSource = ref<CancelTokenSource | undefined>(undefined);
+let autocompleteIndex = ref(-1);
+let selectedSiteId = ref<string | undefined>(undefined);
+let isSearchingForSimilarPosts = ref<number>(0);
+let imgEl = ref<HTMLImageElement | null>(null);
+
+const selectedInstance = computed(() => {
+  if (selectedSiteId.value) {
+    return config.sites.find((x) => x.id == selectedSiteId.value);
+  }
+});
+
+const selectedPost = computed(() => {
+  if (selectedPostId.value) {
+    return posts.find((x) => x.id == selectedPostId.value);
+  }
+});
+
+const szuru = computed(() => {
+  return selectedInstance.value ? SzuruWrapper.createFromConfig(selectedInstance.value) : undefined;
+});
+
+// (Reactive) shorthand for `selectedPost.value.instanceSpecificData.get(selectedSiteId.value)`.
+// This should only be used as if it were readonly, because the instanceId might change.
+const instanceSpecificData = readonly(
+  computed(() => {
+    if (selectedPost.value && selectedSiteId.value) {
+      return selectedPost.value.instanceSpecificData[selectedSiteId.value];
+    }
+  })
+);
+
+watch(selectedPostId, () => {
+  // Call findSimilar if wanted.
+  if (config.autoSearchSimilar) {
+    let selectedPost = posts.find((x) => x.id == selectedPostId.value);
+    if (selectedPost) findSimilar(selectedPost);
+  }
+});
+
+watch(selectedSiteId, async (x) => {
+  // If changed
+  if (config.selectedSiteId != x) {
+    // Update selectedSiteId in config
+    config.selectedSiteId = x;
+    await config.save();
+
+    // Call findSimilar if wanted.
+    if (config.autoSearchSimilar && selectedPost.value) {
+      findSimilar(selectedPost.value);
+    }
+  }
+});
+
+function openOptionsPage() {
+  browser.runtime.openOptionsPage();
+}
+
+async function getActiveTabId(): Promise<number> {
+  const activeTabs = await browser.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+
+  if (activeTabs.length > 0 && activeTabs[0].id) return activeTabs[0].id;
+  throw new Error("No active tab.");
+}
+
+async function grabPost() {
+  // Get active tab
+  const activeTabId = await getActiveTabId();
+
+  // Send 'grab_post' to the content script on the active tab
+  const x = await browser.tabs.sendMessage(activeTabId, new BrowserCommand("grab_post"));
+  // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
+  // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
+  const res = Object.assign(new ScrapeResults(), x);
+
+  console.dir(res);
+
+  // Clear current posts array
+  posts.splice(0);
+
+  for (const result of res.results) {
+    for (const i in result.posts) {
+      const vm = new ScrapedPostDetails(result.posts[i]);
+      vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
+
+      // Add current pageUrl to the source if either
+      // a. user has addPageUrlToSource set to true
+      // b. source is empty
+      if (config?.addPageUrlToSource || vm.source == "") {
+        if (vm.source != "") vm.source += "\n";
+        vm.source += vm.pageUrl;
+      }
+
+      // Initialize instanceSpecificData with an empty object.
+      for (const site of config.sites) {
+        vm.instanceSpecificData[site.id] = {};
+      }
+
+      posts.push(vm);
+    }
+  }
+
+  if (posts.length > 0) {
+    selectedPostId.value = posts[0].id;
+    if (config?.loadTagCounts) {
+      loadTagCounts();
+    }
+  } else {
+    // pushInfo("No posts found.");
+  }
+}
+
+async function upload() {
+  if (!selectedSiteId.value) return;
+
+  // Don't try to upload if an exact copy is already on the server.
+  if (instanceSpecificData.value?.reverseSearchResult?.exactPostId) return;
+
+  // TODO: Terrible code.
+  const post = JSON.parse(JSON.stringify(selectedPost.value));
+  const cmdData = new PostUploadCommandData(post, selectedSiteId.value);
+  const cmd = new BrowserCommand("upload_post", cmdData);
+  await browser.runtime.sendMessage(cmd);
+  // TODO: Handle errors/status update
+}
+
+function getTagClasses(tag: TagDetails): string[] {
+  let classes: string[] = [];
+
+  if (tag.category && tag.category != "default") {
+    classes.push("tag-" + tag.category);
+  } else {
+    classes.push("tag-general");
+  }
+
+  return classes;
+}
+
+function breakTagName(tagName: string) {
+  // Based on https://stackoverflow.com/a/6316913
+  return tagName.replace(/_/g, "_<wbr>");
+}
+
+function resolutionToString(resolution: [number, number]) {
+  if (resolution && resolution.length == 2) {
+    return resolution[0] + "x" + resolution[1];
+  }
+  return "";
+}
+
+function removeTag(tag: TagDetails) {
+  if (selectedPost.value) {
+    const idx = selectedPost.value.tags.indexOf(tag);
+    if (idx != -1) {
+      selectedPost.value.tags.splice(idx, 1);
+    }
+  }
+}
+
+function getActiveSitePostUrl(postId: number): string {
+  if (!selectedInstance.value) return "";
+  return getUrl(selectedInstance.value.domain, "post", postId.toString());
+}
+
+function getSimilarPosts(data?: DeepReadonly<SimpleImageSearchResult>): SimilarPostInfo[] {
+  if (!data) return [];
+
+  const lst: SimilarPostInfo[] = [];
+
+  for (const similarPost of data.similarPosts) {
+    if (data.exactPostId == similarPost.postId) {
+      continue;
+    }
+
+    lst.push(new SimilarPostInfo(similarPost.postId, Math.round(100 - similarPost.distance * 100)));
+  }
+
+  return lst;
+}
+
+function addTag(tag: TagDetails) {
+  if (selectedPost.value) {
+    // Only add tag if it doesn't already exist
+    if (tag.name.length > 0 && selectedPost.value.tags.find((x) => x.name == tag.name) == undefined) {
+      selectedPost.value.tags.push(tag);
+
+      // Add implications for the tag
+      selectedPost.value.tags.push(...tag.implications);
+    }
+  }
+}
+
+async function clickFindSimilar() {
+  let selectedPost = posts.find((x) => x.id == selectedPostId.value);
+  if (selectedPost) return await findSimilar(selectedPost);
+}
+
+async function findSimilar(post: ScrapedPostDetails | undefined) {
+  if (!post || !szuru.value || !selectedSiteId.value) return;
+
+  const selectedInstance = szuru.value; // Get current object, and not reactive.
+  let instanceSpecificData = post.instanceSpecificData[selectedSiteId.value];
+
+  if (!instanceSpecificData) {
+    console.error("instanceSpecificData is undefined. This should never happen!");
+    return;
+  }
+
+  // Don't load this again if it is already loaded.
+  if (instanceSpecificData?.reverseSearchResult) return;
+
+  isSearchingForSimilarPosts.value++;
+
+  try {
+    let res: ImageSearchResult | undefined;
+
+    if (config.useContentTokens) {
+      let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl);
+      // TODO: Error handling?
+      // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
+      instanceSpecificData.contentToken = tmpRes.token;
+
+      res = await selectedInstance.reverseSearchToken(tmpRes.token);
+    } else {
+      res = await selectedInstance.reverseSearch(post.contentUrl);
+    }
+
+    instanceSpecificData.reverseSearchResult = {
+      exactPostId: res.exactPost?.id,
+      similarPosts: res.similarPosts.map((x) => <SimpleSimilarPost>{ postId: x.post.id, distance: x.distance }),
+    };
+  } catch (ex: any) {
+    instanceSpecificData.genericError = "Couldn't reverse search. " + getErrorMessage(ex);
+  }
+
+  isSearchingForSimilarPosts.value--;
+}
+
+function getPostForUrl(contentUrl: string): ScrapedPostDetails | undefined {
+  return posts.find((x) => x.contentUrl == contentUrl);
+}
+
+async function loadTagCounts() {
+  const allTags = posts.flatMap((x) => x.tags);
+
+  for (let i = 0; i < allTags.length; i += 100) {
+    const query = allTags
+      .slice(i, i + 101)
+      .map((x) => encodeTagName(x.name))
+      .join();
+
+    const resp = await szuru.value?.getTags(query);
+
+    // Not the best code, but it works I guess?
+    if (resp) {
+      for (let post of posts)
+        for (let tag of resp.results)
+          for (let postTag of post.tags)
+            if (postTag.name == tag.names[0]) {
+              postTag.usages = tag.usages;
+              break;
+            }
+    }
+  }
+}
+
+async function onAddTagKeyUp(e: KeyboardEvent) {
+  await autocompletePopulator((<HTMLInputElement>e.target).value);
+}
+
+function addTagFromCurrentInput() {
+  addTag(new TagDetails(addTagInput.value));
+  addTagInput.value = ""; // Reset input
+
+  // Only needed when the button is clicked
+  // When this is triggered by the enter key the `onAddTagKeyUp` will internally also hide the autocomplete.
+  // Though hiding it twice doesn't hurt so we don't care.
+  hideAutocomplete();
+
+  // TODO: Do we also want to add the implications?
+  // Answer: Probably not, because if the user wanted to have implications they should've clicked/selected the autocomplete entry.
+}
+
+function onAddTagKeyDown(e: KeyboardEvent) {
+  if (e.code == "ArrowDown") {
+    e.preventDefault();
+    if (autocompleteIndex.value < autocompleteTags.value.length - 1) {
+      autocompleteIndex.value++;
+    }
+  } else if (e.code == "ArrowUp") {
+    e.preventDefault();
+    if (autocompleteIndex.value >= 0) {
+      autocompleteIndex.value--;
+    }
+  } else if (e.code == "Enter") {
+    if (autocompleteIndex.value == -1) {
+      addTagFromCurrentInput();
+    } else {
+      // Add auto completed tag
+      const tagToAdd = autocompleteTags.value[autocompleteIndex.value];
+      addTag(tagToAdd);
+      addTagInput.value = ""; // Reset input
+    }
+  }
+}
+
+function onClickAutocompleteTagItem(tag: TagDetails) {
+  addTag(tag);
+  addTagInput.value = ""; // Reset input
+  autocompleteShown.value = false; // Hide autocomplete list
+}
+
+function hideAutocomplete() {
+  autocompleteIndex.value = -1;
+  autocompleteShown.value = false;
+}
+
+async function autocompletePopulator(input: string) {
+  // Based on https://www.w3schools.com/howto/howto_js_autocomplete.asp
+  // TODO: Put this in a separate component
+
+  // Hide autocomplete when the input is empty, and don't do anything else.
+  if (input.length == 0) {
+    hideAutocomplete();
+    return;
+  }
+
+  // Cancel previous request
+  if (cancelSource.value) {
+    cancelSource.value.cancel();
+  }
+  cancelSource.value = axios.CancelToken.source();
+
+  const query = decodeURIComponent(`*${encodeTagName(input)}* sort:usages`);
+  const res = await szuru.value?.getTags(
+    query,
+    0,
+    100,
+    ["names", "category", "usages", "implications"],
+    cancelSource.value.token
+  );
+
+  if (res) {
+    autocompleteTags.value = res.results.map((x) => TagDetails.fromTag(x));
+    if (autocompleteTags.value.length > 0) autocompleteShown.value = true;
+  } else {
+    autocompleteTags.value = [];
+  }
+}
+
+// Could people would use https://kazupon.github.io/vue-i18n/guide/pluralization.html
+function getUpdatedTagsText(count: number) {
+  return `Updated ${count} tag${count > 1 ? "s" : ""}`;
+}
+
+// Get image width and height from the <img> element.
+// This works because we load the full-resolution image in the <img> element.
+// This code might stop showing correct resolutions if/when we implement a progressive image loading.
+function onloadImage(post: ScrapedPostDetails | undefined) {
+  // I guess post/selectedPost could have a race condition here?
+  // Seems very unlikely though, as the load event gets cancelled as soon as we change the :src attribute.
+  // A race condition might even be impossible then.
+  console.log("Setting resolution! " + imgEl.value?.naturalHeight);
+  if (post && !post.resolution && imgEl.value) {
+    post.resolution = [imgEl.value.naturalWidth, imgEl.value.naturalHeight];
+  }
+}
+
+onMounted(async () => {
+  config = await Config.load();
+  selectedSiteId.value = config.selectedSiteId;
+
+  browser.runtime.onMessage.addListener((cmd: BrowserCommand, _sender: Runtime.MessageSender) => {
+    console.log("Popup received message:");
+    console.dir(cmd);
+
+    switch (cmd.name) {
+      case "set_post_upload_info":
+        {
+          const { postId, instanceId, info } = <SetPostUploadInfoData>cmd.data;
+          let post = posts.find((x) => x.id == postId);
+          if (post) {
+            let instanceSpecificData = post.instanceSpecificData[instanceId];
+            if (instanceSpecificData) {
+              instanceSpecificData.uploadState = info;
+            }
+          }
+        }
+        break;
+      case "set_exact_post_id":
+        {
+          const { postId, instanceId, exactPostId } = <SetExactPostId>cmd.data;
+          let post = posts.find((x) => x.id == postId);
+          if (post && selectedPostId.value) {
+            let instanceSpecificData = post.instanceSpecificData[instanceId];
+            if (instanceSpecificData) {
+              if (instanceSpecificData?.reverseSearchResult) {
+                instanceSpecificData.reverseSearchResult.exactPostId = exactPostId;
+              } else {
+                instanceSpecificData.reverseSearchResult = { exactPostId, similarPosts: [] };
+              }
+            }
+          }
+        }
+        break;
+    }
+  });
+
+  let extraInfoSpec: WebRequest.OnBeforeSendHeadersOptions[] = ["requestHeaders", "blocking"];
+  if (isChrome) {
+    extraInfoSpec.push("extraHeaders");
+  }
+
+  // Add "Referer" header to all requests if post.referrer is set.
+  // This is needed in some rare cases where websites disallow hotlinking to images.
+  // This will probably stop working in Chrome sometime in 2023 due to the Manifest V3 webRequestBlocking bullshit.
+  // Firefox users should be fine.
+  browser.webRequest.onBeforeSendHeaders.addListener(
+    (details: WebRequest.OnBeforeSendHeadersDetailsType): WebRequest.BlockingResponse => {
+      let requestHeaders = details.requestHeaders ?? [];
+
+      // Find which ScrapedPost this belongs to, if any.
+      const post = getPostForUrl(details.url);
+      if (post != undefined && post.referrer) {
+        console.log(`Setting referrer to '${post.referrer}' for request to '${post.contentUrl}'.`);
+        // TODO: If the headers already have a 'Referer' header this will _not_ override that.
+        // As far as I am aware the 'img' tag doesn't set this header, so it shouldn't be a problem.
+        requestHeaders.push({ name: "Referer", value: post.referrer });
+      }
+
+      return {
+        requestHeaders,
+      };
+    },
+    { urls: ["<all_urls>"] },
+    extraInfoSpec
+  );
+
+  grabPost();
+});
+
+useDark();
+</script>
+
 <template>
   <div class="popup-container">
     <div class="popup-messages">
       <ul class="messages">
-        <li v-for="msg in messages" :key="msg.content" :class="getMessageClasses(msg)" v-html="msg.content"></li>
+        <!-- 
+          Error messages
+        -->
+
+        <li v-if="config.sites.length == 0" class="bg-danger">No szurubooru server configured!</li>
+
+        <li v-if="!selectedInstance" class="bg-danger">No target server selected!</li>
+
+        <li v-if="instanceSpecificData?.reverseSearchResult?.exactPostId" class="bg-danger">
+          <a :href="getActiveSitePostUrl(instanceSpecificData.reverseSearchResult?.exactPostId)"
+            >Post already uploaded ({{ instanceSpecificData.reverseSearchResult.exactPostId }})</a
+          >
+        </li>
+
+        <!-- Only show error when it's not undefined and not empty. -->
+        <li v-if="instanceSpecificData?.uploadState?.error?.length" class="bg-danger">
+          Couldn't upload post. {{ instanceSpecificData.uploadState.error }}
+        </li>
+
+        <li v-if="instanceSpecificData?.genericError" class="bg-danger">{{ instanceSpecificData.genericError }}</li>
+
+        <!--
+          Success messages
+        -->
+
+        <!-- TODO: Clicking a link doesn't actually open it in a new tab, see https://stackoverflow.com/questions/8915845 -->
+        <li
+          v-if="
+            instanceSpecificData?.uploadState?.state == 'uploaded' && instanceSpecificData?.uploadState.instancePostId
+          "
+          class="bg-success"
+        >
+          <a :href="getActiveSitePostUrl(instanceSpecificData.uploadState.instancePostId)"
+            >Uploaded post {{ instanceSpecificData.uploadState.instancePostId }}</a
+          >
+        </li>
+
+        <li v-if="instanceSpecificData?.uploadState?.updateTagsState?.totalChanged" class="bg-success">
+          {{ getUpdatedTagsText(instanceSpecificData.uploadState?.updateTagsState?.totalChanged) }}
+        </li>
+
+        <!--
+          Info messages
+        -->
+
+        <li v-if="instanceSpecificData?.uploadState?.state == 'uploading'">Uploading...</li>
+
+        <li
+          v-if="
+            instanceSpecificData?.uploadState?.updateTagsState?.total &&
+            instanceSpecificData.uploadState?.updateTagsState?.current == undefined
+          "
+        >
+          {{ instanceSpecificData.uploadState?.updateTagsState?.total }} tags need a different category
+        </li>
+
+        <li
+          v-if="
+            instanceSpecificData?.uploadState?.updateTagsState?.current &&
+            instanceSpecificData?.uploadState?.updateTagsState?.totalChanged == undefined
+          "
+        >
+          Updating tag {{ instanceSpecificData.uploadState?.updateTagsState?.current }}/{{
+            instanceSpecificData.uploadState?.updateTagsState?.total
+          }}
+        </li>
+
+        <li v-if="isSearchingForSimilarPosts > 0 && instanceSpecificData?.uploadState == undefined">
+          Searching for similar posts...
+        </li>
+
+        <li
+          v-if="
+            instanceSpecificData?.reverseSearchResult?.similarPosts.length == 0 &&
+            instanceSpecificData.uploadState == undefined
+          "
+        >
+          No similar posts found
+        </li>
+
+        <li v-for="similarPost in getSimilarPosts(instanceSpecificData?.reverseSearchResult)" :key="similarPost.id">
+          <a :href="getActiveSitePostUrl(similarPost.id)"
+            >Post {{ similarPost.id }} looks {{ similarPost.percentage }}% similar</a
+          >
+        </li>
       </ul>
     </div>
 
-    <div class="popup-columns">
+    <div v-if="selectedPost" class="popup-columns" :class="{ mobile: isMobile }">
       <div class="popup-left">
         <div class="popup-section">
           <div class="section-header">
             <span>Basic info</span>
-            <i class="fas fa-cog cursor-pointer" @click="openSettings"></i>
+            <!-- <i class="fas fa-cog cursor-pointer" @click="openOptionsPage"></i> -->
+            <font-awesome-icon icon="fa-solid fa-cog" class="cursor-pointer" @click="openOptionsPage" />
           </div>
 
-          <div class="section-row" v-if="selectedPost.resolution != undefined">
+          <div class="section-row" v-if="selectedPost?.resolution">
             <ul class="compact">
               <li>Resolution: {{ resolutionToString(selectedPost.resolution) }}</li>
             </ul>
@@ -23,22 +584,19 @@
           <div class="section-row">
             <span class="section-label">Safety</span>
 
-            <div class="flex">
+            <div style="display: flex; gap: 10px">
               <label>
                 <input type="radio" value="safe" v-model="selectedPost.rating" />
-                <span class="checkmark"></span>
                 Safe
               </label>
 
               <label>
                 <input type="radio" value="sketchy" v-model="selectedPost.rating" />
-                <span class="checkmark"></span>
                 Sketchy
               </label>
 
               <label>
                 <input type="radio" value="unsafe" v-model="selectedPost.rating" />
-                <span class="checkmark"></span>
                 Unsafe
               </label>
             </div>
@@ -46,7 +604,7 @@
 
           <div class="section-row">
             <span class="section-label">Source</span>
-            <textarea v-model="selectedPost.source" />
+            <textarea v-model="selectedPost.source"></textarea>
           </div>
         </div>
 
@@ -87,7 +645,7 @@
               <li v-for="tag in selectedPost.tags" :key="tag.name">
                 <a class="remove-tag" @click="removeTag(tag)">x</a>
                 <span :class="getTagClasses(tag)" v-html="breakTagName(tag.name)"></span>
-                <span v-if="showTagUsages" class="tag-usages tag-usages-reserve-space">{{
+                <span v-if="config.loadTagCounts" class="tag-usages tag-usages-reserve-space">{{
                   tag.usages ? tag.usages : ""
                 }}</span>
               </li>
@@ -97,8 +655,10 @@
 
         <div class="popup-section">
           <div class="section-row">
-            <select disabled>
-              <option>{{ activeSite != null ? activeSite.domain : "(no site available)" }}</option>
+            <select v-model="selectedSiteId">
+              <option v-for="site in config.sites" :key="site.id" :value="site.id">
+                {{ site.domain }}
+              </option>
             </select>
           </div>
         </div>
@@ -106,21 +666,26 @@
 
       <div class="popup-right">
         <div class="popup-section">
-          <select v-model="selectedPost">
-            <option v-for="post in posts" v-bind:key="post.name" v-bind:value="post">{{ post.name }}</option>
+          <select v-model="selectedPostId">
+            <option v-for="post in posts" :key="post.id" :value="post.id">{{ post.name }}</option>
           </select>
         </div>
 
         <div class="popup-section">
           <div style="display: flex; gap: 5px">
-            <button v-if="showFindSimilarButton" class="primary" @click="findSimilar">Find similar</button>
+            <button v-if="!config.autoSearchSimilar" class="primary" @click="clickFindSimilar">Find similar</button>
             <button class="primary full" @click="upload">Import</button>
           </div>
         </div>
 
         <div class="popup-section">
           <div class="post-container">
-            <img :src="selectedPost.contentUrl" v-if="selectedPost.contentType == 'image'" />
+            <img
+              v-if="selectedPost.contentType == 'image'"
+              ref="imgEl"
+              :src="selectedPost.contentUrl"
+              @load="() => onloadImage(selectedPost)"
+            />
             <video v-if="selectedPost.contentType == 'video'" controls>
               <source :src="selectedPost.contentUrl" />
             </video>
@@ -131,417 +696,17 @@
         </div>
       </div>
     </div>
+
+    <div v-else class="p3 flex items-center gap-3">
+      <span>No content found</span>
+      <font-awesome-icon icon="fa-solid fa-cog" class="cursor-pointer" @click="openOptionsPage" />
+    </div>
   </div>
 </template>
 
-<script lang="ts">
-import Vue from "vue";
-import axios, { CancelTokenSource } from "axios";
-import { browser, Runtime, WebRequest } from "webextension-polyfill-ts";
-import { ScrapedPost, ScrapeResults } from "neo-scraper";
-import SzuruWrapper from "../SzuruWrapper";
-import { ImageSearchResult, Post } from "../SzuruTypes";
-import { Config, SzuruSiteConfig } from "../Config";
-import { BrowserCommand, Message, getUrl, isChrome, encodeTagName } from "../Common";
-import { PostViewModel, TagViewModel } from "../ViewModels";
-import PostNotes from "./components/PostNotes.vue";
+<style lang="scss">
+@use "../styles/main.scss";
 
-export default Vue.extend({
-  components: { PostNotes },
-  data() {
-    return {
-      config: null as Config | null,
-      activeSite: null as SzuruSiteConfig | null,
-      szuru: null as SzuruWrapper | null,
-      posts: [] as PostViewModel[],
-      selectedPost: new PostViewModel(new ScrapedPost()), // Shouldn't be null because VueJS gets a mental breakdown when it sees a null.
-      messages: [] as Message[],
-      addTagInput: "",
-      autocompleteShown: false,
-      autocompleteTags: [] as TagViewModel[],
-      cancelSource: null as CancelTokenSource | null,
-      autocompleteIndex: -1,
-      showTagUsages: false,
-      showFindSimilarButton: true,
-    };
-  },
-  watch: {
-    selectedPost() {
-      if (this.config && this.config.autoSearchSimilar) {
-        // No need to check if any vars are unset, findSimilar does that internally
-        this.findSimilar();
-      }
-    },
-  },
-  methods: {
-    async getActiveTabId() {
-      const activeTabs = await browser.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      if (activeTabs.length > 0) return activeTabs[0].id!;
-      throw new Error("No active tab.");
-    },
-    // Try to scrape the post from the page
-    async grabPost() {
-      // Get active tab
-      const activeTabId = await this.getActiveTabId();
-
-      // Send 'grab_post' to the content script on the active tab
-      const x = await browser.tabs.sendMessage(activeTabId, new BrowserCommand("grab_post"));
-      // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
-      // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
-      const res = Object.assign(new ScrapeResults(), x);
-
-      // Clear current posts array
-      this.posts = [];
-
-      for (const result of res.results) {
-        for (const i in result.posts) {
-          const vm = new PostViewModel(result.posts[i]);
-          vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
-
-          // Add current pageUrl to the source if either
-          // a. user has addPageUrlToSource set to true
-          // b. source is empty
-          if (this.config?.addPageUrlToSource || vm.source == "") {
-            if (vm.source != "") vm.source += "\n";
-            vm.source += vm.pageUrl;
-          }
-
-          this.posts.push(vm);
-        }
-      }
-
-      if (this.posts.length > 0) {
-        this.selectedPost = this.posts[0];
-        if (this.config?.loadTagCounts) {
-          this.loadTagCounts();
-        }
-      } else {
-        this.pushInfo("No posts found.");
-      }
-    },
-    // Try to upload the post to the selected szurubooru instance
-    async upload() {
-      window.scrollTo(0, 0);
-
-      // Outsource to background.ts
-      const cmd = new BrowserCommand("upload_post", this.selectedPost);
-      await browser.runtime.sendMessage(cmd);
-      // TODO: Handle errors/status update
-    },
-    // Open extension settings page in new tab
-    async openSettings() {
-      const url = browser.runtime.getURL("options/options.html");
-      window.open(url);
-    },
-    getTagClasses(tag: TagViewModel): string[] {
-      let classes: string[] = [];
-
-      if (tag.category && <any>tag.category != "default") {
-        classes.push("tag-" + tag.category);
-      } else {
-        classes.push("tag-general");
-      }
-
-      return classes;
-    },
-    breakTagName(tagName: string) {
-      // Based on https://stackoverflow.com/a/6316913
-      return tagName.replace(/\_/g, "_<wbr>");
-    },
-    resolutionToString(resolution: [number, number]) {
-      if (resolution && resolution.length == 2) {
-        return resolution[0] + "x" + resolution[1];
-      }
-      return "";
-    },
-    // Remove tag from post's taglist
-    removeTag(tag: TagViewModel) {
-      if (this.selectedPost) {
-        const idx = this.selectedPost.tags.indexOf(tag);
-        if (idx != -1) {
-          this.selectedPost.tags.splice(idx, 1);
-        }
-      }
-    },
-    getMessageClasses(message: Message) {
-      let classes: string[] = [];
-
-      switch (message.level) {
-        case "error":
-          classes.push("message-error");
-          break;
-        case "success":
-          classes.push("message-success");
-          break;
-      }
-
-      return classes;
-    },
-    // Add info message
-    pushInfo(message: string, category: string | null = null): Message {
-      let msg = new Message(message, "info", category);
-      this.messages.push(msg);
-      return msg;
-    },
-    // Add error message
-    pushError(message: string, category: string | null = null): Message {
-      let msg = new Message(message, "error", category);
-      this.messages.push(msg);
-      return msg;
-    },
-    // Clear messages of given category. When category is empty clear all messages.
-    clearMessages(category: string | null = null) {
-      if (category) {
-        for (let i = 0; i < this.messages.length; i++) {
-          if (this.messages[i].category == category) {
-            // Decrement i to negate the i++, because if we remove one object the items
-            // shift one place to the left, aka index--
-            // If we don't do i-- we'll skip the next item in our for loop
-            this.messages.splice(i--, 1);
-          }
-        }
-      } else {
-        this.messages = [];
-      }
-    },
-    getPostUrl(post: Post): string {
-      if (!this.activeSite) return "";
-      return getUrl(this.activeSite.domain, "post", post.id.toString());
-    },
-    // Add tag to the post's taglist
-    addTag(tag: TagViewModel) {
-      if (this.selectedPost) {
-        // Only add tag if it doesn't already exist
-        if (tag.name.length > 0 && this.selectedPost.tags.find((x) => x.name == tag.name) == undefined) {
-          this.selectedPost.tags.push(tag);
-
-          // Add implications for the tag
-          this.selectedPost.tags.push(...tag.implications);
-        }
-      }
-    },
-    // Find posts similar to the grabbed post (this.selectedPost)
-    async findSimilar() {
-      if (!this.selectedPost || !this.szuru) {
-        return;
-      }
-
-      this.clearMessages("FIND_SIMILAR");
-
-      const msg = this.pushInfo("Searching for similar posts...", "FIND_SIMILAR");
-
-      try {
-        let res: ImageSearchResult | undefined;
-
-        if (this.config?.useContentTokens) {
-          let tmpRes = await this.szuru.uploadTempFile(this.selectedPost.contentUrl);
-          // TODO: Error handling?
-          // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
-          this.selectedPost.contentToken = tmpRes.token;
-
-          res = await this.szuru.reverseSearchToken(tmpRes.token);
-        } else {
-          res = await this.szuru.reverseSearch(this.selectedPost.contentUrl);
-        }
-
-        if (!res.exactPost && res.similarPosts.length == 0) {
-          msg.content = "No similar posts found";
-        } else {
-          if (res.exactPost) {
-            msg.content = `<a href='${this.getPostUrl(res.exactPost)}' target='_blank'>
-                        Post already uploaded (${res.exactPost.id})</a>`;
-            msg.level = "error";
-          }
-
-          for (const similarPost of res.similarPosts) {
-            // Don't show this message for the exactPost (because we have a different message for that)
-            if (res.exactPost && res.exactPost.id == similarPost.post.id) {
-              continue;
-            }
-
-            this.pushInfo(
-              `<a href='${this.getPostUrl(similarPost.post)}' target='_blank'>Post ${similarPost.post.id}
-                        looks ${Math.round(100 - similarPost.distance * 100)}% similar</a>`,
-              "FIND_SIMILAR"
-            );
-          }
-        }
-      } catch (ex) {
-        this.clearMessages();
-        this.pushError("Error: couldn't reverse search.");
-      }
-    },
-    // Returns ScrapedPost for a contentUrl, or undefined if the given contentUrl does not belong to a ScrapedPost.
-    getPostForUrl(contentUrl: string): PostViewModel | undefined {
-      for (const post of this.posts) {
-        if (post.contentUrl == contentUrl) return post;
-      }
-      return undefined;
-    },
-    async loadTagCounts() {
-      const allTags = this.posts.flatMap((x) => x.tags);
-
-      for (let i = 0; i < allTags.length; i += 100) {
-        const query = allTags
-          .slice(i, i + 101)
-          .map((x) => encodeTagName(x.name))
-          .join();
-        const resp = await this.szuru?.getTags(query);
-
-        // Not the best code, but it works I guess?
-        if (resp) {
-          for (let post of this.posts)
-            for (let tag of resp.results)
-              for (let postTag of post.tags)
-                if (postTag.name == tag.names[0]) {
-                  postTag.usages = tag.usages;
-                  break;
-                }
-        }
-      }
-    },
-    async onAddTagKeyUp(e: KeyboardEvent) {
-      await this.autocompletePopulator((<HTMLInputElement>e.target).value);
-    },
-    addTagFromCurrentInput() {
-      this.addTag(new TagViewModel(this.addTagInput));
-      this.addTagInput = ""; // Reset input
-
-      // Only needed when the button is clicked
-      // When this is triggered by the enter key the `onAddTagKeyUp` will internally also hide the autocomplete.
-      // Though hiding it twice doesn't hurt so we don't care.
-      this.hideAutocomplete();
-
-      // TODO: Do we also want to add the implications?
-      // Answer: Probably not, because if the user wanted to have implications they should've clicked/selected the autocomplete entry.
-    },
-    onAddTagKeyDown(e: KeyboardEvent) {
-      if (e.code == "ArrowDown") {
-        e.preventDefault();
-        if (this.autocompleteIndex < this.autocompleteTags.length - 1) {
-          this.autocompleteIndex++;
-        }
-      } else if (e.code == "ArrowUp") {
-        e.preventDefault();
-        if (this.autocompleteIndex >= 0) {
-          this.autocompleteIndex--;
-        }
-      } else if (e.code == "Enter") {
-        if (this.autocompleteIndex == -1) {
-          this.addTagFromCurrentInput();
-        } else {
-          // Add auto completed tag
-          const tagToAdd = this.autocompleteTags[this.autocompleteIndex];
-          this.addTag(tagToAdd);
-          this.addTagInput = ""; // Reset input
-        }
-      }
-    },
-    onClickAutocompleteTagItem(tag: TagViewModel) {
-      this.addTag(tag);
-      this.addTagInput = ""; // Reset input
-      this.autocompleteShown = false; // Hide autocomplete list
-    },
-    hideAutocomplete() {
-      this.autocompleteIndex = -1;
-      this.autocompleteShown = false;
-    },
-    async autocompletePopulator(input: string) {
-      // Based on https://www.w3schools.com/howto/howto_js_autocomplete.asp
-      // TODO: Put this in a separate component
-
-      // Hide autocomplete when the input is empty, and don't do anything else.
-      if (input.length == 0) {
-        this.hideAutocomplete();
-        return;
-      }
-
-      // Cancel previous request
-      if (this.cancelSource) {
-        this.cancelSource.cancel();
-      }
-      this.cancelSource = axios.CancelToken.source();
-
-      const query = decodeURIComponent(`*${encodeTagName(input)}* sort:usages`);
-      const resp = await this.szuru?.getTags(
-        query,
-        0,
-        100,
-        ["names", "category", "usages", "implications"],
-        this.cancelSource.token
-      );
-
-      this.autocompleteTags = resp!.results.map((x) => TagViewModel.fromTag(x));
-      if (this.autocompleteTags.length > 0) this.autocompleteShown = true;
-    },
-  },
-  async mounted() {
-    this.config = await Config.load();
-    this.showTagUsages = this.config.loadTagCounts;
-    this.showFindSimilarButton = !this.config.autoSearchSimilar;
-    this.activeSite = this.config.sites.length > 0 ? this.config.sites[0] : null;
-
-    if (!this.activeSite) {
-      this.pushError("No szurubooru server configured!");
-    } else {
-      this.szuru = SzuruWrapper.createFromConfig(this.activeSite);
-    }
-
-    browser.runtime.onMessage.addListener((cmd: BrowserCommand, _sender: Runtime.MessageSender) => {
-      switch (cmd.name) {
-        case "push_message":
-          this.messages.push(cmd.data);
-          break;
-        case "remove_messages":
-          for (let i = 0; i < cmd.data; i++) {
-            if (this.messages.length == 0) break;
-            this.messages.pop();
-          }
-          break;
-      }
-    });
-
-    let extraInfoSpec: WebRequest.OnBeforeSendHeadersOptions[] = ["requestHeaders", "blocking"];
-    if (isChrome()) {
-      extraInfoSpec.push("extraHeaders" as any);
-    }
-
-    // Add "Referer" header to all requests if post.referrer is set.
-    // This is needed in some rare cases where websites disallow hotlinking to images.
-    // This will probably stop working in Chrome sometime in 2023 due to the Manifest V3 webRequestBlocking bullshit.
-    // Firefox users should be fine.
-    browser.webRequest.onBeforeSendHeaders.addListener(
-      (details: WebRequest.OnBeforeSendHeadersDetailsType) => {
-        let requestHeaders = details.requestHeaders ?? [];
-
-        // Find which ScrapedPost this belongs to, if any.
-        const post = this.getPostForUrl(details.url);
-        if (post != undefined && post.referrer) {
-          console.log(`Setting referrer to '${post.referrer}' for request to '${post.contentUrl}'.`);
-          // TODO: If the headers already have a 'Referer' header this will _not_ override that.
-          // As far as I am aware the 'img' tag doesn't set this header, so it shouldn't be a problem.
-          requestHeaders.push({ name: "Referer", value: post.referrer });
-        }
-
-        return <WebRequest.BlockingResponse>{
-          requestHeaders,
-        };
-      },
-      { urls: ["<all_urls>"] },
-      extraInfoSpec
-    );
-
-    // Always call grabPost, even when there is no activeSite
-    await this.grabPost();
-  },
-});
-</script>
-
-<style lang="scss" scoped>
 video {
   width: 100%;
 }
@@ -572,10 +737,14 @@ label {
 .popup-columns {
   display: flex;
   flex-direction: row;
+
+  &.mobile {
+    flex-direction: column-reverse;
+  }
 }
 
 .popup-left {
-  flex: 1 0 auto;
+  flex: 1 0 300px;
 }
 
 .popup-right {
@@ -633,6 +802,11 @@ label {
   > div {
     cursor: pointer;
     padding: 2px 4px;
+
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+
     &:hover {
       background: var(--primary-color);
       > span {
