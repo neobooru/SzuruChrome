@@ -1,3 +1,6 @@
+import { MicroUser, Post } from "./api/models";
+import { TagDetails } from "./models";
+
 export function getUrl(root: string, ...parts: string[]): string {
   let url = root.replace(/\/+$/, "");
   for (const part of parts) {
@@ -15,4 +18,65 @@ export function encodeTagName(tagName: string) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getErrorMessage(ex: any) {
   return ex.description ?? ex.message ?? ex;
+}
+
+export function emptyMicroUser(): MicroUser {
+  return {
+    name: "",
+    avatarUrl: "",
+  };
+}
+
+export function emptyPost(): Post {
+  return {
+    id: 0,
+    version: 0,
+    creationTime: new Date(),
+    lastEditTime: new Date(),
+    safety: "safe",
+    source: "",
+    type: "",
+    mimeType: "",
+    checksum: "",
+    fileSize: 0,
+    canvasWidth: 0,
+    canvasHeight: 0,
+    contentUrl: "",
+    thumbnailUrl: "",
+    flags: [],
+    tags: [],
+    relations: [],
+    user: emptyMicroUser(),
+    score: 0,
+    ownScore: 0,
+    ownFavorite: false,
+    tagCount: 0,
+    favoriteCount: 0,
+    commentCount: 0,
+    noteCount: 0,
+    relationCount: 0,
+    featureCount: 0,
+    lastFeatureTime: new Date(),
+    favoritedBy: [],
+    hasCustomThumbnail: false,
+    notes: [],
+    comments: [],
+  };
+}
+
+export function getTagClasses(tag: TagDetails): string[] {
+  const classes: string[] = [];
+
+  if (tag.category && tag.category != "default") {
+    classes.push("tag-" + tag.category);
+  } else {
+    classes.push("tag-general");
+  }
+
+  return classes;
+}
+
+export function breakTagName(tagName: string) {
+  // Based on https://stackoverflow.com/a/6316913
+  return tagName.replace(/_/g, "_<wbr>");
 }

@@ -68,7 +68,7 @@ export interface Post {
   creationTime: Date;
   lastEditTime?: Date;
   safety: Safety;
-  source: string;
+  source: string | null;
   type: string;
   mimeType: string;
   checksum: string;
@@ -114,4 +114,16 @@ export interface ImageSearchResult {
 
 export interface TemporaryFileUploadResult {
   token: string;
+}
+
+export interface UpdatePostRequest {
+  version: number;
+  tags: string[] | undefined;
+  safety: Safety | undefined;
+  source: string | undefined | null;
+  // relations: string[];
+  // notes: string[],
+  // flags: string[];
+  contentUrl: string | undefined;
+  contentToken: string | undefined;
 }

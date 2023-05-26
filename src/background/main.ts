@@ -1,8 +1,14 @@
 import { encodeTagName, getErrorMessage } from "~/utils";
-import { BrowserCommand, PostUploadCommandData, PostUploadInfo, SetPostUploadInfoData, SetExactPostId } from "~/models";
+import {
+  BrowserCommand,
+  PostUploadCommandData,
+  PostUploadInfo,
+  SetPostUploadInfoData,
+  SetExactPostId,
+  PostUpdateCommandData,
+} from "~/models";
 import { PostAlreadyUploadedError } from "~/api/models";
 import SzurubooruApi from "~/api";
-import { Config } from "~/config";
 
 // Only on dev mode
 if (import.meta.hot) {
@@ -13,40 +19,27 @@ if (import.meta.hot) {
 }
 
 async function uploadPost(data: PostUploadCommandData) {
-  console.dir(data.post);
-
-  const cfg = await Config.load();
-  const selectedSite = cfg.sites.find((x) => x.id == data.siteId);
-
-  if (!selectedSite) {
-    // TODO: Generic error handler which also shows the message in the popup frontend.
-    // browser.runtime.sendMessage(
-    //   new BrowserCommand("push_message", new Message("Selected instance not found in config!", "error"))
-    // );
-    return;
-  }
-
   const info: PostUploadInfo = {
     state: "uploading",
   };
 
-  try {
-    const szuru = SzurubooruApi.createFromConfig(selectedSite);
-
-    // Create and upload post
+  const pushInfo = () =>
     browser.runtime.sendMessage(
-      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
+      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.selectedSite.id, data.post.id, info))
     );
 
-    const contentToken = data.post.instanceSpecificData[data.siteId]?.contentToken;
+  try {
+    const szuru = SzurubooruApi.createFromConfig(data.selectedSite);
+
+    // Create and upload post
+    pushInfo();
+
+    const contentToken = data.post.instanceSpecificData[data.selectedSite.id]?.contentToken;
     const createdPost = await szuru.createPost(data.post, contentToken);
 
     info.state = "uploaded";
     info.instancePostId = createdPost.id;
-
-    browser.runtime.sendMessage(
-      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
-    );
+    pushInfo();
 
     // Find tags with "default" category and update it
     // TODO: Make all these categories configurable
@@ -59,9 +52,7 @@ async function uploadPost(data: PostUploadCommandData) {
       info.updateTagsState = {
         total: unsetCategoryTags.length,
       };
-      browser.runtime.sendMessage(
-        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
-      );
+      pushInfo();
 
       // unsetCategoryTags is of type MicroTag[] and we need a Tag resource to update it, so let's get those
       const query = unsetCategoryTags.map((x) => encodeTagName(x.names[0])).join();
@@ -71,9 +62,7 @@ async function uploadPost(data: PostUploadCommandData) {
 
       for (const i in tags) {
         info.updateTagsState.current = parseInt(i);
-        browser.runtime.sendMessage(
-          new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
-        );
+        pushInfo();
 
         const wantedCategory = tagsWithCategory.find((x) => tags[i].names.includes(x.name))?.category;
         if (wantedCategory) {
@@ -91,30 +80,52 @@ async function uploadPost(data: PostUploadCommandData) {
 
       if (categoriesChangedCount > 0) {
         info.updateTagsState.totalChanged = categoriesChangedCount;
-        browser.runtime.sendMessage(
-          new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
-        );
+        pushInfo();
       }
     }
   } catch (ex: any) {
     if (ex.name && ex.name == "PostAlreadyUploadedError") {
       const otherPostId = (ex as PostAlreadyUploadedError).otherPostId;
       browser.runtime.sendMessage(
-        new BrowserCommand("set_exact_post_id", new SetExactPostId(data.siteId, data.post.id, otherPostId))
+        new BrowserCommand("set_exact_post_id", new SetExactPostId(data.selectedSite.id, data.post.id, otherPostId))
       );
-
-      // No error message, because we have a different message for posts that are already uploaded.
-      info.state = "error";
-      browser.runtime.sendMessage(
-        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
-      );
+      // We don't set an error message, because we have a different message for posts that are already uploaded.
     } else {
-      info.state = "error";
+      // Set generic error message.
       info.error = getErrorMessage(ex);
-      browser.runtime.sendMessage(
-        new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.siteId, data.post.id, info))
-      );
     }
+    info.state = "error";
+    pushInfo();
+  }
+}
+
+async function updatePost(data: PostUpdateCommandData) {
+  const info: PostUploadInfo = {
+    state: "uploading",
+    instancePostId: data.postId,
+  };
+
+  const pushInfo = () =>
+    browser.runtime.sendMessage(
+      new BrowserCommand(
+        "set_post_update_info",
+        new SetPostUploadInfoData(data.selectedSite.id, `merge-${data.postId}`, info)
+      )
+    );
+
+  try {
+    const szuru = SzurubooruApi.createFromConfig(data.selectedSite);
+    
+    pushInfo();
+
+    await szuru.updatePost(data.postId, data.updateRequest);
+    
+    info.state = "uploaded";
+    pushInfo();
+  } catch (ex: any) {
+    info.state = "error";
+    info.error = getErrorMessage(ex);
+    pushInfo();
   }
 }
 
@@ -125,6 +136,8 @@ async function messageHandler(cmd: BrowserCommand): Promise<any> {
   switch (cmd.name) {
     case "upload_post":
       return uploadPost(cmd.data);
+    case "update_post":
+      return updatePost(cmd.data);
   }
 }
 

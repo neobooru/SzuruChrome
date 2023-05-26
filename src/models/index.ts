@@ -1,13 +1,18 @@
 import { BooruTypes, ContentType, ScrapedNote, ScrapedPost, ScrapedTag } from "neo-scraper";
-import { MicroTag, Tag } from "~/api/models";
+import { MicroTag, Tag, UpdatePostRequest } from "~/api/models";
+import { SzuruSiteConfig } from "~/config";
 
 export class TagDetails {
   public implications: TagDetails[] = [];
 
-  constructor(public name: string, public category?: string, public usages?: number) {}
+  constructor(public names: string[], public category?: string, public usages?: number) {}
+
+  get name() {
+    return this.names[0];
+  }
 
   static fromTag(tag: Tag) {
-    const x = new TagDetails(tag.names[0], tag.category, tag.usages);
+    const x = new TagDetails(tag.names, tag.category, tag.usages);
 
     if (tag.implications) {
       x.implications = tag.implications.map((y) => TagDetails.fromMicroTag(y));
@@ -17,11 +22,11 @@ export class TagDetails {
   }
 
   static fromMicroTag(tag: MicroTag) {
-    return new TagDetails(tag.names[0], tag.category, tag.usages);
+    return new TagDetails(tag.names, tag.category, tag.usages);
   }
 
   static fromScapedTag(tag: ScrapedTag): TagDetails {
-    return new TagDetails(tag.name, tag.category);
+    return new TagDetails([tag.name], tag.category);
   }
 }
 
@@ -90,7 +95,13 @@ export class PostUploadInfo {
   };
 }
 
-export type BrowserCommandName = "grab_post" | "upload_post" | "set_post_upload_info" | "set_exact_post_id";
+export type BrowserCommandName =
+  | "grab_post"
+  | "upload_post"
+  | "set_post_upload_info"
+  | "set_exact_post_id"
+  | "update_post"
+  | "set_post_update_info";
 
 export class BrowserCommand<T = any> {
   name: BrowserCommandName;
@@ -103,14 +114,14 @@ export class BrowserCommand<T = any> {
 }
 
 export class PostUploadCommandData {
-  constructor(public readonly post: ScrapedPostDetails, public readonly siteId: string) {}
+  constructor(public readonly post: ScrapedPostDetails, public readonly selectedSite: SzuruSiteConfig) {}
 }
 
 export class SetPostUploadInfoData {
   constructor(
-    public readonly instanceId: string,
-    public readonly postId: string,
-    public readonly info: PostUploadInfo
+    public instanceId: string,
+    public postId: string,
+    public info: PostUploadInfo
   ) {}
 }
 
@@ -120,4 +131,8 @@ export class SetExactPostId {
     public readonly postId: string,
     public readonly exactPostId: number
   ) {}
+}
+
+export class PostUpdateCommandData {
+  constructor(public readonly postId: number, public readonly updateRequest: UpdatePostRequest, public readonly selectedSite: SzuruSiteConfig) {}
 }

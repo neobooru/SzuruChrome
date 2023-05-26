@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, CancelToken } from "axios";
+import { isEqual } from "lodash";
 import {
   TagsResult,
   TagCategoriesResult,
@@ -8,6 +9,7 @@ import {
   ImageSearchResult,
   TagFields,
   TemporaryFileUploadResult,
+  UpdatePostRequest,
 } from "./models";
 import { ScrapedPostDetails } from "~/models";
 import { SzuruSiteConfig } from "~/config";
@@ -45,8 +47,16 @@ export default class SzurubooruApi {
     return (await this.apiGet("info")).data;
   }
 
+  async getPost(id: number): Promise<Post> {
+    return (await this.apiGet("post/" + id)).data;
+  }
+
   async updateTag(tag: Tag): Promise<any> {
     return (await this.apiPut("tag/" + encodeURIComponent(tag.names[0]), tag)).data;
+  }
+
+  async updatePost(id: number, updateRequest: UpdatePostRequest): Promise<Post> {
+    return (await this.apiPut("post/" + id, updateRequest)).data;
   }
 
   async getTags(
@@ -109,6 +119,31 @@ export default class SzurubooruApi {
     return new SzurubooruApi(siteConfig.domain, siteConfig.username, siteConfig.authToken);
   }
 
+  static createUpdatePostRequest(orig: Post, newPost: Post /*, anonymous = false*/) {
+    const detail = <UpdatePostRequest>{ version: newPost.version };
+
+    // Send only changed fields to avoid user privilege violation
+    // if (anonymous === true) {
+    //   detail.anonymous = true;
+    // }
+
+    if (orig.safety != newPost.safety) {
+      detail.safety = newPost.safety;
+    }
+
+    if (orig.source != newPost.source) {
+      detail.source = newPost.source;
+    }
+
+    const oldTags = orig.tags.map((x) => x.names[0]);
+    const newTags = newPost.tags.map((x) => x.names[0]);
+    if (isEqual(oldTags, newTags) == false) {
+      detail.tags = newTags;
+    }
+
+    return detail;
+  }
+
   private async apiGet(url: string, additionalHeaders: any = {}, cancelToken?: CancelToken): Promise<any> {
     const fullUrl = this.apiUrl + url;
     const config: AxiosRequestConfig = {
@@ -149,7 +184,6 @@ export default class SzurubooruApi {
     if (this.username && this.authToken) {
       const token = "Token " + btoa(`${this.username}:${this.authToken}`);
       if (!config.headers) config.headers = {};
-      // @ts-expect-error xxx
       config.headers["Authorization"] = token;
     }
 

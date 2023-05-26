@@ -28,9 +28,13 @@
   "dependencies": {
     "axios": "^1.2.2",
     "basscss": "^8.1.0",
+    "lodash": "^4.17.21",
     "markdown-it": "^13.0.1",
     "neo-scraper": "^0.5.8",
-    "normalize.css": "^8.0.1"
+    "normalize.css": "^8.0.1",
+    "pinia": "^2.0.36",
+    "pinia-plugin-persistedstate": "^3.1.0",
+    "vue-router": "4"
   },
   "devDependencies": {
     "@ffflorian/jszip-cli": "^3.1.6",
@@ -38,6 +42,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
     "@fortawesome/vue-fontawesome": "^3.0.3",
     "@types/fs-extra": "^9.0.13",
+    "@types/lodash": "^4.14.194",
     "@types/markdown-it": "^12.2.3",
     "@types/node": "^18.11.9",
     "@types/webextension-polyfill": "^0.9.1",

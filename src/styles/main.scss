@@ -91,6 +91,7 @@ html.dark {
   --text-color: #e6e6e6;
   color: var(--text-color);
   background-color: var(--bg-main-color);
+  color-scheme: dark;
 }
 
 body {
@@ -237,17 +238,18 @@ a.remove-tag {
 }
 
 .messages {
-  list-style-type: none;
-  padding: 0;
-  display: inline;
-
-  > li {
-    padding: 5px;
+  > div {
+    display: flex;
     border-radius: 2px;
     background: var(--primary-color);
     color: #fff;
 
-    > a {
+    a,
+    span {
+      padding: 5px;
+    }
+
+    a {
       color: #fff;
       text-decoration: none;
     }
@@ -268,4 +270,16 @@ a.remove-tag {
 
 .bg-success {
   background: var(--success-color) !important;
+}
+
+.danger {
+  color: var(--danger-color);
+}
+
+.success {
+  color: var(--success-color);
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }

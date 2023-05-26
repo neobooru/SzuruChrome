@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { useColorMode } from "@vueuse/core";
 import SzuruWrapper from "~/api";
-import { Config, SzuruSiteConfig } from "~/config";
+import { SzuruSiteConfig } from "~/config";
+import { useConfigStore } from "~/stores";
 import { getErrorMessage } from "~/utils";
 
 let autoSearchSimilar = ref(false);
 let loadTagCounts = ref(false);
 let addPageUrlToSource = ref(false);
-let useContentTokens = ref(false);
 let statusText = ref("");
-let statusType = ref("");
+let statusType = ref("status-quiet");
 let sites = reactive<SzuruSiteConfig[]>([]);
 let selectedSiteId = ref<string | undefined>(undefined);
 const selectedSite = computed(() => {
@@ -18,7 +18,9 @@ const selectedSite = computed(() => {
   }
 });
 
-type StatusType = "success" | "error";
+const configStore = useConfigStore();
+
+type StatusType = "success" | "error" | "quiet";
 
 async function testConnection() {
   if (
@@ -47,16 +49,11 @@ async function testConnection() {
 }
 
 async function saveSettings() {
-  let config = await Config.load();
-
-  config.sites = sites;
-  config.autoSearchSimilar = autoSearchSimilar.value;
-  config.loadTagCounts = loadTagCounts.value;
-  config.addPageUrlToSource = addPageUrlToSource.value;
-  config.useContentTokens = useContentTokens.value;
-  config.selectedSiteId = selectedSiteId.value;
-
-  await config.save();
+  configStore.sites = sites;
+  configStore.autoSearchSimilar = autoSearchSimilar.value;
+  configStore.loadTagCounts = loadTagCounts.value;
+  configStore.addPageUrlToSource = addPageUrlToSource.value;
+  configStore.selectedSiteId = selectedSiteId.value;
 
   setStatus("Settings successfully saved");
 }
@@ -80,24 +77,17 @@ function removeSelectedSite() {
 }
 
 onMounted(async () => {
-  let config = await Config.load();
+  statusText.value = "Version " + browser.runtime.getManifest().version;
 
-  for (let site of config.sites) {
-    // Generate IDs for sites which are missing them.
-    // This is needed to correctly import old configs.
-    if (!site.id) {
-      site.id = window.crypto.randomUUID();
-    }
-
+  for (let site of configStore.sites) {
     // This somehow makes `site` reactive.
     sites.push(site);
   }
 
-  autoSearchSimilar.value = config.autoSearchSimilar;
-  loadTagCounts.value = config.loadTagCounts;
-  addPageUrlToSource.value = config.addPageUrlToSource;
-  useContentTokens.value = config.useContentTokens;
-  selectedSiteId.value = config.selectedSiteId;
+  autoSearchSimilar.value = configStore.autoSearchSimilar;
+  loadTagCounts.value = configStore.loadTagCounts;
+  addPageUrlToSource.value = configStore.addPageUrlToSource;
+  selectedSiteId.value = configStore.selectedSiteId;
 });
 
 let mode = useColorMode({ emitAuto: true });
@@ -210,7 +200,7 @@ let mode = useColorMode({ emitAuto: true });
 </template>
 
 <style lang="scss">
-@use "../styles/main.scss";
+@use "~/styles/main.scss";
 
 .content-holder {
   padding: 1.5em;
@@ -250,12 +240,20 @@ html.dark .content-wrapper {
   line-height: 120%;
 }
 
+.status {
+  align-self: center;
+}
+
 .status-error {
   color: red;
 }
 
 .status-success {
   color: green;
+}
+
+.status-quiet {
+  opacity: 0.6;
 }
 
 label {
