@@ -2,23 +2,17 @@
 import { useColorMode } from "@vueuse/core";
 import SzuruWrapper from "~/api";
 import { SzuruSiteConfig } from "~/config";
-import { useConfigStore } from "~/stores";
+import { cfg } from "~/stores";
 import { getErrorMessage } from "~/utils";
 
-let autoSearchSimilar = ref(false);
-let loadTagCounts = ref(false);
-let addPageUrlToSource = ref(false);
-let statusText = ref("");
+let statusText = ref("Version " + browser.runtime.getManifest().version);
 let statusType = ref("status-quiet");
-let sites = reactive<SzuruSiteConfig[]>([]);
-let selectedSiteId = ref<string | undefined>(undefined);
+
 const selectedSite = computed(() => {
-  if (selectedSiteId.value) {
-    return sites.find((x) => x.id == selectedSiteId.value);
+  if (cfg.value.selectedSiteId) {
+    return cfg.value.sites.find((x) => x.id == cfg.value.selectedSiteId);
   }
 });
-
-const configStore = useConfigStore();
 
 type StatusType = "success" | "error" | "quiet";
 
@@ -48,16 +42,6 @@ async function testConnection() {
   }
 }
 
-async function saveSettings() {
-  configStore.sites = sites;
-  configStore.autoSearchSimilar = autoSearchSimilar.value;
-  configStore.loadTagCounts = loadTagCounts.value;
-  configStore.addPageUrlToSource = addPageUrlToSource.value;
-  configStore.selectedSiteId = selectedSiteId.value;
-
-  setStatus("Settings successfully saved");
-}
-
 function setStatus(text: string, type: StatusType = "success") {
   statusText.value = text;
   statusType.value = "status-" + type;
@@ -65,30 +49,21 @@ function setStatus(text: string, type: StatusType = "success") {
 
 function addSite() {
   const site = new SzuruSiteConfig();
-  sites.push(site);
-  selectedSiteId.value = site.id;
+  cfg.value.sites.push(site);
+  cfg.value.selectedSiteId = site.id;
 }
 
 function removeSelectedSite() {
   if (selectedSite.value) {
-    const idx = sites.indexOf(selectedSite.value);
-    sites.splice(idx, 1);
+    const idx = cfg.value.sites.indexOf(selectedSite.value);
+    cfg.value.sites.splice(idx, 1);
+  }
+
+  // Select first site in list, if it exists.
+  if (cfg.value.sites.length > 0) {
+    cfg.value.selectedSiteId = cfg.value.sites[0].id;
   }
 }
-
-onMounted(async () => {
-  statusText.value = "Version " + browser.runtime.getManifest().version;
-
-  for (let site of configStore.sites) {
-    // This somehow makes `site` reactive.
-    sites.push(site);
-  }
-
-  autoSearchSimilar.value = configStore.autoSearchSimilar;
-  loadTagCounts.value = configStore.loadTagCounts;
-  addPageUrlToSource.value = configStore.addPageUrlToSource;
-  selectedSiteId.value = configStore.selectedSiteId;
-});
 
 let mode = useColorMode({ emitAuto: true });
 </script>
@@ -105,8 +80,8 @@ let mode = useColorMode({ emitAuto: true });
 
             <!-- This isn't perfectly responsive for very small devices. -->
             <div class="fit flex gap-1 flex-fit">
-              <select v-model="selectedSiteId">
-                <option v-for="site in sites" :key="site.id" :value="site.id">
+              <select v-model="cfg.selectedSiteId">
+                <option v-for="site in cfg.sites" :key="site.id" :value="site.id">
                   {{ site.username }} @ {{ site.domain }}
                 </option>
               </select>
@@ -154,7 +129,7 @@ let mode = useColorMode({ emitAuto: true });
 
         <div class="settings-block">
           <label>
-            <input type="checkbox" v-model="autoSearchSimilar" />
+            <input type="checkbox" v-model="cfg.autoSearchSimilar" />
             Automatically search for similar posts
           </label>
           <p class="hint">
@@ -165,7 +140,7 @@ let mode = useColorMode({ emitAuto: true });
 
         <div class="settings-block">
           <label>
-            <input type="checkbox" v-model="addPageUrlToSource" />
+            <input type="checkbox" v-model="cfg.addPageUrlToSource" />
             Add page URL to the source list
           </label>
           <p class="hint">
@@ -177,7 +152,7 @@ let mode = useColorMode({ emitAuto: true });
 
         <div class="settings-block">
           <label>
-            <input type="checkbox" v-model="loadTagCounts" />
+            <input type="checkbox" v-model="cfg.loadTagCounts" />
             Show how often a tag is used in the selected szurubooru instance
           </label>
           <p class="hint">
@@ -192,7 +167,7 @@ let mode = useColorMode({ emitAuto: true });
 
         <div class="flex gap-1">
           <button @click="testConnection">Test connection</button>
-          <button @click="saveSettings" class="primary">Save settings</button>
+          <!-- <button @click="saveSettings" class="primary">Save settings</button> -->
         </div>
       </div>
     </div>

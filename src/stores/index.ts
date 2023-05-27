@@ -1,45 +1,24 @@
 import { defineStore } from "pinia";
 import { SzuruSiteConfig } from "~/config";
-import SzurubooruApi from "~/api";
 import type { ScrapedPostDetails, SetPostUploadInfoData } from "~/models";
+import { useStorageLocal } from "~/composables/useStorageLocal";
 
-export const useConfigStore = defineStore("config", {
-  state: () => ({
-    addPageUrlToSource: true,
-    autoSearchSimilar: false,
-    loadTagCounts: true,
-    useContentTokens: true,
-    sites: [] as Array<SzuruSiteConfig>,
-    selectedSiteId: undefined as string | undefined,
-    addTagImplications: true,
-    merge: {
-      expandOptions: true,
-      expandExistingTags: false,
-      expandAddTags: true,
-      addMissingTags: true,
-      appendSource: true,
-      mergeSafety: true,
-    },
-  }),
-  getters: {
-    selectedSite: (state) => {
-      return state.sites.find((x) => x.id == state.selectedSiteId);
-    },
-    szuru(): SzurubooruApi | undefined {
-      if (this.selectedSite) {
-        return SzurubooruApi.createFromConfig(this.selectedSite);
-      }
-    },
+export const cfg = useStorageLocal("config", {
+  addPageUrlToSource: true,
+  autoSearchSimilar: false,
+  loadTagCounts: true,
+  useContentTokens: true,
+  sites: [] as Array<SzuruSiteConfig>,
+  selectedSiteId: undefined as string | undefined,
+  addTagImplications: true,
+  merge: {
+    expandOptions: true,
+    expandExistingTags: false,
+    expandAddTags: true,
+    addMissingTags: true,
+    appendSource: true,
+    mergeSafety: true,
   },
-  actions: {
-    createSzuruApiFromConfig(siteId: string) {
-      const cfg = this.sites.find((x) => x.id == siteId);
-      if (cfg) {
-        return SzurubooruApi.createFromConfig(cfg);
-      }
-    },
-  },
-  persist: true,
 });
 
 export const usePopupStore = defineStore("popup", {

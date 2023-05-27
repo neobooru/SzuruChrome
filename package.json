@@ -33,7 +33,6 @@
     "neo-scraper": "^0.5.8",
     "normalize.css": "^8.0.1",
     "pinia": "^2.0.36",
-    "pinia-plugin-persistedstate": "^3.1.0",
     "vue-router": "4"
   },
   "devDependencies": {

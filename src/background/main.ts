@@ -46,7 +46,7 @@ async function uploadPost(data: PostUploadCommandData) {
     const tagsWithCategory = data.post.tags.filter((x) => x.category);
     const unsetCategoryTags = createdPost.tags
       .filter((x) => x.category == "default")
-      .filter((x) => tagsWithCategory.some((y) => x.names.includes(y.name)));
+      .filter((x) => tagsWithCategory.some((y) => x.names.includes(y.names[0])));
 
     if (unsetCategoryTags.length != 0) {
       info.updateTagsState = {
@@ -64,7 +64,7 @@ async function uploadPost(data: PostUploadCommandData) {
         info.updateTagsState.current = parseInt(i);
         pushInfo();
 
-        const wantedCategory = tagsWithCategory.find((x) => tags[i].names.includes(x.name))?.category;
+        const wantedCategory = tagsWithCategory.find((x) => tags[i].names.includes(x.names[0]))?.category;
         if (wantedCategory) {
           if (existingCategories.some((x) => x.name == wantedCategory)) {
             tags[i].category = wantedCategory;

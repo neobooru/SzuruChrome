@@ -3,15 +3,14 @@ import { isEqual, cloneDeep } from "lodash";
 import SzurubooruApi from "~/api";
 import { Post, UpdatePostRequest } from "~/api/models";
 import { BrowserCommand, PostUpdateCommandData, TagDetails } from "~/models";
-import { useConfigStore, useMergeStore, usePopupStore } from "~/stores";
+import { cfg, useMergeStore, usePopupStore } from "~/stores";
 import { emptyPost, getUrl } from "~/utils";
 
 const props = defineProps(["siteId", "postId"]);
-const cfg = useConfigStore();
 const merge = useMergeStore();
 const pop = usePopupStore();
 
-const szuruConfig = cfg.sites.find((x) => x.id == props.siteId)!;
+const szuruConfig = cloneDeep(cfg.value.sites.find((x) => x.id == props.siteId))!;
 const szuru = SzurubooruApi.createFromConfig(szuruConfig);
 
 // Used for the update post request.
@@ -54,7 +53,7 @@ function addTag(tag: TagDetails) {
     tagsToAdd.push(tag);
 
     // Add implications for the tag
-    if (cfg.addTagImplications) {
+    if (cfg.value.addTagImplications) {
       tagsToAdd.push(...tag.implications);
     }
   }
@@ -162,7 +161,7 @@ watch(
 );
 
 watch(
-  () => cfg.merge.addMissingTags,
+  () => cfg.value.merge.addMissingTags,
   (value) => {
     if (value) {
       addMissingTags();
@@ -173,7 +172,7 @@ watch(
 );
 
 watch(
-  () => cfg.merge.appendSource,
+  () => cfg.value.merge.appendSource,
   (value) => {
     if (value) {
       appendSources();
@@ -184,7 +183,7 @@ watch(
 );
 
 watch(
-  () => cfg.merge.mergeSafety,
+  () => cfg.value.merge.mergeSafety,
   (value) => {
     if (value) {
       mergeSafety();
@@ -198,9 +197,9 @@ onMounted(async () => {
   existingPostRo = await szuru?.getPost(props.postId);
   if (existingPostRo) {
     post.value = cloneDeep(existingPostRo);
-    if (cfg.merge.appendSource) appendSources();
-    if (cfg.merge.addMissingTags) addMissingTags();
-    if (cfg.merge.mergeSafety) mergeSafety();
+    if (cfg.value.merge.appendSource) appendSources();
+    if (cfg.value.merge.addMissingTags) addMissingTags();
+    if (cfg.value.merge.mergeSafety) mergeSafety();
 
     if (scrapedPost?.resolution) {
       // Set imageToKeep depending on which image has the largest resolution.
@@ -256,6 +255,29 @@ onMounted(async () => {
           <button class="primary full" @click="mergeChanges">Merge changes</button>
         </div>
       </div>
+
+      <PopupSection header="Changes">
+        <div class="section-row">
+          <ul class="compact-tags">
+            <li v-show="tagsToAdd.length != 0 || tagsRemoved != 0">
+              Tags: <span class="success" v-show="tagsToAdd.length != 0">+{{ tagsToAdd.length }}</span>
+              <span class="danger" v-show="tagsRemoved != 0">-{{ tagsRemoved }}</span>
+            </li>
+            <li v-show="sourcesAdded != 0 || sourcesRemoved != 0">
+              Sources: <span class="success" v-show="sourcesAdded != 0">+2</span>
+              <span class="danger" v-show="sourcesRemoved != 0">-1</span>
+            </li>
+            <li v-show="existingPostRo?.safety != post.safety">
+              Safety: <s class="danger">{{ existingPostRo?.safety }}</s> <span class="success">{{ post.safety }}</span>
+            </li>
+            <li v-show="imageToKeep == 'new'">
+              <span class="success">Updating post content</span>
+            </li>
+
+            <!-- TODO: Add "No changes" text. -->
+          </ul>
+        </div>
+      </PopupSection>
 
       <PopupSection header="Basic info">
         <div class="section-row">
@@ -347,27 +369,6 @@ onMounted(async () => {
               Merge safety
             </label>
           </div>
-        </div>
-      </PopupSection>
-
-      <PopupSection header="Changes">
-        <div class="section-row">
-          <ul class="compact-tags">
-            <li v-show="tagsToAdd.length != 0 || tagsRemoved != 0">
-              Tags: <span class="success" v-show="tagsToAdd.length != 0">+{{ tagsToAdd.length }}</span>
-              <span class="danger" v-show="tagsRemoved != 0">-{{ tagsRemoved }}</span>
-            </li>
-            <li v-show="sourcesAdded != 0 || sourcesRemoved != 0">
-              Sources: <span class="success" v-show="sourcesAdded != 0">+2</span>
-              <span class="danger" v-show="sourcesRemoved != 0">-1</span>
-            </li>
-            <li v-show="existingPostRo?.safety != post.safety">
-              Safety: <s class="danger">{{ existingPostRo?.safety }}</s> <span class="success">{{ post.safety }}</span>
-            </li>
-            <li v-show="imageToKeep == 'new'">
-              <span class="success">Updating post content</span>
-            </li>
-          </ul>
         </div>
       </PopupSection>
     </div>

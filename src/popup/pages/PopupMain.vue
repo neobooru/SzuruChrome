@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useDark } from "@vueuse/core";
+import { cloneDeep } from "lodash";
 import { ScrapeResults } from "neo-scraper";
 import { getUrl, encodeTagName, getErrorMessage } from "~/utils";
 import {
@@ -14,18 +15,29 @@ import {
 import { ImageSearchResult } from "~/api/models";
 import { isMobile } from "~/env";
 import { DeepReadonly } from "vue";
-import { useConfigStore, usePopupStore } from "~/stores";
+import { cfg, usePopupStore } from "~/stores";
+import { SzuruSiteConfig } from "~/config";
+import SzurubooruApi from "~/api";
 
 const pop = usePopupStore();
-const cfg = useConfigStore();
 const isSearchingForSimilarPosts = ref<number>(0);
+
+const selectedSite = computed(() => {
+  if (cfg.value.selectedSiteId) {
+    return cfg.value.sites.find((x) => x.id == cfg.value.selectedSiteId);
+  }
+});
+
+const szuru = computed(() => {
+  return selectedSite.value ? SzurubooruApi.createFromConfig(selectedSite.value) : undefined;
+});
 
 // (Reactive) shorthand for `main.selectedPost.instanceSpecificData.get(config.selectedSiteId)`.
 // This should only be used as if it were readonly, because the instanceId might change.
 const instanceSpecificData = readonly(
   computed(() => {
-    if (pop.selectedPost && cfg.selectedSiteId) {
-      return pop.selectedPost.instanceSpecificData[cfg.selectedSiteId];
+    if (pop.selectedPost && cfg.value.selectedSiteId) {
+      return pop.selectedPost.instanceSpecificData[cfg.value.selectedSiteId];
     }
   })
 );
@@ -34,7 +46,7 @@ watch(
   () => pop.selectedPostId,
   (value) => {
     // Call findSimilar if wanted.
-    if (cfg.autoSearchSimilar) {
+    if (cfg.value.autoSearchSimilar) {
       let selectedPost = pop.posts.find((x) => x.id == value);
       if (selectedPost) findSimilar(selectedPost);
     }
@@ -42,14 +54,14 @@ watch(
 );
 
 watch(
-  () => cfg.selectedSiteId,
+  () => cfg.value.selectedSiteId,
   async (value, oldValue) => {
     // If changed
     if (value != oldValue) {
       // Update selectedSiteId in config
-      cfg.selectedSiteId = value;
+      cfg.value.selectedSiteId = value;
       // Call findSimilar if wanted.
-      if (cfg.autoSearchSimilar && pop.selectedPost) {
+      if (cfg.value.autoSearchSimilar && pop.selectedPost) {
         findSimilar(pop.selectedPost);
       }
     }
@@ -93,13 +105,13 @@ async function grabPost() {
       // Add current pageUrl to the source if either
       // a. user has addPageUrlToSource set to true
       // b. source is empty
-      if (cfg?.addPageUrlToSource || vm.source == "") {
+      if (cfg.value.addPageUrlToSource || vm.source == "") {
         if (vm.source != "") vm.source += "\n";
         vm.source += vm.pageUrl;
       }
 
       // Initialize instanceSpecificData with an empty object.
-      for (const site of cfg.sites) {
+      for (const site of cfg.value.sites) {
         vm.instanceSpecificData[site.id] = {};
       }
 
@@ -109,7 +121,7 @@ async function grabPost() {
 
   if (pop.posts.length > 0) {
     pop.selectedPostId = pop.posts[0].id;
-    if (cfg?.loadTagCounts) {
+    if (cfg.value.loadTagCounts) {
       loadTagCounts();
     }
   } else {
@@ -118,8 +130,8 @@ async function grabPost() {
 }
 
 async function upload() {
-  if (!cfg.selectedSiteId) return;
-  let instanceSpecificData = pop.selectedPost?.instanceSpecificData[cfg.selectedSiteId];
+  if (!cfg.value.selectedSiteId) return;
+  let instanceSpecificData = pop.selectedPost?.instanceSpecificData[cfg.value.selectedSiteId];
 
   // Don't try to upload if an exact copy is already on the server.
   if (instanceSpecificData?.reverseSearchResult?.exactPostId) return;
@@ -128,11 +140,18 @@ async function upload() {
     instanceSpecificData.uploadState = { state: "uploading" };
   }
 
-  const post: any = { ...pop.selectedPost };
-  // @ts-expect-error ...
-  const cmdData = new PostUploadCommandData(post, cfg.selectedSite);
-  const cmd = new BrowserCommand("upload_post", cmdData);
-  await browser.runtime.sendMessage(cmd);
+  try {
+    const post: any = cloneDeep(pop.selectedPost);
+    const cmdData = new PostUploadCommandData(post, <SzuruSiteConfig>cloneDeep(selectedSite.value));
+    const cmd = new BrowserCommand("upload_post", cmdData);
+    await browser.runtime.sendMessage(cmd);
+  } catch (ex: any) {
+    if (instanceSpecificData?.uploadState) {
+      instanceSpecificData.uploadState.state = "error";
+      instanceSpecificData.uploadState.error = ex.toString();
+    }
+    throw ex;
+  }
 }
 
 function resolutionToString(resolution: [number, number]) {
@@ -152,8 +171,8 @@ function removeTag(tag: TagDetails) {
 }
 
 function getActiveSitePostUrl(postId: number): string {
-  if (!cfg.selectedSite) return "";
-  return getUrl(cfg.selectedSite.domain, "post", postId.toString());
+  if (!selectedSite.value) return "";
+  return getUrl(selectedSite.value.domain, "post", postId.toString());
 }
 
 function getSimilarPosts(data?: DeepReadonly<SimpleImageSearchResult>): SimilarPostInfo[] {
@@ -179,7 +198,7 @@ function addTag(tag: TagDetails) {
       pop.selectedPost.tags.push(tag);
 
       // Add implications for the tag
-      if (cfg.addTagImplications) {
+      if (cfg.value.addTagImplications) {
         pop.selectedPost.tags.push(...tag.implications);
       }
     }
@@ -191,10 +210,11 @@ async function clickFindSimilar() {
 }
 
 async function findSimilar(post: ScrapedPostDetails | undefined) {
-  if (!post || !cfg.szuru || !cfg.selectedSiteId) return;
+  if (!post || !szuru.value || !cfg.value.selectedSiteId) return;
 
-  const selectedInstance = cfg.szuru; // Get current object, and not reactive.
-  let instanceSpecificData = post.instanceSpecificData[cfg.selectedSiteId];
+  // TODO: This code might not work.
+  const selectedInstance = toRaw(szuru.value); // Get current object, and not reactive.
+  let instanceSpecificData = post.instanceSpecificData[cfg.value.selectedSiteId];
 
   if (!instanceSpecificData) {
     console.error("instanceSpecificData is undefined. This should never happen!");
@@ -209,7 +229,7 @@ async function findSimilar(post: ScrapedPostDetails | undefined) {
   try {
     let res: ImageSearchResult | undefined;
 
-    if (cfg.useContentTokens) {
+    if (cfg.value.useContentTokens) {
       let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl);
       // TODO: Error handling?
       // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
@@ -240,7 +260,7 @@ async function loadTagCounts() {
       .map((x) => encodeTagName(x.name))
       .join();
 
-    const resp = await cfg.szuru?.getTags(query);
+    const resp = await szuru.value?.getTags(query);
 
     // Not the best code, but it works I guess?
     if (resp) {
@@ -283,10 +303,10 @@ useDark();
       -->
 
       <div v-if="cfg.sites.length == 0" class="bg-danger">
-        <span>No szurubooru server configured!</span>
+        <span>No szurubooru servers configured!</span>
       </div>
 
-      <div v-if="!cfg.selectedSite" class="bg-danger">
+      <div v-if="!szuru && cfg.sites.length != 0" class="bg-danger">
         <span>No target server selected!</span>
       </div>
 
@@ -453,7 +473,7 @@ useDark();
 
       <PopupSection header="Tags">
         <div class="section-row">
-          <TagInput :szuru="cfg.szuru" @add-tag="addTag" />
+          <TagInput :szuru="szuru" @add-tag="addTag" />
         </div>
 
         <div class="section-row">

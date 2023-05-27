@@ -82,7 +82,7 @@ export default class SzurubooruApi {
 
   async createPost(post: ScrapedPostDetails, contentToken?: string): Promise<Post> {
     const obj = <any>{
-      tags: post.tags.map((x) => x.name),
+      tags: post.tags.map((x) => x.names[0]),
       safety: post.rating,
       source: post.source,
       notes: post.notes,
