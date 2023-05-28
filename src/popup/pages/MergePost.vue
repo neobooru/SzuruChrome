@@ -2,6 +2,7 @@
 import { isEqual, cloneDeep } from "lodash";
 import SzurubooruApi from "~/api";
 import { Post, UpdatePostRequest } from "~/api/models";
+import { isMobile } from "~/env";
 import { BrowserCommand, PostUpdateCommandData, TagDetails } from "~/models";
 import { cfg, useMergeStore, usePopupStore } from "~/stores";
 import { emptyPost, getUrl } from "~/utils";
@@ -146,6 +147,12 @@ async function mergeChanges() {
     return;
   }
 
+  merge.uploadInfo.push({
+    instanceId: szuruConfig.id,
+    postId: `merge-${existingPostRo.id}`,
+    info: { state: "uploading", instancePostId: existingPostRo.id },
+  });
+
   const cmdData = new PostUpdateCommandData(existingPostRo.id, req, szuruConfig);
   const cmd = new BrowserCommand("update_post", cmdData);
   await browser.runtime.sendMessage(cmd);
@@ -194,7 +201,13 @@ watch(
 );
 
 onMounted(async () => {
+  // Clear upload info and error.
+  merge.uploadInfo.splice(0);
+  merge.genericError = undefined;
+
+  // Load existing post data.
   existingPostRo = await szuru?.getPost(props.postId);
+
   if (existingPostRo) {
     post.value = cloneDeep(existingPostRo);
     if (cfg.value.merge.appendSource) appendSources();
@@ -237,8 +250,7 @@ onMounted(async () => {
     </div>
   </div>
 
-  <!-- <div class="popup-columns" :class="{ mobile: isMobile }"> -->
-  <div class="popup-columns">
+  <div class="popup-columns" :class="{ mobile: isMobile }">
     <div class="popup-left">
       <div class="popup-section">
         <div style="display: flex; flex-direction: column; gap: 5px">

@@ -20,6 +20,7 @@ specifiers:
   chokidar: ^3.5.3
   cross-env: ^7.0.3
   crx: ^5.0.1
+  deepmerge: ^4.3.1
   eslint: ^8.32.0
   eslint-plugin-vue: ^9.9.0
   esno: ^0.16.3
@@ -48,6 +49,7 @@ specifiers:
 dependencies:
   axios: 1.4.0
   basscss: 8.1.0
+  deepmerge: 4.3.1
   lodash: 4.17.21
   markdown-it: 13.0.1
   neo-scraper: 0.5.8
@@ -2192,7 +2194,6 @@ packages:
   /deepmerge/4.3.1:
     resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
     engines: {node: '>=0.10.0'}
-    dev: true
 
   /defaults/1.0.4:
     resolution: {integrity: sha512-eFuaLoy/Rxalv2kr+lqMlUnrDWV+3j4pljOIJgLIhI058IQfWJ7vXhyEIHu+HtC738klGALYxOKDO0bQP3tg8A==}
