@@ -47,8 +47,10 @@ export class ScrapedPostDetails {
   tags: TagDetails[] = [];
   notes: ScrapedNote[];
   contentUrl: string;
+  contentSize: number | undefined;
   pageUrl: string;
   contentType: ContentType;
+  contentSubType: string | undefined;
   rating: BooruTypes.SafetyRating;
   source = "";
   referrer?: string;
@@ -57,6 +59,7 @@ export class ScrapedPostDetails {
 
   constructor(post: ScrapedPost) {
     this.contentUrl = post.contentUrl;
+    // this.contentSize = post.contentSize;
     this.pageUrl = post.pageUrl;
     this.contentType = post.contentType;
     this.rating = post.rating;
@@ -118,11 +121,7 @@ export class PostUploadCommandData {
 }
 
 export class SetPostUploadInfoData {
-  constructor(
-    public instanceId: string,
-    public postId: string,
-    public info: PostUploadInfo
-  ) {}
+  constructor(public instanceId: string, public postId: string, public info: PostUploadInfo) {}
 }
 
 export class SetExactPostId {
@@ -134,5 +133,9 @@ export class SetExactPostId {
 }
 
 export class PostUpdateCommandData {
-  constructor(public readonly postId: number, public readonly updateRequest: UpdatePostRequest, public readonly selectedSite: SzuruSiteConfig) {}
+  constructor(
+    public readonly postId: number,
+    public readonly updateRequest: UpdatePostRequest,
+    public readonly selectedSite: SzuruSiteConfig
+  ) {}
 }

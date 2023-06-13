@@ -2,7 +2,7 @@
 import { useDark } from "@vueuse/core";
 import { cloneDeep } from "lodash";
 import { ScrapeResults } from "neo-scraper";
-import { getUrl, encodeTagName, getErrorMessage } from "~/utils";
+import { getUrl, encodeTagName, getErrorMessage, getPostInfoSummary } from "~/utils";
 import {
   BrowserCommand,
   ScrapedPostDetails,
@@ -124,8 +124,10 @@ async function grabPost() {
     if (cfg.value.loadTagCounts) {
       loadTagCounts();
     }
-  } else {
-    // pushInfo("No posts found.");
+
+    if (cfg.value.fetchPostInfo) {
+      fetchPostInfo();
+    }
   }
 }
 
@@ -152,13 +154,6 @@ async function upload() {
     }
     throw ex;
   }
-}
-
-function resolutionToString(resolution: [number, number]) {
-  if (resolution && resolution.length == 2) {
-    return resolution[0] + "x" + resolution[1];
-  }
-  return "";
 }
 
 function removeTag(tag: TagDetails) {
@@ -271,6 +266,29 @@ async function loadTagCounts() {
               postTag.usages = tag.usages;
               break;
             }
+    }
+  }
+}
+
+async function fetchPostInfo() {
+  for (const post of pop.posts) {
+    if (!post.contentSize) {
+      // We are missing cookies/etc which means that the request might fail.
+      // If you want access to the cookies/session/etc then you need to execute this code inside the content script.
+      try {
+        const res = await fetch(post.contentUrl, { method: "HEAD" });
+        const size = res.headers.get("Content-Length");
+        const type = res.headers.get("Content-Type");
+
+        if (size) post.contentSize = parseInt(size);
+
+        if (type) {
+          const [_main, sub] = type.split("/");
+          if (sub) post.contentSubType = sub.toUpperCase();
+        }
+      } catch {
+        // TODO: Log errors.
+      }
     }
   }
 }
@@ -438,10 +456,8 @@ useDark();
           <font-awesome-icon icon="fa-solid fa-cog" class="cursor-pointer" @click="openOptionsPage" />
         </template>
 
-        <div class="section-row" v-if="pop.selectedPost?.resolution">
-          <ul class="compact">
-            <li>Resolution: {{ resolutionToString(pop.selectedPost.resolution) }}</li>
-          </ul>
+        <div class="section-row" v-if="pop.selectedPost?.resolution || pop.selectedPost?.contentSize">
+          <PostInfoSummary v-model="pop.selectedPost" />
         </div>
 
         <div class="section-row">
@@ -500,7 +516,10 @@ useDark();
     <div class="popup-right">
       <div class="popup-section">
         <select v-model="pop.selectedPostId">
-          <option v-for="post in pop.posts" :key="post.id" :value="post.id">{{ post.name }}</option>
+          <!-- &#160;&#160; is used because duplicate space characters are usually removed by the browser. -->
+          <option v-for="post in pop.posts" :key="post.id" :value="post.id">
+            {{ post.name }} &#160;-&#160; {{ getPostInfoSummary(post) }}
+          </option>
         </select>
       </div>
 

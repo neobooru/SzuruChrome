@@ -10,6 +10,7 @@ export const cfg = useStorageLocal(
     addPageUrlToSource: true,
     autoSearchSimilar: false,
     loadTagCounts: true,
+    fetchPostInfo: true,
     useContentTokens: true,
     sites: [] as Array<SzuruSiteConfig>,
     selectedSiteId: undefined as string | undefined,

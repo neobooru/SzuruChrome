@@ -1,5 +1,6 @@
+import byteSize from "byte-size";
 import { MicroUser, Post } from "./api/models";
-import { TagDetails } from "./models";
+import { ScrapedPostDetails, TagDetails } from "./models";
 
 export function getUrl(root: string, ...parts: string[]): string {
   let url = root.replace(/\/+$/, "");
@@ -79,4 +80,25 @@ export function getTagClasses(tag: TagDetails): string[] {
 export function breakTagName(tagName: string) {
   // Based on https://stackoverflow.com/a/6316913
   return tagName.replace(/_/g, "_<wbr>");
+}
+
+export function resolutionToString(resolution: [number, number]) {
+  if (resolution && resolution.length == 2) {
+    return resolution[0] + "x" + resolution[1];
+  }
+  return "";
+}
+
+export function getPostInfoSummary(post: ScrapedPostDetails) {
+  const parts = [];
+  if (post.contentSize) {
+    parts.push(byteSize(post.contentSize));
+  }
+  if (post.contentSubType) {
+    parts.push(post.contentSubType);
+  }
+  if (post.resolution) {
+    parts.push(resolutionToString(post.resolution));
+  }
+  return parts.join(" / ");
 }
