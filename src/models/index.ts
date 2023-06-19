@@ -47,6 +47,7 @@ export class ScrapedPostDetails {
   tags: TagDetails[] = [];
   notes: ScrapedNote[];
   contentUrl: string;
+  extraContentUrl: string | undefined;
   contentSize: number | undefined;
   pageUrl: string;
   contentType: ContentType;
@@ -59,6 +60,7 @@ export class ScrapedPostDetails {
 
   constructor(post: ScrapedPost) {
     this.contentUrl = post.contentUrl;
+    this.extraContentUrl = post.extraContentUrl;
     // this.contentSize = post.contentSize;
     this.pageUrl = post.pageUrl;
     this.contentType = post.contentType;
@@ -104,7 +106,8 @@ export type BrowserCommandName =
   | "set_post_upload_info"
   | "set_exact_post_id"
   | "update_post"
-  | "set_post_update_info";
+  | "set_post_update_info"
+  | "fetch";
 
 export class BrowserCommand<T = any> {
   name: BrowserCommandName;
@@ -138,4 +141,8 @@ export class PostUpdateCommandData {
     public readonly updateRequest: UpdatePostRequest,
     public readonly selectedSite: SzuruSiteConfig
   ) {}
+}
+
+export class FetchCommandData {
+  constructor(public readonly url: string, public readonly options: RequestInit | undefined = undefined) {}
 }

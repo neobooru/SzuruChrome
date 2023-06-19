@@ -6,6 +6,7 @@ import {
   SetPostUploadInfoData,
   SetExactPostId,
   PostUpdateCommandData,
+  FetchCommandData,
 } from "~/models";
 import { PostAlreadyUploadedError } from "~/api/models";
 import SzurubooruApi from "~/api";
@@ -115,11 +116,11 @@ async function updatePost(data: PostUpdateCommandData) {
 
   try {
     const szuru = SzurubooruApi.createFromConfig(data.selectedSite);
-    
+
     pushInfo();
 
     await szuru.updatePost(data.postId, data.updateRequest);
-    
+
     info.state = "uploaded";
     pushInfo();
   } catch (ex: any) {
@@ -127,6 +128,15 @@ async function updatePost(data: PostUpdateCommandData) {
     info.error = getErrorMessage(ex);
     pushInfo();
   }
+}
+
+/**
+ * Executes fetch in the background page. This allows us to do "forbidden" stuff, like ignoring CORS headers.
+ * @param data
+ * @returns
+ */
+async function executeFetch(data: FetchCommandData) {
+  return await fetch(data.url, data.options);
 }
 
 async function messageHandler(cmd: BrowserCommand): Promise<any> {
@@ -138,6 +148,8 @@ async function messageHandler(cmd: BrowserCommand): Promise<any> {
       return uploadPost(cmd.data);
     case "update_post":
       return updatePost(cmd.data);
+    case "fetch":
+      return executeFetch(cmd.data);
   }
 }
 

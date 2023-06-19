@@ -21,6 +21,7 @@ import SzurubooruApi from "~/api";
 
 const pop = usePopupStore();
 const isSearchingForSimilarPosts = ref<number>(0);
+const enableAutoSearch = ref(true);
 
 const selectedSite = computed(() => {
   if (cfg.value.selectedSiteId) {
@@ -46,7 +47,7 @@ watch(
   () => pop.selectedPostId,
   (value) => {
     // Call findSimilar if wanted.
-    if (cfg.value.autoSearchSimilar) {
+    if (cfg.value.autoSearchSimilar && enableAutoSearch.value) {
       let selectedPost = pop.posts.find((x) => x.id == value);
       if (selectedPost) findSimilar(selectedPost);
     }
@@ -120,13 +121,24 @@ async function grabPost() {
   }
 
   if (pop.posts.length > 0) {
+    // Hack so that findSimilar does not trigger when we set selectedPostId, due to the watch(...).
+    // This because we might change the contentUrl in fetchPostInfo, after which we'd need to call findSimilar again.
+    // In which case it would be better to just call it once.
+    enableAutoSearch.value = false;
     pop.selectedPostId = pop.posts[0].id;
+
     if (cfg.value.loadTagCounts) {
       loadTagCounts();
     }
 
     if (cfg.value.fetchPostInfo) {
-      fetchPostInfo();
+      await fetchPostInfo();
+    }
+
+    // Delayed call to findSimilar, as fetchPostInfo might change the post's contentUrl.
+    enableAutoSearch.value = true;
+    if (cfg.value.autoSearchSimilar) {
+      findSimilar(pop.selectedPost);
     }
   }
 }
@@ -272,11 +284,14 @@ async function loadTagCounts() {
 
 async function fetchPostInfo() {
   for (const post of pop.posts) {
-    if (!post.contentSize) {
+    if (!post.contentSize || post.extraContentUrl) {
       // We are missing cookies/etc which means that the request might fail.
       // If you want access to the cookies/session/etc then you need to execute this code inside the content script.
       try {
-        const res = await fetch(post.contentUrl, { method: "HEAD" });
+        const contentUrl = post.extraContentUrl ?? post.contentUrl;
+
+        // TODO: Check whether we need to call this in the background page, or if it is fine to call it from the popup.
+        const res = await fetch(contentUrl, { method: "HEAD" });
         const size = res.headers.get("Content-Length");
         const type = res.headers.get("Content-Type");
 
@@ -286,8 +301,14 @@ async function fetchPostInfo() {
           const [_main, sub] = type.split("/");
           if (sub) post.contentSubType = sub.toUpperCase();
         }
-      } catch {
-        // TODO: Log errors.
+
+        // Resolve extraContentUrl redirects.
+        if (post.extraContentUrl && res.url != post.contentUrl) {
+          post.contentUrl = res.url;
+        }
+      } catch (ex) {
+        // TODO: Maybe display an error in the UI.
+        console.error(ex);
       }
     }
   }
