@@ -31,7 +31,7 @@ specifiers:
   kolorist: ^1.6.0
   lodash: ^4.17.21
   markdown-it: ^13.0.1
-  neo-scraper: ^0.6.0
+  neo-scraper: ^0.7.0
   normalize.css: ^8.0.1
   npm-run-all: ^4.1.5
   pinia: ^2.0.36
@@ -55,7 +55,7 @@ dependencies:
   deepmerge: 4.3.1
   lodash: 4.17.21
   markdown-it: 13.0.1
-  neo-scraper: 0.6.0
+  neo-scraper: 0.7.0
   normalize.css: 8.0.1
   pinia: 2.0.36_hmuptsblhheur2tugfgucj7gc4
   vue-router: 4.1.6_vue@3.2.47
@@ -4595,8 +4595,8 @@ packages:
     dev: true
     optional: true
 
-  /neo-scraper/0.6.0:
-    resolution: {integrity: sha512-ytvdnj4NEaCw9KS+Zgg1lv5t/8l5Sq0jsDVW4OykvWQs4W35skcEnYQyL/LnKCmQ7aU5ZywIeVllvh8LiAZgcg==}
+  /neo-scraper/0.7.0:
+    resolution: {integrity: sha512-JaUAc6w+yM1QHuTUrIzc2b1KiGWg+tjGBZoDF+4f21QV6jydLKAUpvNVFuFjPY6I51L4RO0kdc7nZRoQzLhrbA==}
     dependencies:
       js-cookie: 3.0.5
       turndown: 7.1.2
