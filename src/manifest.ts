@@ -11,7 +11,7 @@ export async function getManifest() {
   const manifest: Manifest.WebExtensionManifest = {
     name: pkg.displayName,
     description: pkg.description,
-    version: process.env.SZ_VERSION || pkg.version,
+    version: process.env.VITE_SZ_VERSION || pkg.version,
     manifest_version: 2,
     icons: {
       16: "./assets/icon-128.png",
@@ -38,12 +38,15 @@ export async function getManifest() {
         js: ["./dist/contentScripts/index.global.js"],
       },
     ],
-    browser_specific_settings: {
-      gecko: {
-        id: "{13372607-2257-4360-8f51-5ce66fa73350}",
-      },
-    },
   };
+
+  if (process.env.SZ_GECKO_ID) {
+    manifest.browser_specific_settings = {
+      gecko: {
+        id: process.env.SZ_GECKO_ID,
+      },
+    };
+  }
 
   if (isDev) {
     // for content script, as browsers will cache them for each reload,

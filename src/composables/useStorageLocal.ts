@@ -8,15 +8,11 @@ const storageLocal: StorageLikeAsync = {
   },
 
   setItem(key: string, value: string) {
-    console.log("setItem");
-    console.dir(value);
     return storage.local.set({ [key]: value });
   },
 
   async getItem(key: string) {
-    console.log("getItem");
     const item = (await storage.local.get(key))[key];
-    console.dir(item);
     return item;
   },
 };

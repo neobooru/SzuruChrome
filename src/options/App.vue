@@ -5,8 +5,11 @@ import { SzuruSiteConfig } from "~/config";
 import { cfg } from "~/stores";
 import { getErrorMessage } from "~/utils";
 
-let statusText = ref("Version " + browser.runtime.getManifest().version);
-let statusType = ref("status-quiet");
+const statusText = ref("Version " + browser.runtime.getManifest().version);
+const statusType = ref("status-quiet");
+const versionInfo = import.meta.env.VITE_SZ_VERSION_INFO ?? "info not available";
+
+console.log("Version: " + versionInfo);
 
 const selectedSite = computed(() => {
   if (cfg.value.selectedSiteId) {

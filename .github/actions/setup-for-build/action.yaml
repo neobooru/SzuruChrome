@@ -14,12 +14,14 @@ runs:
     - name: Determine Version
       uses: gittools/actions/gitversion/execute@v0
       id: version
+      with:
+        useConfigFile: true
 
     - name: Use the version
       shell: bash
       run: |
-        echo SZ_VERSION="${{ steps.version.outputs.AssemblySemFileVer }}" >> $GITHUB_ENV
-        echo SZ_VERSION_NAME="${{ steps.version.outputs.InformationalVersion }}" >> $GITHUB_ENV
+        echo VITE_SZ_VERSION="${{ steps.version.outputs.AssemblySemFileVer }}" >> $GITHUB_ENV
+        echo VITE_SZ_VERSION_INFO="${{ steps.version.outputs.InformationalVersion }}" >> $GITHUB_ENV
 
     - uses: pnpm/action-setup@v2
       name: Install pnpm
