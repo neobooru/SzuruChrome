@@ -1,0 +1,54 @@
+name: Build release
+on: [push]
+jobs:
+  build_chrome:
+    name: "Build Chrome Extension"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-for-build
+
+      - name: Build
+        run: pnpm build
+
+      - name: Pack ZIP
+        run: pnpm pack:zip
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Chrome Extension (Unsigned)
+          path: extension.zip
+
+  build_firefox:
+    name: "Build Firefox Extension"
+    runs-on: ubuntu-20.04
+    # Doesn't really need the Chrome build, but we can reuse its cache.
+    needs: build_chrome
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-for-build
+
+      - name: Build
+        run: pnpm build
+        env:
+          SZ_GECKO_ID: 13372607-2257-4360-8f51-5ce66fa73350
+
+      - name: Sign XPI
+        run: pnpm sign:firefox
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Firefox Extension (Signed)
+          path: web-ext-artifacts/*.xpi
