@@ -2,6 +2,7 @@ name: Build release
 on: [push]
 jobs:
   build_chrome:
+    name: "Build Chrome Extension"
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -23,6 +24,7 @@ jobs:
           path: extension.zip
 
   build_firefox:
+    name: "Build Firefox Extension"
     runs-on: ubuntu-20.04
     # Doesn't really need the Chrome build, but we can reuse its cache.
     needs: build_chrome
