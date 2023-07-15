@@ -1,0 +1,7 @@
+mode: ContinuousDelivery
+increment: None
+assembly-file-versioning-format: "{Major}.{Minor}.{Patch}.{CommitsSinceVersionSource}"
+branches: {}
+ignore:
+  sha: []
+merge-message-formats: {}
