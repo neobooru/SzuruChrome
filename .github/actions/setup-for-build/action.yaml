@@ -16,6 +16,7 @@ runs:
       id: version
 
     - name: Use the version
+      shell: bash
       run: |
         echo SZ_VERSION="${{ steps.version.outputs.AssemblySemFileVer }}" >> $GITHUB_ENV
         echo SZ_VERSION_NAME="${{ steps.version.outputs.InformationalVersion }}" >> $GITHUB_ENV
@@ -33,7 +34,9 @@ runs:
         cache: "pnpm"
 
     - name: Install dependencies
+      shell: bash
       run: pnpm install
 
     - name: Linter
+      shell: bash
       run: pnpm lint
