@@ -43,7 +43,7 @@ export async function getManifest() {
   if (process.env.SZ_GECKO_ID) {
     manifest.browser_specific_settings = {
       gecko: {
-        id: process.env.SZ_GECKO_ID,
+        id: `{${process.env.SZ_GECKO_ID}}`,
       },
     };
   }
