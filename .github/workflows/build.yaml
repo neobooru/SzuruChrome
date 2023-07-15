@@ -20,7 +20,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: extension-zip
+          name: Chrome Extension (Unsigned)
           path: extension.zip
 
   build_firefox:
@@ -50,5 +50,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: extension-xpi
+          name: Firefox Extension (Signed)
           path: web-ext-artifacts/*.xpi
