@@ -4,6 +4,7 @@ on:
     paths:
       - src/**
       - extension/**
+  workflow_dispatch:
 jobs:
   build_chrome:
     name: "Build Chrome Extension"
