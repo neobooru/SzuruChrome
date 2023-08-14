@@ -47,7 +47,7 @@ jobs:
           SZ_GECKO_ID: 13372607-2257-4360-8f51-5ce66fa73350
 
       - name: Sign XPI
-        run: pnpm sign:firefox
+        run: pnpm sign:firefox --channel unlisted
         env:
           WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
           WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
@@ -57,28 +57,27 @@ jobs:
           name: Firefox Extension (Signed)
           path: web-ext-artifacts/*.xpi
 
-  # build_amo_firefox:
-  #   name: "Build Firefox Extension for AMO"
-  #   runs-on: ubuntu-20.04
-  #   # Doesn't really need the Chrome build, but we can reuse its cache.
-  #   needs: build_chrome
-  #   if: github.ref == 'refs/heads/master'
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 0
+  build_amo_firefox:
+    name: "Build Firefox Extension for AMO"
+    runs-on: ubuntu-20.04
+    # Doesn't really need the Chrome build, but we can reuse its cache.
+    needs: build_chrome
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-  #     - uses: ./.github/actions/setup-for-build
+      - uses: ./.github/actions/setup-for-build
 
-  #     - name: Build
-  #       run: pnpm build
-  #       env:
-  #         SZ_GECKO_ID: 18365332-8485-4c04-9498-2843a41ab620
+      - name: Build
+        run: pnpm build
+        env:
+          SZ_GECKO_ID: 18365332-8485-4c04-9498-2843a41ab620
 
-  # TODO: Add --channel=listed
-  #     - name: Sign XPI and upload to AMO
-  #       run: pnpm sign:firefox
-  #       env:
-  #         WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
-  #         WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+      - name: Sign XPI and upload to AMO
+        run: pnpm sign:firefox --channel listed
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
