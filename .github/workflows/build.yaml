@@ -5,6 +5,11 @@ on:
       - src/**
       - extension/**
   workflow_dispatch:
+    inputs:
+      publish_amo_listed:
+        description: "Publish to AMO"
+        required: false
+        type: boolean
 jobs:
   build_chrome:
     name: "Build Chrome Extension"
@@ -63,7 +68,10 @@ jobs:
     runs-on: ubuntu-20.04
     # Doesn't really need the Chrome build, but we can reuse its cache.
     needs: build_chrome
-    if: github.ref == 'refs/heads/master'
+    # Only run on master branch AND if tagging or manually dispatching.
+    if: |
+      github.ref == 'refs/heads/master' && 
+      (startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish_amo_listed == true)
     steps:
       - name: Checkout
         uses: actions/checkout@v2
