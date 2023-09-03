@@ -103,6 +103,10 @@ async function grabPost() {
       const vm = new ScrapedPostDetails(result.posts[i]);
       vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
 
+      if (!cfg.value.addAllParsedTags) {
+        vm.tags.splice(0);
+      }
+
       // Add current pageUrl to the source if either
       // a. user has addPageUrlToSource set to true
       // b. source is empty
@@ -562,7 +566,7 @@ useDark();
     </div>
   </div>
 
-  <div v-else class="p3 flex items-center gap-3">
+  <div v-else class="p-3 flex items-center gap-3">
     <span>No content found</span>
     <font-awesome-icon icon="fa-solid fa-cog" class="cursor-pointer" @click="openOptionsPage" />
   </div>

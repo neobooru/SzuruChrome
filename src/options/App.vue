@@ -5,11 +5,12 @@ import { SzuruSiteConfig } from "~/config";
 import { cfg } from "~/stores";
 import { getErrorMessage } from "~/utils";
 
-const statusText = ref("Version " + browser.runtime.getManifest().version);
-const statusType = ref("status-quiet");
-const versionInfo = import.meta.env.VITE_SZ_VERSION_INFO ?? "info not available";
+import TabView from "primevue/tabview";
+import TabPanel from "primevue/tabpanel";
 
-console.log("Version: " + versionInfo);
+const statusText = ref("");
+const statusType = ref("status-quiet");
+const versionInfo = "Version: " + (import.meta.env.VITE_SZ_VERSION_INFO ?? browser.runtime.getManifest().version);
 
 const selectedSite = computed(() => {
   if (cfg.value.selectedSiteId) {
@@ -73,113 +74,133 @@ let mode = useColorMode({ emitAuto: true });
 
 <template>
   <div class="content-holder">
-    <div class="content-wrapper flex flex-wrap gap-3">
-      <div class="flex-fit"><strong>SzuruChrome Settings</strong></div>
+    <div class="content-wrapper flex flex-column gap-3">
+      <div><strong>SzuruChrome Settings</strong></div>
 
-      <div class="flex-fit">
-        <div class="fit flex flex-wrap">
-          <div class="flex-fit">
-            <label>Szurubooru Instances</label>
-
-            <!-- This isn't perfectly responsive for very small devices. -->
-            <div class="fit flex gap-1 flex-fit">
-              <select v-model="cfg.selectedSiteId">
-                <option v-for="site in cfg.sites" :key="site.id" :value="site.id">
-                  {{ site.username }} @ {{ site.domain }}
-                </option>
+      <TabView>
+        <TabPanel header="General">
+          <div class="grid grid-nogutter gap-3">
+            <div class="col-12 md:col-6">
+              <label>Theme</label>
+              <select v-model="mode">
+                <option value="auto">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
               </select>
-
-              <button class="primary" @click="addSite">Add</button>
-              <button class="bg-danger" @click="removeSelectedSite">Remove</button>
+              <p class="hint">This setting auto-saves.</p>
             </div>
+
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.autoSearchSimilar" />
+                Automatically search for similar posts
+              </label>
+              <p class="hint">
+                Automatically start searching for similar posts when opening the popup. Enabling this option will hide
+                the "Find Similar" button.
+              </p>
+            </div>
+
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.addPageUrlToSource" />
+                Add page URL to the source list
+              </label>
+              <p class="hint">
+                This will add the current page URL (e.g. the booru link) to the source list in addition to the actual
+                source (e.g. twitter/pixiv/artstation). Note: if the source is empty/not detected then the page URL will
+                always be used as fallback source.
+              </p>
+            </div>
+
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.addAllParsedTags" />
+                Automatically import all tags on supported pages
+              </label>
+              <p class="hint">
+                This will automatically import all tags, including their categories, on supported pages such as Danbooru
+                and Zerochan.
+              </p>
+            </div>
+
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.loadTagCounts" />
+                Show how often a tag is used in the selected szurubooru instance
+              </label>
+              <p class="hint">
+                Shows how often a given tag is used in the selected szurubooru instance. No number will be displayed
+                when the tag does not yet exist.
+              </p>
+            </div>
+
+            <span class="col-12 status-quiet">{{ versionInfo }}</span>
           </div>
+        </TabPanel>
 
-          <div v-if="selectedSite" class="flex-fit flex flex-wrap gap-1 border-box pb2">
-            <div style="flex: 1 1 20ch">
-              <label>URL</label>
-              <input
-                v-if="selectedSite"
-                text="Szurubooru URL"
-                type="text"
-                name="domain"
-                v-model.lazy="selectedSite.domain"
-              />
+        <TabPanel header="Instances">
+          <div class="formgrid grid">
+            <div class="field col-12">
+              <label>Szurubooru Instances</label>
+
+              <div class="flex gap-1">
+                <select v-model="cfg.selectedSiteId">
+                  <option v-for="site in cfg.sites" :key="site.id" :value="site.id">
+                    {{ site.username }} @ {{ site.domain }}
+                  </option>
+                </select>
+
+                <button class="primary" @click="addSite">Add</button>
+                <button class="bg-danger" @click="removeSelectedSite">Remove</button>
+              </div>
             </div>
 
-            <div style="flex: 1 1 12ch">
-              <label>Username</label>
-              <input text="Username" type="text" name="username" v-model="selectedSite.username" />
-            </div>
+            <template v-if="selectedSite">
+              <div class="field col-12">
+                <label>URL</label>
+                <input
+                  v-if="selectedSite"
+                  text="Szurubooru URL"
+                  type="text"
+                  name="domain"
+                  v-model="selectedSite.domain"
+                />
+              </div>
 
-            <div style="flex: 1 1 28ch">
-              <label>Authentication token</label>
-              <input text="Authentication token" type="text" name="token" v-model="selectedSite.authToken" />
-            </div>
+              <div class="field col-12 md:col-6">
+                <label>Username</label>
+                <input text="Username" type="text" name="username" v-model="selectedSite.username" />
+              </div>
+
+              <div class="field col-12 md:col-6">
+                <label>Authentication token</label>
+                <input text="Authentication token" type="text" name="token" v-model="selectedSite.authToken" />
+              </div>
+
+              <div class="col-12 flex flex-wrap justify-content-between gap-3">
+                <span class="status" :class="statusType">{{ statusText }}</span>
+                <button @click="testConnection">Test connection</button>
+              </div>
+            </template>
           </div>
-        </div>
-      </div>
+        </TabPanel>
 
-      <div class="flex-fit flex flex-wrap gap-3">
-        <div class="settings-block" style="flex: 1 0 10ch">
-          <label>Theme</label>
-          <select v-model="mode">
-            <option value="auto">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-          <p class="hint">This setting auto-saves.</p>
-        </div>
+        <TabPanel header="Tags">
+          <!-- TODO: Tag category colors -->
 
-        <div class="settings-block">
-          <label>
-            <input type="checkbox" v-model="cfg.autoSearchSimilar" />
-            Automatically search for similar posts
-          </label>
-          <p class="hint">
-            Automatically start searching for similar posts when opening the popup. Enabling this option will hide the
-            "Find Similar" button.
-          </p>
-        </div>
+          <!-- TODO: Tag ignore list -->
 
-        <div class="settings-block">
-          <label>
-            <input type="checkbox" v-model="cfg.addPageUrlToSource" />
-            Add page URL to the source list
-          </label>
-          <p class="hint">
-            This will add the current page URL (e.g. the booru link) to the source list in addition to the actual source
-            (e.g. twitter/pixiv/artstation). Note: if the source is empty/not detected then the page URL will always be
-            used as fallback source.
-          </p>
-        </div>
+          <!-- TODO: Category ignore list -->
+        </TabPanel>
 
-        <div class="settings-block">
-          <label>
-            <input type="checkbox" v-model="cfg.loadTagCounts" />
-            Show how often a tag is used in the selected szurubooru instance
-          </label>
-          <p class="hint">
-            Shows how often a given tag is used in the selected szurubooru instance. No number will be displayed when
-            the tag does not yet exist.
-          </p>
-        </div>
-      </div>
-
-      <div class="flex-fit flex flex-wrap justify-between gap-3">
-        <span class="status" :class="statusType">{{ statusText }}</span>
-
-        <div class="flex gap-1">
-          <button @click="testConnection">Test connection</button>
-          <!-- <button @click="saveSettings" class="primary">Save settings</button> -->
-        </div>
-      </div>
+        <!-- TODO: Settings import/export? -->
+      </TabView>
     </div>
   </div>
 </template>
 
 <style lang="scss">
-@use "~/styles/main.scss";
-
 .content-holder {
   padding: 1.5em;
   display: flex;
@@ -199,15 +220,6 @@ let mode = useColorMode({ emitAuto: true });
 
 html.dark .content-wrapper {
   background: var(--section-header-bg-color);
-}
-
-.settings-block {
-  flex: 1 0 200px;
-
-  label {
-    padding: 0;
-    margin-bottom: 0.3em;
-  }
 }
 
 .hint {
@@ -232,11 +244,6 @@ html.dark .content-wrapper {
 
 .status-quiet {
   opacity: 0.6;
-}
-
-label {
-  display: block;
-  padding: 0.3em 0;
 }
 
 input[type="checkbox"] {

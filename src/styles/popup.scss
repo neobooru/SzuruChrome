@@ -17,10 +17,6 @@
   }
 }
 
-.popup-section {
-  margin: 10px;
-}
-
 video {
   width: 100%;
 }
@@ -36,36 +32,4 @@ label {
   input[type="radio"] {
     margin: 3px 3px 0 0;
   }
-}
-
-.section-header {
-  height: 30px;
-  padding: 0 6px 0 10px;
-  background-color: var(--section-header-bg-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  > span {
-    font-size: 1.2em;
-    vertical-align: middle;
-    color: var(--section-header-fg-color);
-  }
-
-  &.toggleable {
-    cursor: pointer;
-  }
-}
-
-.section-row {
-  margin: 10px 5px 0;
-}
-
-.section-label {
-  display: block;
-  margin: 0 0 5px 0;
-}
-
-.section-block {
-  display: block;
 }
