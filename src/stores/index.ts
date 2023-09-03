@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import deepMerge from "deepmerge";
-import { SzuruSiteConfig } from "~/config";
+import { SzuruSiteConfig, TagCategoryColor } from "~/config";
 import type { ScrapedPostDetails, SetPostUploadInfoData } from "~/models";
 import { useStorageLocal } from "~/composables/useStorageLocal";
 
@@ -24,6 +24,7 @@ export const cfg = useStorageLocal(
       appendSource: true,
       mergeSafety: true,
     },
+    tagCategories: [] as Array<TagCategoryColor>,
   },
   {
     mergeDefaults: (storageValue, defaults) => deepMerge(defaults, storageValue),

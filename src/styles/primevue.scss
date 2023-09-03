@@ -1,0 +1,27 @@
+.p-tabview {
+  .p-tabview-nav {
+    margin: 1em 0;
+  }
+
+  .p-tabview-header {
+    span {
+      padding: 0 1.2em;
+      line-height: 2.3em;
+    }
+
+    &.p-highlight {
+      background-color: var(--tab-color);
+    }
+  }
+}
+
+.p-datatable {
+  margin: -0.4em;
+  
+  .p-datatable-table {
+    th,
+    td {
+      padding: 0.4em;
+    }
+  }
+}

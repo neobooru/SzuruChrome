@@ -1,16 +1,23 @@
 <script setup lang="ts">
 import { useColorMode } from "@vueuse/core";
 import SzuruWrapper from "~/api";
-import { SzuruSiteConfig } from "~/config";
+import { SzuruSiteConfig, TagCategoryColor } from "~/config";
 import { cfg } from "~/stores";
 import { getErrorMessage } from "~/utils";
 
 import TabView from "primevue/tabview";
 import TabPanel from "primevue/tabpanel";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
 
 const statusText = ref("");
 const statusType = ref("status-quiet");
 const versionInfo = "Version: " + (import.meta.env.VITE_SZ_VERSION_INFO ?? browser.runtime.getManifest().version);
+
+const columns = ref([
+  { field: "name", header: "Category name" },
+  { field: "color", header: "CSS color" },
+]);
 
 const selectedSite = computed(() => {
   if (cfg.value.selectedSiteId) {
@@ -19,6 +26,8 @@ const selectedSite = computed(() => {
 });
 
 type StatusType = "success" | "error" | "quiet";
+
+let mode = useColorMode({ emitAuto: true });
 
 async function testConnection() {
   if (
@@ -69,7 +78,19 @@ function removeSelectedSite() {
   }
 }
 
-let mode = useColorMode({ emitAuto: true });
+function resetTagCategories() {
+  cfg.value.tagCategories.splice(0);
+  cfg.value.tagCategories.push(
+    new TagCategoryColor("copyright", "#a0a"),
+    new TagCategoryColor("character", "#0a0"),
+    new TagCategoryColor("artist", "#a00"),
+    new TagCategoryColor("meta", "#f80")
+  );
+}
+
+function addTagCategory() {
+  cfg.value.tagCategories.push(new TagCategoryColor("category", "#abcdef"));
+}
 </script>
 
 <template>
@@ -79,7 +100,7 @@ let mode = useColorMode({ emitAuto: true });
 
       <TabView>
         <TabPanel header="General">
-          <div class="grid grid-nogutter gap-3">
+          <div class="grid">
             <div class="col-12 md:col-6">
               <label>Theme</label>
               <select v-model="mode">
@@ -187,6 +208,44 @@ let mode = useColorMode({ emitAuto: true });
         </TabPanel>
 
         <TabPanel header="Tags">
+          <div class="grid">
+            <DataTable :value="cfg.tagCategories" table-class="col-12" style="width: 100%">
+              <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header">
+                <template #body="{ data, field }">
+                  <template v-if="field == 'color'">
+                    <div class="color-preview">
+                      <input type="text" class="color" v-model="data[field]" />
+                      <div
+                        class="preview background-preview"
+                        :style="{ 'border-color': data[field], 'background-color': data[field] }"
+                      ></div>
+                      <div
+                        class="preview text-preview"
+                        :style="{ 'border-color': data[field], color: data[field] }"
+                      ></div>
+                    </div>
+                  </template>
+
+                  <template v-else>
+                    <input type="text" :name="field" v-model="data[field]" />
+                  </template>
+                </template>
+              </Column>
+
+              <Column field="name">
+                <template #body="{ index }">
+                  <a class="color-primary cursor-pointer" @click="() => cfg.tagCategories.splice(index, 1)">Remove</a>
+                </template>
+              </Column>
+            </DataTable>
+
+            <div class="col-12 flex flex-wrap grid grid-nogutter gap-1">
+              <button class="primary" @click="addTagCategory">Add new category</button>
+              <!-- <button>Import from connected instances</button> -->
+              <button class="bg-danger sm:ml-auto" @click="resetTagCategories">Reset to default</button>
+            </div>
+          </div>
+
           <!-- TODO: Tag category colors -->
 
           <!-- TODO: Tag ignore list -->
@@ -207,8 +266,8 @@ let mode = useColorMode({ emitAuto: true });
   justify-content: center;
 
   > .content-wrapper {
-    //   box-sizing: border-box;
-    // text-align: left;
+    // box-sizing: border-box;
+    text-align: left;
     // display: inline-block;
     // flex: auto;
     max-width: 1000px;
@@ -257,6 +316,33 @@ input[type="checkbox"] {
 
   .status {
     flex: 0 0 100%;
+  }
+}
+
+div.color-preview {
+  white-space: nowrap;
+  position: relative;
+  display: flex;
+
+  input {
+    margin-right: 0.5em;
+  }
+
+  .preview {
+    display: inline-block;
+    text-align: center;
+    padding: 0 0.5em;
+    border: 2px solid #000;
+
+    &::after {
+      content: "A";
+    }
+  }
+
+  .background-preview {
+    border-right: 0;
+    border-right-color: currentcolor;
+    color: transparent;
   }
 }
 </style>

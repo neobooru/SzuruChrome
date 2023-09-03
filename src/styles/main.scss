@@ -88,7 +88,7 @@ input[type="text"],
 select {
   color: var(--text-color);
   background-color: var(--bg-secondary-color);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
 
   padding: 0.2em 0.3em;
   box-sizing: border-box;
@@ -107,7 +107,7 @@ input[type="radio"] {
 textarea {
   color: var(--text-color);
   background-color: var(--bg-secondary-color);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   width: 100%;
   white-space: pre;
   overflow-wrap: normal;
@@ -156,30 +156,6 @@ ul.compact {
 
 .tag-general {
   color: var(--primary-color);
-}
-
-.tag-copyright {
-  color: rgb(170, 0, 170);
-}
-
-.tag-character {
-  color: rgb(0, 170, 0);
-}
-
-.tag-artist {
-  color: rgb(170, 0, 0);
-}
-
-.tag-meta {
-  color: rgb(255, 128, 0);
-}
-
-.tag-species {
-  color: rgb(17, 14, 247);
-}
-
-.tag-lore {
-  color: rgb(48, 48, 48);
 }
 
 .remove-tag {
@@ -280,19 +256,6 @@ a.remove-tag {
   display: block;
 }
 
-.p-tabview {
-  .p-tabview-nav {
-    margin: 1em 0;
-  }
-
-  .p-tabview-header {
-    span {
-      padding: 0 1.2em;
-      line-height: 2.3em;
-    }
-
-    &.p-highlight {
-      background-color: var(--tab-color);
-    }
-  }
+.color-primary {
+  color: var(--primary-color);
 }

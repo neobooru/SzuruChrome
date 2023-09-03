@@ -3,10 +3,20 @@ import { onMounted } from "vue";
 import { isChrome } from "~/env";
 import { BrowserCommand, SetPostUploadInfoData, SetExactPostId } from "~/models";
 import { Runtime, WebRequest } from "webextension-polyfill";
-import { useMergeStore, usePopupStore } from "~/stores";
+import { cfg, useMergeStore, usePopupStore } from "~/stores";
+import { refreshTagCategoryColorMap } from "~/dynamicStyle";
 
 const pop = usePopupStore();
 const merge = useMergeStore();
+
+let el: any;
+watch(
+  cfg,
+  (value) => {
+    el = refreshTagCategoryColorMap(value.tagCategories, el);
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
   browser.runtime.onMessage.addListener((cmd: BrowserCommand, _sender: Runtime.MessageSender) => {
