@@ -10,7 +10,7 @@ export function refreshTagCategoryColorMap(tagCategories: TagCategoryColor[], st
   }
   styleElement = document.createElement("style");
   document.head.appendChild(styleElement);
-  for (let category of tagCategories) {
+  for (const category of tagCategories) {
     const ruleName = makeCssName("tag", category.name);
     styleElement.sheet!.insertRule(`.${ruleName} { color: ${category.color} }`, styleElement.sheet!.cssRules.length);
     console.log("adding " + category);
