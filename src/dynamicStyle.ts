@@ -12,8 +12,12 @@ export function refreshTagCategoryColorMap(tagCategories: TagCategoryColor[], st
   document.head.appendChild(styleElement);
   for (const category of tagCategories) {
     const ruleName = makeCssName("tag", category.name);
-    styleElement.sheet!.insertRule(`.${ruleName} { color: ${category.color} }`, styleElement.sheet!.cssRules.length);
-    console.log("adding " + category);
+
+    if (styleElement.sheet) {
+      styleElement.sheet.insertRule(`.${ruleName} { color: ${category.color} }`, styleElement.sheet.cssRules.length);
+    } else {
+      console.error("styleElement.sheet is undefined. This should never happen!");
+    }
   }
   return styleElement;
 }

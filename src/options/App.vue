@@ -86,6 +86,11 @@ function resetTagCategories() {
 function addTagCategory() {
   cfg.value.tagCategories.push(new TagCategoryColor("category", "#abcdef"));
 }
+
+// For debugging
+const wnd = window as any;
+wnd.szc_get_config = () => JSON.parse(JSON.stringify(cfg.value));
+wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
 </script>
 
 <template>
