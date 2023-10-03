@@ -1,12 +1,18 @@
 import { defineStore } from "pinia";
 import deepMerge from "deepmerge";
-import { SzuruSiteConfig, TagCategoryColor } from "~/config";
-import type { ScrapedPostDetails, SetPostUploadInfoData } from "~/models";
+import {
+  getDefaultTagCategories,
+  type ScrapedPostDetails,
+  type SetPostUploadInfoData,
+  type SzuruSiteConfig,
+  type TagCategoryColor,
+} from "~/models";
 import { useStorageLocal } from "~/composables/useStorageLocal";
 
 export const cfg = useStorageLocal(
   "config",
   {
+    version: 0,
     addPageUrlToSource: true,
     autoSearchSimilar: false,
     loadTagCounts: true,
@@ -27,7 +33,29 @@ export const cfg = useStorageLocal(
     tagCategories: [] as Array<TagCategoryColor>,
   },
   {
-    mergeDefaults: (storageValue, defaults) => deepMerge(defaults, storageValue),
+    mergeDefaults(storageValue, defaults) {
+      const cfg = deepMerge(defaults, storageValue);
+      const oldVersion = cfg.version;
+
+      // Crappy config migration.
+      switch (cfg.version) {
+        case 0:
+          cfg.version++;
+
+          // Don't clear the existing tagCategories and don't add duplicates.
+          for (const cat of getDefaultTagCategories()) {
+            if (!cfg.tagCategories.find((x) => x.name == cat.name)) {
+              cfg.tagCategories.push(cat);
+            }
+          }
+      }
+
+      if (oldVersion != cfg.version) {
+        console.log(`Migrated config from version ${oldVersion} to ${cfg.version}`);
+      }
+
+      return cfg;
+    },
   }
 );
 

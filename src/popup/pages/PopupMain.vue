@@ -11,12 +11,12 @@ import {
   SimpleSimilarPost,
   SimpleImageSearchResult,
   PostUploadCommandData,
+  SzuruSiteConfig,
 } from "~/models";
 import { ImageSearchResult } from "~/api/models";
 import { isMobile } from "~/env";
 import { DeepReadonly } from "vue";
 import { cfg, usePopupStore } from "~/stores";
-import { SzuruSiteConfig } from "~/config";
 import SzurubooruApi from "~/api";
 
 const pop = usePopupStore();

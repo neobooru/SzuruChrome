@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useColorMode } from "@vueuse/core";
 import SzuruWrapper from "~/api";
-import { SzuruSiteConfig, TagCategoryColor } from "~/config";
 import { cfg } from "~/stores";
 import { getErrorMessage } from "~/utils";
 
@@ -9,10 +8,11 @@ import TabView from "primevue/tabview";
 import TabPanel from "primevue/tabpanel";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
+import { SzuruSiteConfig, TagCategoryColor, getDefaultTagCategories } from "~/models";
 
 const statusText = ref("");
 const statusType = ref("status-quiet");
-const versionInfo = "Version: " + (import.meta.env.VITE_SZ_VERSION_INFO ?? browser.runtime.getManifest().version);
+const versionInfo = "Version: " + (import.meta.env.VITE_SZ_VERSION ?? browser.runtime.getManifest().version);
 
 const columns = ref([
   { field: "name", header: "Category name" },
@@ -80,12 +80,7 @@ function removeSelectedSite() {
 
 function resetTagCategories() {
   cfg.value.tagCategories.splice(0);
-  cfg.value.tagCategories.push(
-    new TagCategoryColor("copyright", "#a0a"),
-    new TagCategoryColor("character", "#0a0"),
-    new TagCategoryColor("artist", "#a00"),
-    new TagCategoryColor("meta", "#f80")
-  );
+  cfg.value.tagCategories.push(...getDefaultTagCategories());
 }
 
 function addTagCategory() {

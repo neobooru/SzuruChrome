@@ -1,6 +1,5 @@
 import { BooruTypes, ContentType, ScrapedNote, ScrapedPost, ScrapedTag } from "neo-scraper";
 import { MicroTag, Tag, UpdatePostRequest } from "~/api/models";
-import { SzuruSiteConfig } from "~/config";
 
 export class TagDetails {
   public implications: TagDetails[] = [];
@@ -146,3 +145,21 @@ export class PostUpdateCommandData {
 export class FetchCommandData {
   constructor(public readonly url: string, public readonly options: RequestInit | undefined = undefined) {}
 }
+
+export class SzuruSiteConfig {
+  id = window.crypto.randomUUID();
+  domain = "https://example.com";
+  username = "user";
+  authToken = "";
+}
+
+export class TagCategoryColor {
+  constructor(public name: string, public color: string) {}
+}
+
+export const getDefaultTagCategories = () => [
+  new TagCategoryColor("copyright", "#a0a"),
+  new TagCategoryColor("character", "#0a0"),
+  new TagCategoryColor("artist", "#a00"),
+  new TagCategoryColor("meta", "#f80"),
+];

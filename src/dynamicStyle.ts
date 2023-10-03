@@ -1,4 +1,4 @@
-import { TagCategoryColor } from "./config";
+import { TagCategoryColor } from "./models";
 
 export function makeCssName(prefix: string, name: string) {
   return prefix + "-" + name.replace(/[^a-z0-9]/g, "_");

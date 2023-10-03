@@ -11,8 +11,7 @@ import {
   TemporaryFileUploadResult,
   UpdatePostRequest,
 } from "./models";
-import { ScrapedPostDetails } from "~/models";
-import { SzuruSiteConfig } from "~/config";
+import { ScrapedPostDetails, SzuruSiteConfig } from "~/models";
 
 /**
  * A 1:1 wrapper around the szurubooru API.
