@@ -11,6 +11,7 @@ const props = defineProps(["siteId", "postId"]);
 const merge = useMergeStore();
 const pop = usePopupStore();
 
+// Why is this cloneDeep needed? Or maybe it isn't?
 const szuruConfig = cloneDeep(cfg.value.sites.find((x) => x.id == props.siteId))!;
 const szuru = SzurubooruApi.createFromConfig(szuruConfig);
 

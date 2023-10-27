@@ -9,6 +9,7 @@ import TabPanel from "primevue/tabpanel";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import { SzuruSiteConfig, TagCategoryColor, getDefaultTagCategories } from "~/models";
+import SzurubooruApi from "~/api";
 
 const statusText = ref("");
 const statusType = ref("status-quiet");
@@ -85,6 +86,20 @@ function resetTagCategories() {
 
 function addTagCategory() {
   cfg.value.tagCategories.push(new TagCategoryColor("category", "#abcdef"));
+}
+
+async function importTagCategoriesFromInstance() {
+  const szuruConfig = cfg.value.sites.find((x) => x.id == cfg.value.selectedSiteId)!;
+  const szuru = SzurubooruApi.createFromConfig(szuruConfig);
+  const cats = (await szuru.getTagCategories()).results;
+
+  for (const cat of cats) {
+    if (cat.name == "default") continue;
+
+    if (!cfg.value.tagCategories.find((x) => x.name == cat.name)) {
+      cfg.value.tagCategories.push(new TagCategoryColor(cat.name, cat.color));
+    }
+  }
 }
 
 // For debugging
@@ -241,7 +256,7 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
 
             <div class="col-12 flex flex-wrap grid grid-nogutter gap-1">
               <button class="primary" @click="addTagCategory">Add new category</button>
-              <!-- <button>Import from connected instances</button> -->
+              <button @click="importTagCategoriesFromInstance">Import from active instance</button>
               <button class="bg-danger sm:ml-auto" @click="resetTagCategories">Reset to default</button>
             </div>
           </div>
