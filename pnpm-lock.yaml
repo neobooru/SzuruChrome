@@ -21,8 +21,8 @@ dependencies:
     specifier: ^13.0.1
     version: 13.0.1
   neo-scraper:
-    specifier: ^0.7.1
-    version: 0.7.1
+    specifier: ^0.7.3
+    version: 0.7.3
   normalize.css:
     specifier: ^8.0.1
     version: 8.0.1
@@ -4586,8 +4586,8 @@ packages:
     dev: true
     optional: true
 
-  /neo-scraper@0.7.1:
-    resolution: {integrity: sha512-ZIeXMNF0i8upZ6IObjhX5dVxjUol0/VzxsmqnAE90+SPKOpIhzctsSiAYF8W7/p8YHP/b2uaDmzD7zsQeEv26Q==}
+  /neo-scraper@0.7.3:
+    resolution: {integrity: sha512-4t1JHBte1sWSXz2IKW8CTHtuinXFpY2XHlhqhm4CTnXGIZQmT0coxUwyCil3z0L0nRJ6K4gXjtKyKv0mh4nSFw==}
     dependencies:
       js-cookie: 3.0.5
       turndown: 7.1.2
