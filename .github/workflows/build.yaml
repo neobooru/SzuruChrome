@@ -4,6 +4,8 @@ on:
     paths:
       - src/**
       - extension/**
+      - package.json
+      - pnpm-lock.yaml
   workflow_dispatch:
     inputs:
       publish_amo_listed:
