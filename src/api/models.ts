@@ -3,9 +3,11 @@
  */
 
 export type Safety = "safe" | "sketchy" | "unsafe";
-export type TagFields = "names" | "category" | "usages" | "implications";
+export type TagFields = "version" | "names" | "category" | "usages" | "implications";
+export type PoolFields = "version" | "id" | "names" | "category" | "description" | "postCount" | "posts";
 
 export type TagsResult = PagedSearchResult<Tag>;
+export type PoolsResult = PagedSearchResult<Pool>;
 export type TagCategoriesResult = UnpagedSearchResult<TagCategory>;
 
 export interface SzuruError {
@@ -37,16 +39,26 @@ export interface MicroTag {
   usages: number;
 }
 
-export interface Tag {
-  names: string[];
-  category: string;
+export interface Tag extends MicroTag {
   version: number;
   description?: string; // Markdown
   creationTime: Date;
   lastEditTime?: Date;
-  usages: number;
   suggestions: MicroTag[];
   implications: MicroTag[];
+}
+
+/**
+ * All fields can be optional.
+ */
+export interface Pool {
+  id: number;
+  names: string[];
+  category: string;
+  version: number;
+  description: null;
+  postCount: number;
+  posts: MicroPost[];
 }
 
 export interface TagCategory {
@@ -62,8 +74,12 @@ export interface MicroUser {
   avatarUrl: string;
 }
 
-export interface Post {
+export interface MicroPost {
   id: number;
+  thumbnailUrl: string;
+}
+
+export interface Post extends MicroPost {
   version: number;
   creationTime: Date;
   lastEditTime?: Date;
@@ -76,7 +92,6 @@ export interface Post {
   canvasWidth: number;
   canvasHeight: number;
   contentUrl: string;
-  thumbnailUrl: string;
   flags: string[];
   tags: MicroTag[];
   relations: any[]; // MicroPost resource
@@ -126,4 +141,10 @@ export interface UpdatePostRequest {
   // flags: string[];
   contentUrl: string | undefined;
   contentToken: string | undefined;
+}
+
+export interface UpdatePoolRequest {
+  version: number;
+  // names?: string[];
+  posts: number[];
 }

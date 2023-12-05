@@ -10,6 +10,10 @@ import {
   TagFields,
   TemporaryFileUploadResult,
   UpdatePostRequest,
+  PoolsResult,
+  PoolFields,
+  Pool,
+  UpdatePoolRequest,
 } from "./models";
 import { ScrapedPostDetails, SzuruSiteConfig } from "~/models";
 
@@ -63,7 +67,7 @@ export default class SzurubooruApi {
     offset = 0,
     limit = 100,
     fields?: TagFields[],
-    cancelToken?: CancelToken
+    cancelToken?: CancelToken,
   ): Promise<TagsResult> {
     const params = new URLSearchParams();
     params.append("offset", offset.toString());
@@ -97,6 +101,39 @@ export default class SzurubooruApi {
     console.dir(obj);
 
     return (await this.apiPost("posts", obj)).data;
+  }
+
+  async createPool(name: string, category: string, posts?: number[]): Promise<Pool> {
+    const obj = <any>{
+      names: [name],
+      category,
+    };
+
+    if (posts) {
+      obj.posts = posts;
+    }
+
+    return (await this.apiPost("pool", obj)).data;
+  }
+
+  async getPools(
+    query?: string,
+    offset = 0,
+    limit = 100,
+    fields?: PoolFields[],
+    cancelToken?: CancelToken): Promise<PoolsResult> {
+    const params = new URLSearchParams();
+    params.append("offset", offset.toString());
+    params.append("limit", limit.toString());
+
+    if (fields && fields.length > 0) params.append("fields", fields.join());
+    if (query) params.append("query", query);
+
+    return (await this.apiGet("pools?" + params.toString(), {}, cancelToken)).data;
+  }
+
+  async updatePool(id: number, updateRequest: UpdatePoolRequest): Promise<Pool> {
+    return (await this.apiPut("pool/" + id, updateRequest)).data;
   }
 
   async reverseSearch(contentUrl: string): Promise<ImageSearchResult> {

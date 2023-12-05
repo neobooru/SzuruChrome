@@ -8,7 +8,7 @@ import {
   PostUpdateCommandData,
   FetchCommandData,
 } from "~/models";
-import { PostAlreadyUploadedError } from "~/api/models";
+import { PostAlreadyUploadedError, UpdatePoolRequest } from "~/api/models";
 import SzurubooruApi from "~/api";
 
 // Only on dev mode
@@ -26,7 +26,7 @@ async function uploadPost(data: PostUploadCommandData) {
 
   const pushInfo = () =>
     browser.runtime.sendMessage(
-      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.selectedSite.id, data.post.id, info))
+      new BrowserCommand("set_post_upload_info", new SetPostUploadInfoData(data.selectedSite.id, data.post.id, info)),
     );
 
   try {
@@ -73,7 +73,7 @@ async function uploadPost(data: PostUploadCommandData) {
             categoriesChangedCount++;
           } else {
             console.log(
-              `Not adding the '${wantedCategory}' category to the tag '${tags[i].names[0]}' because the szurubooru instance does not have this category.`
+              `Not adding the '${wantedCategory}' category to the tag '${tags[i].names[0]}' because the szurubooru instance does not have this category.`,
             );
           }
         }
@@ -84,11 +84,39 @@ async function uploadPost(data: PostUploadCommandData) {
         pushInfo();
       }
     }
+
+    // TODO: This code shouldn't all be in the same try catch.
+    // Add post to pools
+    for (const scrapedPool of data.post.pools) {
+      // Attention! Don't use the .name getter as it does not exist. Just use names[0].
+      const existingPools = await szuru.getPools(encodeTagName(scrapedPool.names[0]), 0, 1, ["id", "posts", "version"]);
+
+      if (existingPools.results.length == 0) {
+        // Pool does not exist. Create a new pool and add the post to it in one API call.
+        console.log(`Creating new pool ${scrapedPool.names[0]} and adding post ${createdPost.id}.`);
+        await szuru.createPool(scrapedPool.names[0], "default", [createdPost.id]);
+      } else {
+        // Pool exists, so add it to the existing pool.
+        const existingPool = existingPools.results[0];
+        const posts = existingPool.posts.map(x => x.id);
+        posts.push(createdPost.id);
+
+        console.log(`Adding post ${createdPost.id} to existing pool ${existingPool.id}`);
+
+        const updateRequest = <UpdatePoolRequest>{
+          version: existingPool.version,
+          posts,
+        };
+
+        await szuru.updatePool(existingPool.id, updateRequest);
+      }
+    }
   } catch (ex: any) {
+    console.error(ex);
     if (ex.name && ex.name == "PostAlreadyUploadedError") {
       const otherPostId = (ex as PostAlreadyUploadedError).otherPostId;
       browser.runtime.sendMessage(
-        new BrowserCommand("set_exact_post_id", new SetExactPostId(data.selectedSite.id, data.post.id, otherPostId))
+        new BrowserCommand("set_exact_post_id", new SetExactPostId(data.selectedSite.id, data.post.id, otherPostId)),
       );
       // We don't set an error message, because we have a different message for posts that are already uploaded.
     } else {
@@ -110,8 +138,8 @@ async function updatePost(data: PostUpdateCommandData) {
     browser.runtime.sendMessage(
       new BrowserCommand(
         "set_post_update_info",
-        new SetPostUploadInfoData(data.selectedSite.id, `merge-${data.postId}`, info)
-      )
+        new SetPostUploadInfoData(data.selectedSite.id, `merge-${data.postId}`, info),
+      ),
     );
 
   try {
@@ -124,6 +152,7 @@ async function updatePost(data: PostUpdateCommandData) {
     info.state = "uploaded";
     pushInfo();
   } catch (ex: any) {
+    console.error(ex);
     info.state = "error";
     info.error = getErrorMessage(ex);
     pushInfo();

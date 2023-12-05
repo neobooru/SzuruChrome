@@ -12,6 +12,7 @@ import {
   SimpleImageSearchResult,
   PostUploadCommandData,
   SzuruSiteConfig,
+  PoolDetails,
 } from "~/models";
 import { ImageSearchResult } from "~/api/models";
 import { isMobile } from "~/env";
@@ -40,7 +41,7 @@ const instanceSpecificData = readonly(
     if (pop.selectedPost && cfg.value.selectedSiteId) {
       return pop.selectedPost.instanceSpecificData[cfg.value.selectedSiteId];
     }
-  })
+  }),
 );
 
 watch(
@@ -51,7 +52,7 @@ watch(
       let selectedPost = pop.posts.find((x) => x.id == value);
       if (selectedPost) findSimilar(selectedPost);
     }
-  }
+  },
 );
 
 watch(
@@ -66,7 +67,7 @@ watch(
         findSimilar(pop.selectedPost);
       }
     }
-  }
+  },
 );
 
 function openOptionsPage() {
@@ -181,6 +182,15 @@ function removeTag(tag: TagDetails) {
   }
 }
 
+function removePool(pool: PoolDetails) {
+  if (pop.selectedPost) {
+    const idx = pop.selectedPost.pools.indexOf(pool);
+    if (idx != -1) {
+      pop.selectedPost.pools.splice(idx, 1);
+    }
+  }
+}
+
 function getActiveSitePostUrl(postId: number): string {
   if (!selectedSite.value) return "";
   return getUrl(selectedSite.value.domain, "post", postId.toString());
@@ -212,6 +222,15 @@ function addTag(tag: TagDetails) {
       if (cfg.value.addTagImplications) {
         pop.selectedPost.tags.push(...tag.implications);
       }
+    }
+  }
+}
+
+function addPool(pool: PoolDetails) {
+  if (pop.selectedPost) {
+    // Only add pool if it doesn't already exist
+    if (pool.name.length > 0 && pop.selectedPost.pools.find((x) => x.name == pool.name) == undefined) {
+      pop.selectedPost.pools.push(pool);
     }
   }
 }
@@ -361,21 +380,20 @@ useDark();
         <!-- TODO: Maybe a 5px gap here? -->
 
         <div style="display: flex; background: purple; border-radius: 0 2px 2px 0">
-          <router-link
-            :to="{
-              name: 'merge',
-              params: {
-                siteId: cfg.selectedSiteId,
-                postId: instanceSpecificData?.reverseSearchResult?.exactPostId,
-              },
-            }"
-            style="padding: 5px 20px"
-            >Merge</router-link
-          >
+          <router-link :to="{
+            name: 'merge',
+            params: {
+              siteId: cfg.selectedSiteId,
+              postId: instanceSpecificData?.reverseSearchResult?.exactPostId,
+            },
+          }" style="padding: 5px 20px">Merge</router-link>
         </div>
       </div>
 
-      <!-- Only show error when it's not undefined and not empty. -->
+      <!--
+        Only show error when it's not undefined and not empty.
+        TODO: Maybe remove this in favor of genericError?
+      -->
       <div v-if="instanceSpecificData?.uploadState?.error?.length" class="bg-danger">
         <span>Couldn't upload post. {{ instanceSpecificData.uploadState.error }}</span>
       </div>
@@ -389,15 +407,10 @@ useDark();
       -->
 
       <!-- TODO: Clicking a link doesn't actually open it in a new tab, see https://stackoverflow.com/questions/8915845 -->
-      <div
-        v-if="
-          instanceSpecificData?.uploadState?.state == 'uploaded' && instanceSpecificData?.uploadState.instancePostId
-        "
-        class="bg-success"
-      >
-        <a :href="getActiveSitePostUrl(instanceSpecificData.uploadState.instancePostId)"
-          >Uploaded post {{ instanceSpecificData.uploadState.instancePostId }}</a
-        >
+      <div v-if="instanceSpecificData?.uploadState?.state == 'uploaded' && instanceSpecificData?.uploadState.instancePostId
+        " class="bg-success">
+        <a :href="getActiveSitePostUrl(instanceSpecificData.uploadState.instancePostId)">Uploaded post {{
+          instanceSpecificData.uploadState.instancePostId }}</a>
       </div>
 
       <div v-if="instanceSpecificData?.uploadState?.updateTagsState?.totalChanged" class="bg-success">
@@ -410,64 +423,45 @@ useDark();
 
       <div v-if="instanceSpecificData?.uploadState?.state == 'uploading'"><span>Uploading...</span></div>
 
-      <div
-        v-if="
-          instanceSpecificData?.uploadState?.updateTagsState?.total &&
-          instanceSpecificData.uploadState?.updateTagsState?.current == undefined
-        "
-      >
+      <div v-if="instanceSpecificData?.uploadState?.updateTagsState?.total &&
+        instanceSpecificData.uploadState?.updateTagsState?.current == undefined
+        ">
         <span>{{ instanceSpecificData.uploadState?.updateTagsState?.total }} tags need a different category</span>
       </div>
 
-      <div
-        v-if="
-          instanceSpecificData?.uploadState?.updateTagsState?.current &&
-          instanceSpecificData?.uploadState?.updateTagsState?.totalChanged == undefined
-        "
-      >
-        <span
-          >Updating tag {{ instanceSpecificData.uploadState?.updateTagsState?.current }}/{{
-            instanceSpecificData.uploadState?.updateTagsState?.total
-          }}</span
-        >
+      <div v-if="instanceSpecificData?.uploadState?.updateTagsState?.current &&
+        instanceSpecificData?.uploadState?.updateTagsState?.totalChanged == undefined
+        ">
+        <span>Updating tag {{ instanceSpecificData.uploadState?.updateTagsState?.current }}/{{
+          instanceSpecificData.uploadState?.updateTagsState?.total
+        }}</span>
       </div>
 
       <div v-if="isSearchingForSimilarPosts > 0 && instanceSpecificData?.uploadState == undefined">
         <span>Searching for similar posts...</span>
       </div>
 
-      <div
-        v-if="
-          instanceSpecificData?.reverseSearchResult?.similarPosts.length == 0 &&
-          instanceSpecificData.uploadState == undefined
-        "
-      >
+      <div v-if="instanceSpecificData?.reverseSearchResult?.similarPosts.length == 0 &&
+        instanceSpecificData.uploadState == undefined
+        ">
         <span>No similar posts found</span>
       </div>
 
-      <div
-        v-for="similarPost in getSimilarPosts(instanceSpecificData?.reverseSearchResult)"
-        :key="similarPost.id"
-        class="has-merge-button"
-      >
-        <a :href="getActiveSitePostUrl(similarPost.id)"
-          >Post {{ similarPost.id }} looks {{ similarPost.percentage }}% similar</a
-        >
+      <div v-for="similarPost in getSimilarPosts(instanceSpecificData?.reverseSearchResult)" :key="similarPost.id"
+        class="has-merge-button">
+        <a :href="getActiveSitePostUrl(similarPost.id)">Post {{ similarPost.id }} looks {{ similarPost.percentage }}%
+          similar</a>
 
         <!-- TODO: Maybe a 5px gap here? -->
 
         <div style="display: flex; background: purple; border-radius: 0 2px 2px 0">
-          <router-link
-            :to="{
-              name: 'merge',
-              params: {
-                siteId: cfg.selectedSiteId,
-                postId: similarPost.id,
-              },
-            }"
-            style="padding: 5px 20px"
-            >Merge</router-link
-          >
+          <router-link :to="{
+            name: 'merge',
+            params: {
+              siteId: cfg.selectedSiteId,
+              postId: similarPost.id,
+            },
+          }" style="padding: 5px 20px">Merge</router-link>
         </div>
       </div>
     </div>
@@ -512,18 +506,25 @@ useDark();
         </div>
       </PopupSection>
 
-      <PopupSection header="Tags">
+      <PopupSection header="Tags" toggleable v-model="cfg.popup.expandTags">
         <div class="section-row">
           <TagInput :szuru="szuru" @add-tag="addTag" />
         </div>
 
         <div class="section-row">
-          <CompactTags
-            :tags="pop.selectedPost.tags"
-            :show-remove-tag="true"
-            :show-usages="cfg.loadTagCounts"
-            @remove-tag="removeTag"
-          />
+          <CompactTags :tags="pop.selectedPost.tags" :show-remove-tag="true" :show-usages="cfg.loadTagCounts"
+            @remove-tag="removeTag" />
+        </div>
+      </PopupSection>
+
+      <PopupSection header="Pools" toggleable v-model="cfg.popup.expandPools">
+        <div class="section-row">
+          <PoolInput :szuru="szuru" @add-pool="addPool" />
+        </div>
+
+        <div class="section-row">
+          <CompactPools :pools="pop.selectedPost.pools" :show-remove-pool="true" show-post-count
+            @remove-pool="removePool" />
         </div>
       </PopupSection>
 
@@ -557,11 +558,8 @@ useDark();
       </div>
 
       <div class="popup-section">
-        <PostContentDisplay
-          :content-url="pop.selectedPost.contentUrl"
-          :content-type="pop.selectedPost.contentType"
-          @on-resolution-loaded="onResolutionLoaded"
-        />
+        <PostContentDisplay :content-url="pop.selectedPost.contentUrl" :content-type="pop.selectedPost.contentType"
+          @on-resolution-loaded="onResolutionLoaded" />
       </div>
     </div>
   </div>

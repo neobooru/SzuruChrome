@@ -23,5 +23,7 @@ module.exports = {
       },
     ],
     "@typescript-eslint/no-explicit-any": "off",
+    "eol-last": ["error", "always"],
+    "comma-dangle": ["error", "always-multiline"],
   },
 };

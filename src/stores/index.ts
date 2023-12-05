@@ -30,6 +30,10 @@ export const cfg = useStorageLocal(
       appendSource: true,
       mergeSafety: true,
     },
+    popup: {
+      expandTags: true,
+      expandPools: false,
+    },
     tagCategories: [] as Array<TagCategoryColor>,
   },
   {
@@ -56,7 +60,7 @@ export const cfg = useStorageLocal(
 
       return cfg;
     },
-  }
+  },
 );
 
 export const usePopupStore = defineStore("popup", {

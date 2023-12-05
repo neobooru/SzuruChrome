@@ -1,10 +1,10 @@
 import { BooruTypes, ContentType, ScrapedNote, ScrapedPost, ScrapedTag } from "neo-scraper";
-import { MicroTag, Tag, UpdatePostRequest } from "~/api/models";
+import { MicroTag, Pool, Tag, UpdatePostRequest } from "~/api/models";
 
 export class TagDetails {
   public implications: TagDetails[] = [];
 
-  constructor(public names: string[], public category?: string, public usages?: number) {}
+  constructor(public names: string[], public category?: string, public usages?: number) { }
 
   get name() {
     return this.names[0];
@@ -29,6 +29,18 @@ export class TagDetails {
   }
 }
 
+export class PoolDetails {
+  constructor(public names: string[], public category?: string, public postCount?: number) { }
+
+  get name() {
+    return this.names[0];
+  }
+
+  static fromPool(pool: Pool) {
+    return new PoolDetails(pool.names, pool.category, pool.postCount);
+  }
+}
+
 export class InstanceSpecificData {
   contentToken?: string;
   genericError?: string;
@@ -44,6 +56,7 @@ export class ScrapedPostDetails {
   id = window.crypto.randomUUID();
   name = "";
   tags: TagDetails[] = [];
+  pools: PoolDetails[] = [];
   notes: ScrapedNote[];
   contentUrl: string;
   extraContentUrl: string | undefined;
@@ -83,7 +96,7 @@ export interface SimpleSimilarPost {
 }
 
 export class SimilarPostInfo {
-  constructor(public readonly id: number, public readonly percentage: number) {}
+  constructor(public readonly id: number, public readonly percentage: number) { }
 }
 
 export type PostUploadState = "uploading" | "uploaded" | "error";
@@ -119,31 +132,31 @@ export class BrowserCommand<T = any> {
 }
 
 export class PostUploadCommandData {
-  constructor(public readonly post: ScrapedPostDetails, public readonly selectedSite: SzuruSiteConfig) {}
+  constructor(public readonly post: ScrapedPostDetails, public readonly selectedSite: SzuruSiteConfig) { }
 }
 
 export class SetPostUploadInfoData {
-  constructor(public instanceId: string, public postId: string, public info: PostUploadInfo) {}
+  constructor(public instanceId: string, public postId: string, public info: PostUploadInfo) { }
 }
 
 export class SetExactPostId {
   constructor(
     public readonly instanceId: string,
     public readonly postId: string,
-    public readonly exactPostId: number
-  ) {}
+    public readonly exactPostId: number,
+  ) { }
 }
 
 export class PostUpdateCommandData {
   constructor(
     public readonly postId: number,
     public readonly updateRequest: UpdatePostRequest,
-    public readonly selectedSite: SzuruSiteConfig
-  ) {}
+    public readonly selectedSite: SzuruSiteConfig,
+  ) { }
 }
 
 export class FetchCommandData {
-  constructor(public readonly url: string, public readonly options: RequestInit | undefined = undefined) {}
+  constructor(public readonly url: string, public readonly options: RequestInit | undefined = undefined) { }
 }
 
 export class SzuruSiteConfig {
@@ -154,7 +167,7 @@ export class SzuruSiteConfig {
 }
 
 export class TagCategoryColor {
-  constructor(public name: string, public color: string) {}
+  constructor(public name: string, public color: string) { }
 }
 
 export const getDefaultTagCategories = () => [
