@@ -23,6 +23,7 @@
     "sign:firefox": "web-ext sign --use-submission-api --source-dir ./extension",
     "clear": "rimraf extension/dist extension/manifest.json extension.*",
     "lint": "eslint .",
+    "extlint": "web-ext lint -s extension",
     "test": "vitest test",
     "pretty": "prettier -w ."
   },

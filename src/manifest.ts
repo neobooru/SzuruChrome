@@ -44,6 +44,11 @@ export async function getManifest() {
     manifest.browser_specific_settings = {
       gecko: {
         id: `{${process.env.SZ_GECKO_ID}}`,
+        strict_min_version: "113.0",
+      },
+      gecko_android: {
+        id: `{${process.env.SZ_GECKO_ID}}`,
+        strict_min_version: "113.0",
       },
     };
   }
