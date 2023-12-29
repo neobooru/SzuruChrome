@@ -47,7 +47,6 @@ export async function getManifest() {
         strict_min_version: "113.0",
       },
       gecko_android: {
-        id: `{${process.env.SZ_GECKO_ID}}`,
         strict_min_version: "113.0",
       },
     };

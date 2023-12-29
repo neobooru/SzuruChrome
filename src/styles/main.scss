@@ -12,6 +12,12 @@
     url("/assets/open-sans-v34-latin-regular.woff2") format("woff2");
 }
 
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: "Open Sans", sans-serif;
   font-size: 16px;
