@@ -33,6 +33,9 @@ export const cfg = useStorageLocal(
     popup: {
       expandTags: true,
       expandPools: false,
+      showSource: true,
+      showPools: true,
+      showInstancePicker: true,
     },
     tagCategories: [] as Array<TagCategoryColor>,
   },

@@ -110,33 +110,12 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
 
 <template>
   <div class="content-holder">
-    <div class="content-wrapper flex flex-column gap-3">
+    <div class="content-wrapper flex flex-auto flex-column gap-3">
       <div><strong>SzuruChrome Settings</strong></div>
 
       <TabView>
         <TabPanel header="General">
           <div class="grid">
-            <div class="col-12 md:col-6">
-              <label>Theme</label>
-              <select v-model="mode">
-                <option value="auto">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-              <p class="hint">This setting auto-saves.</p>
-            </div>
-
-            <div class="col-12 md:col-6">
-              <label>
-                <input type="checkbox" v-model="cfg.autoSearchSimilar" />
-                Automatically search for similar posts
-              </label>
-              <p class="hint">
-                Automatically start searching for similar posts when opening the popup. Enabling this option will hide
-                the "Find Similar" button.
-              </p>
-            </div>
-
             <div class="col-12 md:col-6">
               <label>
                 <input type="checkbox" v-model="cfg.addPageUrlToSource" />
@@ -160,6 +139,34 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
               </p>
             </div>
 
+            <span class="col-12 status-quiet">{{ versionInfo }}</span>
+          </div>
+        </TabPanel>
+
+        <TabPanel header="Interface">
+          <div class="grid">
+            <div class="col-12 md:col-6 mb-2">
+              <label>Theme</label>
+              <select v-model="mode">
+                <option value="auto">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.autoSearchSimilar" />
+                Automatically search for similar posts
+              </label>
+              <p class="hint">
+                Automatically start searching for similar posts when opening the popup. Enabling this option will hide
+                the "Find Similar" button.
+              </p>
+            </div>
+
             <div class="col-12 md:col-6">
               <label>
                 <input type="checkbox" v-model="cfg.loadTagCounts" />
@@ -171,14 +178,33 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
               </p>
             </div>
 
-            <span class="col-12 status-quiet">{{ versionInfo }}</span>
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.popup.showSource" />
+                Show source textbox in popup
+              </label>
+            </div>
+
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.popup.showPools" />
+                Show pools in popup
+              </label>
+            </div>
+
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.popup.showInstancePicker" />
+                Show instance picker in popup
+              </label>
+            </div>
           </div>
         </TabPanel>
 
         <TabPanel header="Instances">
           <div class="formgrid grid">
             <div class="field col-12">
-              <label>Szurubooru Instances</label>
+              <label>Selected Szurubooru Instance</label>
 
               <div class="flex gap-1">
                 <select v-model="cfg.selectedSiteId">
@@ -195,13 +221,8 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
             <template v-if="selectedSite">
               <div class="field col-12">
                 <label>URL</label>
-                <input
-                  v-if="selectedSite"
-                  text="Szurubooru URL"
-                  type="text"
-                  name="domain"
-                  v-model="selectedSite.domain"
-                />
+                <input v-if="selectedSite" text="Szurubooru URL" type="text" name="domain"
+                  v-model="selectedSite.domain" />
               </div>
 
               <div class="field col-12 md:col-6">
@@ -230,14 +251,10 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
                   <template v-if="field == 'color'">
                     <div class="color-preview">
                       <input type="text" class="color" v-model="data[field]" />
-                      <div
-                        class="preview background-preview"
-                        :style="{ 'border-color': data[field], 'background-color': data[field] }"
-                      ></div>
-                      <div
-                        class="preview text-preview"
-                        :style="{ 'border-color': data[field], color: data[field] }"
-                      ></div>
+                      <div class="preview background-preview"
+                        :style="{ 'border-color': data[field], 'background-color': data[field] }"></div>
+                      <div class="preview text-preview" :style="{ 'border-color': data[field], color: data[field] }">
+                      </div>
                     </div>
                   </template>
 
@@ -268,7 +285,19 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
           <!-- TODO: Category ignore list -->
         </TabPanel>
 
-        <!-- TODO: Settings import/export? -->
+        <!--
+        <TabPanel header="Developer">
+          <div class="flex flex-column gap-2">
+            <b>Config</b>
+            <Textarea v-model="configText" autoResize rows="16" />
+
+            <div class="flex flex-wrap gap-1">
+              <button class="primary" @click="showConfig">Show config</button>
+              <button class="bg-danger" @click="importConfig">Import config</button>
+            </div>
+          </div>
+        </TabPanel>
+        -->
       </TabView>
     </div>
   </div>

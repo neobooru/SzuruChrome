@@ -528,7 +528,7 @@ useDark();
           </div>
         </div>
 
-        <div class="section-row">
+        <div v-if="cfg.popup.showSource" class="section-row">
           <span class="section-label">Source</span>
           <textarea v-model="pop.selectedPost.source"></textarea>
         </div>
@@ -549,7 +549,7 @@ useDark();
         </div>
       </PopupSection>
 
-      <PopupSection header="Pools" toggleable v-model="cfg.popup.expandPools">
+      <PopupSection v-if="cfg.popup.showPools" header="Pools" toggleable v-model="cfg.popup.expandPools">
         <div class="section-row">
           <PoolInput :szuru="szuru" @add-pool="addPool" />
         </div>
@@ -564,7 +564,7 @@ useDark();
         </div>
       </PopupSection>
 
-      <div class="popup-section">
+      <div v-if="cfg.popup.showInstancePicker" class="popup-section">
         <div class="section-row">
           <select v-model="cfg.selectedSiteId">
             <option v-for="site in cfg.sites" :key="site.id" :value="site.id">
