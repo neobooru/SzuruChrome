@@ -98,7 +98,7 @@ async function uploadPost(data: PostUploadCommandData) {
       } else {
         // Pool exists, so add it to the existing pool.
         const existingPool = existingPools.results[0];
-        const posts = existingPool.posts.map(x => x.id);
+        const posts = existingPool.posts.map((x) => x.id);
         posts.push(createdPost.id);
 
         console.log(`Adding post ${createdPost.id} to existing pool ${existingPool.id}`);

@@ -4,7 +4,11 @@ import { MicroTag, Pool, Tag, UpdatePostRequest } from "~/api/models";
 export class TagDetails {
   public implications: TagDetails[] = [];
 
-  constructor(public names: string[], public category?: string, public usages?: number) { }
+  constructor(
+    public names: string[],
+    public category?: string,
+    public usages?: number,
+  ) {}
 
   get name() {
     return this.names[0];
@@ -30,7 +34,11 @@ export class TagDetails {
 }
 
 export class PoolDetails {
-  constructor(public names: string[], public category?: string, public postCount?: number) { }
+  constructor(
+    public names: string[],
+    public category?: string,
+    public postCount?: number,
+  ) {}
 
   get name() {
     return this.names[0];
@@ -96,7 +104,10 @@ export interface SimpleSimilarPost {
 }
 
 export class SimilarPostInfo {
-  constructor(public readonly id: number, public readonly percentage: number) { }
+  constructor(
+    public readonly id: number,
+    public readonly percentage: number,
+  ) {}
 }
 
 export type PostUploadState = "uploading" | "uploaded" | "error";
@@ -132,11 +143,18 @@ export class BrowserCommand<T = any> {
 }
 
 export class PostUploadCommandData {
-  constructor(public readonly post: ScrapedPostDetails, public readonly selectedSite: SzuruSiteConfig) { }
+  constructor(
+    public readonly post: ScrapedPostDetails,
+    public readonly selectedSite: SzuruSiteConfig,
+  ) {}
 }
 
 export class SetPostUploadInfoData {
-  constructor(public instanceId: string, public postId: string, public info: PostUploadInfo) { }
+  constructor(
+    public instanceId: string,
+    public postId: string,
+    public info: PostUploadInfo,
+  ) {}
 }
 
 export class SetExactPostId {
@@ -144,7 +162,7 @@ export class SetExactPostId {
     public readonly instanceId: string,
     public readonly postId: string,
     public readonly exactPostId: number,
-  ) { }
+  ) {}
 }
 
 export class PostUpdateCommandData {
@@ -152,11 +170,14 @@ export class PostUpdateCommandData {
     public readonly postId: number,
     public readonly updateRequest: UpdatePostRequest,
     public readonly selectedSite: SzuruSiteConfig,
-  ) { }
+  ) {}
 }
 
 export class FetchCommandData {
-  constructor(public readonly url: string, public readonly options: RequestInit | undefined = undefined) { }
+  constructor(
+    public readonly url: string,
+    public readonly options: RequestInit | undefined = undefined,
+  ) {}
 }
 
 export class SzuruSiteConfig {
@@ -167,7 +188,10 @@ export class SzuruSiteConfig {
 }
 
 export class TagCategoryColor {
-  constructor(public name: string, public color: string) { }
+  constructor(
+    public name: string,
+    public color: string,
+  ) {}
 }
 
 export const getDefaultTagCategories = () => [

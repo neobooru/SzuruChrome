@@ -129,7 +129,7 @@ async function mergeChanges() {
   if (
     !isEqual(
       newTags,
-      existingPostRo.tags.map((x) => x.names[0])
+      existingPostRo.tags.map((x) => x.names[0]),
     )
   ) {
     req.tags = newTags;
@@ -165,7 +165,7 @@ watch(
     // TODO: Implement this.
     sourcesAdded.value = 0;
     sourcesRemoved.value = 0;
-  }
+  },
 );
 
 watch(
@@ -176,7 +176,7 @@ watch(
     } else if (existingPostRo) {
       tagsToAdd.splice(0);
     }
-  }
+  },
 );
 
 watch(
@@ -187,7 +187,7 @@ watch(
     } else if (existingPostRo) {
       post.value.source = existingPostRo.source;
     }
-  }
+  },
 );
 
 watch(
@@ -198,7 +198,7 @@ watch(
     } else if (existingPostRo) {
       post.value.safety = existingPostRo.safety;
     }
-  }
+  },
 );
 
 onMounted(async () => {

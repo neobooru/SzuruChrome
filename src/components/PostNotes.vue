@@ -2,7 +2,10 @@
 import { ScrapedNote } from "neo-scraper";
 
 class Point {
-  constructor(public x: any, public y: any) {}
+  constructor(
+    public x: any,
+    public y: any,
+  ) {}
 }
 
 // HACK: Copied from old client

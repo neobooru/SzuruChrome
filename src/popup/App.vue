@@ -15,7 +15,7 @@ watch(
   (value) => {
     el = refreshTagCategoryColorMap(value.tagCategories, el);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onMounted(() => {
@@ -93,7 +93,7 @@ onMounted(() => {
       };
     },
     { urls: ["<all_urls>"] },
-    extraInfoSpec
+    extraInfoSpec,
   );
 });
 </script>

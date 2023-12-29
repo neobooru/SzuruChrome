@@ -22,13 +22,7 @@ function addTagFromCurrentInput(input: string) {
 
 async function autocompletePopulator(input: string, ct: CancelToken) {
   const query = decodeURIComponent(`*${encodeTagName(input)}* sort:usages`);
-  const res = await props.szuru?.getTags(
-    query,
-    0,
-    100,
-    ["names", "category", "usages", "implications"],
-    ct
-  );
+  const res = await props.szuru?.getTags(query, 0, 100, ["names", "category", "usages", "implications"], ct);
 
   if (res) {
     // TODO: Maybe search on hamming distance or something?
@@ -41,8 +35,13 @@ async function autocompletePopulator(input: string, ct: CancelToken) {
 </script>
 
 <template>
-  <AutocompleteInput :autocomplete-items="autocompleteItems" @add-item="addTag"
-    @add-from-current-input="addTagFromCurrentInput" @autocomplete-populator="autocompletePopulator" v-slot="slotProps">
+  <AutocompleteInput
+    :autocomplete-items="autocompleteItems"
+    @add-item="addTag"
+    @add-from-current-input="addTagFromCurrentInput"
+    @autocomplete-populator="autocompletePopulator"
+    v-slot="slotProps"
+  >
     <span :class="getTagClasses(slotProps.item)">{{ slotProps.item.name }}</span>
     <span class="tag-usages">{{ slotProps.item.usages ? slotProps.item.usages : "" }}</span>
   </AutocompleteInput>

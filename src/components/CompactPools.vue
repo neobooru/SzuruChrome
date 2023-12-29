@@ -16,7 +16,8 @@ defineEmits(["removePool"]);
     <li v-for="pool in pools" :key="pool.name">
       <a v-if="showRemovePool" class="remove-tag" @click="$emit('removePool', pool)">x</a>
       <span class="tag-general" v-html="breakTagName(pool.name)"></span>
-      <span v-if="showPostCount" class="tag-usages tag-usages-reserve-space">{{ pool.postCount ? pool.postCount : ""
+      <span v-if="showPostCount" class="tag-usages tag-usages-reserve-space">{{
+        pool.postCount ? pool.postCount : ""
       }}</span>
     </li>
   </ul>

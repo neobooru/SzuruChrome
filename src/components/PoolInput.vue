@@ -22,13 +22,7 @@ function addPoolFromCurrentInput(input: string) {
 
 async function autocompletePopulator(input: string, ct: CancelToken) {
   const query = decodeURIComponent(`*${encodeTagName(input)}*`);
-  const res = await props.szuru?.getPools(
-    query,
-    0,
-    100,
-    ["id", "names", "category", "description", "postCount"],
-    ct,
-  );
+  const res = await props.szuru?.getPools(query, 0, 100, ["id", "names", "category", "description", "postCount"], ct);
 
   if (res) {
     // TODO: Maybe search on hamming distance or something?
@@ -40,8 +34,13 @@ async function autocompletePopulator(input: string, ct: CancelToken) {
 </script>
 
 <template>
-  <AutocompleteInput :autocomplete-items="autocompleteItems" @add-item="addPool"
-    @add-from-current-input="addPoolFromCurrentInput" @autocomplete-populator="autocompletePopulator" v-slot="slotProps">
+  <AutocompleteInput
+    :autocomplete-items="autocompleteItems"
+    @add-item="addPool"
+    @add-from-current-input="addPoolFromCurrentInput"
+    @autocomplete-populator="autocompletePopulator"
+    v-slot="slotProps"
+  >
     <span :class="getTagClasses(slotProps.item)">{{ slotProps.item.name }}</span>
     <span class="tag-usages">{{ slotProps.item.usages ? slotProps.item.usages : "" }}</span>
   </AutocompleteInput>

@@ -99,9 +99,14 @@ watch(props, (newValue) => {
     </div>
 
     <div class="autocomplete-items" v-bind:class="{ show: autocompleteShown }">
-      <div v-for="(item, idx) in autocompleteItems" @click="onClickAutocompleteItem(item)" :key="item.name" :class="{
-        active: idx == autocompleteIndex,
-      }">
+      <div
+        v-for="(item, idx) in autocompleteItems"
+        @click="onClickAutocompleteItem(item)"
+        :key="item.name"
+        :class="{
+          active: idx == autocompleteIndex,
+        }"
+      >
         <slot :item="item"></slot>
       </div>
     </div>
@@ -121,7 +126,7 @@ watch(props, (newValue) => {
     display: block;
   }
 
-  >div {
+  > div {
     cursor: pointer;
     padding: 2px 4px;
 
@@ -132,16 +137,16 @@ watch(props, (newValue) => {
     &:hover {
       background: var(--primary-color);
 
-      >span {
+      > span {
         color: var(--text-color);
       }
     }
   }
 
-  >div.active {
+  > div.active {
     background: var(--primary-color);
 
-    >span {
+    > span {
       color: var(--text-color);
     }
   }

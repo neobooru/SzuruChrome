@@ -121,7 +121,8 @@ export default class SzurubooruApi {
     offset = 0,
     limit = 100,
     fields?: PoolFields[],
-    cancelToken?: CancelToken): Promise<PoolsResult> {
+    cancelToken?: CancelToken,
+  ): Promise<PoolsResult> {
     const params = new URLSearchParams();
     params.append("offset", offset.toString());
     params.append("limit", limit.toString());
