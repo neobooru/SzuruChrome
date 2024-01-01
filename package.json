@@ -33,7 +33,7 @@
     "deepmerge": "^4.3.1",
     "lodash": "^4.17.21",
     "markdown-it": "^14.0.0",
-    "neo-scraper": "^0.7.3",
+    "neo-scraper": "^0.7.4",
     "normalize.css": "^8.0.1",
     "pinia": "^2.1.7",
     "primeflex": "^3.3.1",

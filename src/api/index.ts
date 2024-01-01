@@ -148,8 +148,39 @@ export default class SzurubooruApi {
   }
 
   async uploadTempFile(contentUrl: string): Promise<TemporaryFileUploadResult> {
+    // HACK: For some sources we need to download the image to the client and then upload it to szurubooru.
+    // We can't just pass the contentUrl because that would trigger the bot/hotlink protection.
+
+    if (contentUrl.indexOf("donmai.us") != -1) {
+      console.log("Upload from content");
+      return this.uploadTempFileFromContent(contentUrl);
+    } else {
+      console.log("Upload from URL");
+      return this.uploadTempFileFromUrl(contentUrl);
+    }
+  }
+
+  async uploadTempFileFromUrl(contentUrl: string): Promise<TemporaryFileUploadResult> {
     const obj = { contentUrl };
     return (await this.apiPost("uploads", obj)).data;
+  }
+
+  async uploadTempFileFromContent(contentUrl: string): Promise<TemporaryFileUploadResult> {
+    const content = await (await fetch(contentUrl)).blob();
+
+    const fullUrl = this.apiUrl + "uploads";
+
+    const formData = new FormData();
+    formData.append("content", content);
+
+    const config: AxiosRequestConfig = {
+      method: "POST",
+      url: fullUrl,
+      data: formData,
+    };
+
+    config.headers = { ...this.baseHeaders, "Content-Type": "multipart/form-data" };
+    return (await this.execute(config)).data;
   }
 
   static createFromConfig(siteConfig: SzuruSiteConfig): SzurubooruApi {
