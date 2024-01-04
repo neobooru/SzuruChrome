@@ -39,7 +39,7 @@ async function uploadPost(data: PostUploadCommandData) {
 
     if (!contentToken) {
       // TODO: If donmai URL is the source then we need to do the uploadTempFileFromContent here!
-      console.log("contentToken is undefined. Is could be a problem for some sources!");
+      console.log("contentToken is undefined. This could be a problem for some sources!");
     }
 
     const createdPost = await szuru.createPost(data.post, contentToken);
