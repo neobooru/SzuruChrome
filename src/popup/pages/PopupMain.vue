@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useDark } from "@vueuse/core";
 import { cloneDeep } from "lodash";
-import { ScrapeResults } from "neo-scraper";
+import { NeoScraper, ScrapeResults } from "neo-scraper";
 import { getUrl, encodeTagName, getErrorMessage, getPostInfoSummary } from "~/utils";
 import {
   BrowserCommand,
@@ -92,14 +92,18 @@ async function grabPost() {
   const x = await browser.tabs.sendMessage(activeTabId, new BrowserCommand("grab_post"));
   // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
   // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
-  const res = Object.assign(new ScrapeResults(), x);
+  const res: ScrapeResults = Object.assign(new ScrapeResults(), x);
 
   console.dir(res);
 
   // Clear current posts array
   pop.posts.splice(0);
 
+  const scraper = new NeoScraper();
+
   for (const result of res.results) {
+    const engine = scraper.engines.find((x) => x.name == result.engine);
+
     for (const i in result.posts) {
       const vm = new ScrapedPostDetails(result.posts[i]);
       vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
@@ -119,6 +123,10 @@ async function grabPost() {
       // Initialize instanceSpecificData with an empty object.
       for (const site of cfg.value.sites) {
         vm.instanceSpecificData[site.id] = {};
+      }
+
+      if (engine) {
+        vm.uploadMode = engine.uploadMode;
       }
 
       pop.posts.push(vm);
@@ -160,7 +168,13 @@ async function upload() {
   }
 
   try {
-    const post: any = cloneDeep(pop.selectedPost);
+    const post: ScrapedPostDetails = cloneDeep(pop.selectedPost);
+
+    // uploadMode "content" requires a content token to work. So ensure it is set.
+    if (post.uploadMode == "content") {
+      await ensurePostHasContentToken(post);
+    }
+
     const cmdData = new PostUploadCommandData(post, <SzuruSiteConfig>cloneDeep(selectedSite.value));
     const cmd = new BrowserCommand("upload_post", cmdData);
     await browser.runtime.sendMessage(cmd);
@@ -239,6 +253,27 @@ async function clickFindSimilar() {
   if (pop.selectedPost) return await findSimilar(pop.selectedPost);
 }
 
+async function ensurePostHasContentToken(post: ScrapedPostDetails) {
+  if (!szuru.value || !cfg.value.selectedSiteId) return;
+
+  const selectedInstance = toRaw(szuru.value); // Get current object, and not reactive.
+  let instanceSpecificData = post.instanceSpecificData[cfg.value.selectedSiteId];
+
+  if (!instanceSpecificData) {
+    console.error("instanceSpecificData is undefined. This should never happen!");
+    return;
+  }
+
+  try {
+    let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl, post.uploadMode);
+    // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
+    instanceSpecificData.contentToken = tmpRes.token;
+  } catch (ex) {
+    instanceSpecificData.genericError = "Couldn't upload content. " + getErrorMessage(ex);
+    throw ex;
+  }
+}
+
 async function findSimilar(post: ScrapedPostDetails | undefined) {
   if (!post || !szuru.value || !cfg.value.selectedSiteId) return;
 
@@ -252,23 +287,14 @@ async function findSimilar(post: ScrapedPostDetails | undefined) {
   }
 
   // Don't load this again if it is already loaded.
-  if (instanceSpecificData?.reverseSearchResult) return;
+  if (instanceSpecificData.reverseSearchResult) return;
 
   isSearchingForSimilarPosts.value++;
 
+  await ensurePostHasContentToken(post);
+
   try {
-    let res: ImageSearchResult | undefined;
-
-    if (cfg.value.useContentTokens) {
-      let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl);
-      // TODO: Error handling?
-      // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
-      instanceSpecificData.contentToken = tmpRes.token;
-
-      res = await selectedInstance.reverseSearchToken(tmpRes.token);
-    } else {
-      res = await selectedInstance.reverseSearch(post.contentUrl);
-    }
+    const res = await selectedInstance.reverseSearchToken(instanceSpecificData.contentToken);
 
     instanceSpecificData.reverseSearchResult = {
       exactPostId: res.exactPost?.id,

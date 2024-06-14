@@ -1,4 +1,4 @@
-import { BooruTypes, ContentType, ScrapedNote, ScrapedPost, ScrapedTag } from "neo-scraper";
+import { BooruTypes, ContentType, ScrapedNote, ScrapedPost, ScrapedTag, UploadMode } from "neo-scraper";
 import { MicroTag, Pool, Tag, UpdatePostRequest } from "~/api/models";
 
 export class TagDetails {
@@ -77,6 +77,7 @@ export class ScrapedPostDetails {
   referrer?: string;
   resolution?: [number, number];
   instanceSpecificData: MappedInstanceSpecificData = {};
+  uploadMode: UploadMode = "url";
 
   constructor(post: ScrapedPost) {
     this.contentUrl = post.contentUrl;

@@ -16,6 +16,7 @@ import {
   UpdatePoolRequest,
 } from "./models";
 import { ScrapedPostDetails, SzuruSiteConfig } from "~/models";
+import { UploadMode } from "neo-scraper";
 
 /**
  * A 1:1 wrapper around the szurubooru API.
@@ -147,11 +148,11 @@ export default class SzurubooruApi {
     return (await this.apiPost("posts/reverse-search", obj)).data;
   }
 
-  async uploadTempFile(contentUrl: string): Promise<TemporaryFileUploadResult> {
-    // HACK: For some sources we need to download the image to the client and then upload it to szurubooru.
+  async uploadTempFile(contentUrl: string, uploadMode: UploadMode): Promise<TemporaryFileUploadResult> {
+    // For some sources we need to download the image to the client and then upload it to szurubooru.
     // We can't just pass the contentUrl because that would trigger the bot/hotlink protection.
 
-    if (contentUrl.indexOf("donmai.us") != -1) {
+    if (uploadMode == "content") {
       console.log("Upload from content");
       return this.uploadTempFileFromContent(contentUrl);
     } else {
