@@ -11,6 +11,8 @@ import Column from "primevue/column";
 import { SzuruSiteConfig, TagCategoryColor, getDefaultTagCategories } from "~/models";
 import SzurubooruApi from "~/api";
 
+type StatusType = "success" | "error" | "quiet";
+
 const statusText = ref("");
 const statusType = ref("status-quiet");
 const versionInfo = "Version: " + (import.meta.env.VITE_SZ_VERSION ?? browser.runtime.getManifest().version);
@@ -26,9 +28,7 @@ const selectedSite = computed(() => {
   }
 });
 
-type StatusType = "success" | "error" | "quiet";
-
-let mode = useColorMode({ emitAuto: true });
+const mode = useColorMode({ emitAuto: true });
 
 async function testConnection() {
   if (
@@ -221,8 +221,13 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
             <template v-if="selectedSite">
               <div class="field col-12">
                 <label>URL</label>
-                <input v-if="selectedSite" text="Szurubooru URL" type="text" name="domain"
-                  v-model="selectedSite.domain" />
+                <input
+                  v-if="selectedSite"
+                  text="Szurubooru URL"
+                  type="text"
+                  name="domain"
+                  v-model="selectedSite.domain"
+                />
               </div>
 
               <div class="field col-12 md:col-6">
@@ -251,10 +256,14 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
                   <template v-if="field == 'color'">
                     <div class="color-preview">
                       <input type="text" class="color" v-model="data[field]" />
-                      <div class="preview background-preview"
-                        :style="{ 'border-color': data[field], 'background-color': data[field] }"></div>
-                      <div class="preview text-preview" :style="{ 'border-color': data[field], color: data[field] }">
-                      </div>
+                      <div
+                        class="preview background-preview"
+                        :style="{ 'border-color': data[field], 'background-color': data[field] }"
+                      ></div>
+                      <div
+                        class="preview text-preview"
+                        :style="{ 'border-color': data[field], color: data[field] }"
+                      ></div>
                     </div>
                   </template>
 
@@ -284,6 +293,16 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
 
           <!-- TODO: Category ignore list -->
         </TabPanel>
+
+        <!-- <TabPanel header="About">
+          <div class="grid">
+            <div v-for="engine in scraper.engines" :key="engine.name" class="col-12 md:col-4 flex flex-column">
+              <span class="font-bold">{{ engine.name }}</span>
+              <span>Features: {{ engine.features.join(", ") }}</span>
+              <span>Hosts: {{ engine.supportedHosts.join(", ") }}</span>
+            </div>
+          </div>
+        </TabPanel> -->
 
         <!--
         <TabPanel header="Developer">

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useDark } from "@vueuse/core";
 import { cloneDeep } from "lodash";
-import { NeoScraper, ScrapeResults } from "neo-scraper";
+import { ScrapeResults } from "neo-scraper";
 import { getUrl, encodeTagName, getErrorMessage, getPostInfoSummary } from "~/utils";
 import {
   BrowserCommand,
@@ -14,7 +14,6 @@ import {
   SzuruSiteConfig,
   PoolDetails,
 } from "~/models";
-import { ImageSearchResult } from "~/api/models";
 import { isMobile } from "~/env";
 import { DeepReadonly } from "vue";
 import { cfg, usePopupStore } from "~/stores";
@@ -99,14 +98,11 @@ async function grabPost() {
   // Clear current posts array
   pop.posts.splice(0);
 
-  const scraper = new NeoScraper();
-
   for (const result of res.results) {
-    const engine = scraper.engines.find((x) => x.name == result.engine);
-
     for (const i in result.posts) {
       const vm = new ScrapedPostDetails(result.posts[i]);
-      vm.name = `[${result.engine}] Post ${parseInt(i) + 1}`; // parseInt() is required!
+      const name = result.posts[i].name ?? `Post ${parseInt(i) + 1}`; // parseInt() is required!
+      vm.name = `[${result.engine}] ${name}`;
 
       if (!cfg.value.addAllParsedTags) {
         vm.tags.splice(0);
@@ -125,10 +121,6 @@ async function grabPost() {
         vm.instanceSpecificData[site.id] = {};
       }
 
-      if (engine) {
-        vm.uploadMode = engine.uploadMode;
-      }
-
       pop.posts.push(vm);
     }
   }
@@ -145,7 +137,7 @@ async function grabPost() {
     }
 
     if (cfg.value.fetchPostInfo) {
-      await fetchPostInfo();
+      await fetchPostsInfo();
     }
 
     // Delayed call to findSimilar, as fetchPostInfo might change the post's contentUrl.
@@ -168,7 +160,7 @@ async function upload() {
   }
 
   try {
-    const post: ScrapedPostDetails = cloneDeep(pop.selectedPost);
+    const post: ScrapedPostDetails = cloneDeep(pop.selectedPost)!;
 
     // uploadMode "content" requires a content token to work. So ensure it is set.
     if (post.uploadMode == "content") {
@@ -291,10 +283,10 @@ async function findSimilar(post: ScrapedPostDetails | undefined) {
 
   isSearchingForSimilarPosts.value++;
 
-  await ensurePostHasContentToken(post);
-
   try {
-    const res = await selectedInstance.reverseSearchToken(instanceSpecificData.contentToken);
+    await ensurePostHasContentToken(post);
+
+    const res = await selectedInstance.reverseSearchToken(instanceSpecificData.contentToken!);
 
     instanceSpecificData.reverseSearchResult = {
       exactPostId: res.exactPost?.id,
@@ -331,33 +323,58 @@ async function loadTagCounts() {
   }
 }
 
-async function fetchPostInfo() {
+async function updatePostWithRemoteInfo(post: ScrapedPostDetails, contentUrl: string) {
+  // We are missing cookies/etc which means that the request might fail.
+  // If you want access to the cookies/session/etc then you need to execute this code inside the content script.
+  try {
+    // This request follows redirects.
+    const res = await fetch(contentUrl, { method: "HEAD" });
+    const size = res.headers.get("Content-Length");
+    const type = res.headers.get("Content-Type");
+
+    if (type) {
+      if (type.indexOf("text/html") != -1) {
+        // If we get a HTML page back it usually means that the request failed.
+        // Not all sites (e.g. e-hentai) reply with a 403.
+        throw new Error(
+          "Received a text/html content type. This probably means that we don't have permission to access the resource.",
+        );
+      }
+
+      const [_main, sub] = type.split("/");
+      if (sub) post.contentSubType = sub.toUpperCase();
+    }
+
+    // This should be after the type check, because the type check also checks whether the response we get is valid/unsable.
+    if (size) post.contentSize = parseInt(size);
+
+    // Update url if it changes. The url can change when:
+    // a. the extraContentUrl was successfully loaded
+    // b. because of redirects
+    if (res.url != post.contentUrl) {
+      // The developer needs to make sure that the remote server can load this URL if `post.uploadMode == 'url'`!
+      console.log(`Updating post.contentUrl to '${res.url}'`);
+      post.contentUrl = res.url;
+    }
+
+    return true;
+  } catch (ex) {
+    console.error(ex);
+    return false;
+  }
+}
+
+async function fetchPostsInfo() {
   for (const post of pop.posts) {
     if (!post.contentSize || post.extraContentUrl) {
-      // We are missing cookies/etc which means that the request might fail.
-      // If you want access to the cookies/session/etc then you need to execute this code inside the content script.
-      try {
-        const contentUrl = post.extraContentUrl ?? post.contentUrl;
-
-        // TODO: Check whether we need to call this in the background page, or if it is fine to call it from the popup.
-        const res = await fetch(contentUrl, { method: "HEAD" });
-        const size = res.headers.get("Content-Length");
-        const type = res.headers.get("Content-Type");
-
-        if (size) post.contentSize = parseInt(size);
-
-        if (type) {
-          const [_main, sub] = type.split("/");
-          if (sub) post.contentSubType = sub.toUpperCase();
-        }
-
-        // Resolve extraContentUrl redirects.
-        if (post.extraContentUrl && res.url != post.contentUrl) {
-          post.contentUrl = res.url;
-        }
-      } catch (ex) {
-        // TODO: Maybe display an error in the UI.
-        console.error(ex);
+      let ok = false;
+      if (post.extraContentUrl) {
+        // Prioritize info from extraContentUrl.
+        ok = await updatePostWithRemoteInfo(post, post.extraContentUrl);
+      }
+      if (!ok) {
+        // Fall back to normal contentUrl if we can't get the data from the extraContentUrl.
+        await updatePostWithRemoteInfo(post, post.contentUrl);
       }
     }
   }
@@ -369,7 +386,8 @@ function getUpdatedTagsText(count: number) {
 }
 
 function onResolutionLoaded(res: any) {
-  if (pop.selectedPost && !pop.selectedPost.resolution) {
+  // This no longer checks for `!pop.selectedPost.resolution` because the resolution can change if the contentUrl is updated.
+  if (pop.selectedPost) {
     pop.selectedPost.resolution = res;
   }
 }
