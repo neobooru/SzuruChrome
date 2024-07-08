@@ -313,12 +313,11 @@ async function loadTagCounts() {
     // Not the best code, but it works I guess?
     if (resp) {
       for (let post of pop.posts)
-        for (let tag of resp.results)
-          for (let postTag of post.tags)
-            if (tag.names.includes(postTag.name)) {
-              postTag.usages = tag.usages;
-              break;
-            }
+        for (let tag of resp.results) {
+          post.tags
+            .find(postTag => tag.names.includes(postTag.name))
+            .usages = tag.usages;
+        }
     }
   }
 }
