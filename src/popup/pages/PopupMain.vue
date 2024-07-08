@@ -315,7 +315,7 @@ async function loadTagCounts() {
       for (let post of pop.posts)
         for (let tag of resp.results)
           for (let postTag of post.tags)
-            if (postTag.name == tag.names[0]) {
+            if (tag.names.includes(postTag.name)) {
               postTag.usages = tag.usages;
               break;
             }
