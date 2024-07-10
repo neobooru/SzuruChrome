@@ -384,6 +384,10 @@ function getUpdatedTagsText(count: number) {
   return `Updated ${count} tag${count > 1 ? "s" : ""}`;
 }
 
+async function openNewTab(url: string) {
+  browser.tabs.create({url, active:false});
+}
+
 function onResolutionLoaded(res: any) {
   // This no longer checks for `!pop.selectedPost.resolution` because the resolution can change if the contentUrl is updated.
   if (pop.selectedPost) {
@@ -416,9 +420,10 @@ useDark();
       </div>
 
       <div v-if="instanceSpecificData?.reverseSearchResult?.exactPostId" class="bg-danger has-merge-button">
-        <a :href="getActiveSitePostUrl(instanceSpecificData.reverseSearchResult?.exactPostId)">
-          Post already uploaded ({{ instanceSpecificData.reverseSearchResult.exactPostId }})
-        </a>
+        <a href="#"
+          @click.prevent="openNewTab(getActiveSitePostUrl(instanceSpecificData.reverseSearchResult?.exactPostId))"
+          >Post already uploaded ({{ instanceSpecificData.reverseSearchResult.exactPostId }}) </a
+        >
 
         <!-- TODO: Maybe a 5px gap here? -->
 
@@ -460,8 +465,9 @@ useDark();
         "
         class="bg-success"
       >
-        <a :href="getActiveSitePostUrl(instanceSpecificData.uploadState.instancePostId)"
-          >Uploaded post {{ instanceSpecificData.uploadState.instancePostId }}</a
+        <a href="#" 
+          @click="openNewTab(getActiveSitePostUrl(instanceSpecificData.uploadState.instancePostId))"
+          >Uploaded post {{ instanceSpecificData.uploadState.instancePostId }} </a
         >
       </div>
 
@@ -515,7 +521,8 @@ useDark();
         :key="similarPost.id"
         class="has-merge-button"
       >
-        <a :href="getActiveSitePostUrl(similarPost.id)"
+        <a href="#"
+          @click.prevent="openNewTab(getActiveSitePostUrl(similarPost.id))"
           >Post {{ similarPost.id }} looks {{ similarPost.percentage }}% similar</a
         >
 
