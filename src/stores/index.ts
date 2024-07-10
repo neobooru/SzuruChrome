@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import deepMerge from "deepmerge";
 import {
+  type TagDetails,
   getDefaultTagCategories,
   type ScrapedPostDetails,
   type SetPostUploadInfoData,
@@ -40,6 +41,7 @@ export const cfg = useStorageLocal(
       showInstancePicker: true,
     },
     tagCategories: [] as Array<TagCategoryColor>,
+    tagIgnores: [] as Array<TagDetails>,
   },
   {
     mergeDefaults(storageValue, defaults) {
