@@ -138,6 +138,12 @@ async function grabPost() {
         vm.instanceSpecificData[site.id] = {};
       }
 
+      // Remove ignored tags
+      // The complexity for this is quite bad but all the other ways I tried were even worse
+      vm.tags = vm.tags.filter(tag => cfg.value.tagIgnores.every(
+        ignoredTag => tag.name != ignoredTag.names[0] // no getters after deserializing
+      ));
+
       pop.posts.push(vm);
     }
   }
