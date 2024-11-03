@@ -139,6 +139,17 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
               </p>
             </div>
 
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.alwaysUploadAsContent" />
+                Always upload as content
+              </label>
+              <p class="hint">
+                This will always upload the image content directly, instead of
+                as an URL
+              </p>
+            </div>
+
             <span class="col-12 status-quiet">{{ versionInfo }}</span>
           </div>
         </TabPanel>

@@ -162,8 +162,12 @@ async function upload() {
   try {
     const post: ScrapedPostDetails = cloneDeep(pop.selectedPost)!;
 
-    // uploadMode "content" requires a content token to work. So ensure it is set.
-    if (post.uploadMode == "content") {
+    // uploadMode "content" requires a content token to work. So ensure it is
+    // set. Ignore fallback "Upload as URL" mode as well
+    if (
+      (cfg.value.alwaysUploadAsContent || post.uploadMode === "content")
+        && post.name !== "[fallback] Upload as URL"
+    ) {
       await ensurePostHasContentToken(post);
     }
 
@@ -257,7 +261,10 @@ async function ensurePostHasContentToken(post: ScrapedPostDetails) {
   }
 
   try {
-    let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl, post.uploadMode);
+    const uploadMode =
+      cfg.value.alwaysUploadAsContent && post.name !== "[fallback] Upload as URL" ?
+        'content' : post.uploadMode;
+    let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl, uploadMode);
     // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
     instanceSpecificData.contentToken = tmpRes.token;
   } catch (ex) {
@@ -403,7 +410,7 @@ useDark();
 <template>
   <div class="popup-messages">
     <div class="messages">
-      <!-- 
+      <!--
         Error messages
       -->
 
