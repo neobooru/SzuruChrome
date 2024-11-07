@@ -14,6 +14,7 @@ export const cfg = useStorageLocal(
   {
     version: 0,
     addPageUrlToSource: true,
+    alwaysUploadAsContent: false,
     autoSearchSimilar: false,
     loadTagCounts: true,
     fetchPostInfo: true,
