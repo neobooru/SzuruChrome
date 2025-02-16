@@ -30,7 +30,7 @@ jobs:
       - name: Pack ZIP
         run: pnpm pack:zip
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Chrome Extension (Unsigned)
           path: extension.zip
@@ -60,7 +60,7 @@ jobs:
           WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
           WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Firefox Extension (Signed)
           path: web-ext-artifacts/*.xpi
