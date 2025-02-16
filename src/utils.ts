@@ -1,6 +1,7 @@
 import byteSize from "byte-size";
 import { MicroUser, Post } from "./api/models";
 import { ScrapedPostDetails, TagDetails } from "./models";
+import SzurubooruApi from "./api";
 
 export function getUrl(root: string, ...parts: string[]): string {
   let url = root.replace(/\/+$/, "");
@@ -101,4 +102,29 @@ export function getPostInfoSummary(post: ScrapedPostDetails) {
     parts.push(resolutionToString(post.resolution));
   }
   return parts.join(" / ");
+}
+
+export async function ensurePostHasContentToken(selectedInstance: SzurubooruApi, post: ScrapedPostDetails, cfg: any) {
+  if (!selectedInstance || !cfg.value.selectedSiteId) return;
+
+  const instanceSpecificData = post.instanceSpecificData[cfg.value.selectedSiteId];
+
+  if (!instanceSpecificData) {
+    console.error("instanceSpecificData is undefined. This should never happen!");
+    return;
+  }
+
+  if (instanceSpecificData.contentToken) {
+    console.log("[ensurePostHasContentToken] contentToken is already set.");
+    return;
+  }
+
+  try {
+    const tmpRes = await selectedInstance.uploadTempFile(post.contentUrl, post.uploadMode);
+    // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
+    instanceSpecificData.contentToken = tmpRes.token;
+  } catch (ex) {
+    instanceSpecificData.genericError = "Couldn't upload content. " + getErrorMessage(ex);
+    throw ex;
+  }
 }

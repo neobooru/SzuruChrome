@@ -5,7 +5,7 @@ import { Post, UpdatePostRequest } from "~/api/models";
 import { isMobile } from "~/env";
 import { BrowserCommand, PostUpdateCommandData, TagDetails } from "~/models";
 import { cfg, useMergeStore, usePopupStore } from "~/stores";
-import { emptyPost, getUrl } from "~/utils";
+import { emptyPost, ensurePostHasContentToken, getUrl } from "~/utils";
 
 const props = defineProps(["siteId", "postId"]);
 const merge = useMergeStore();
@@ -140,7 +140,10 @@ async function mergeChanges() {
   }
 
   if (imageToKeep.value == "new") {
-    req.contentUrl = scrapedPost?.contentUrl;
+    // In practice this should not be needed, because finding similar posts requires the use of content tokens.
+    // So if a similar post is found, it means that a contentToken has already been set.
+    ensurePostHasContentToken(szuru, scrapedPost, cfg);
+    req.contentToken = scrapedPost.instanceSpecificData[cfg.value.selectedSiteId!].contentToken!;
   }
 
   if (!req.safety && !req.source && !(req.contentUrl || req.contentToken) && req.tags === undefined) {

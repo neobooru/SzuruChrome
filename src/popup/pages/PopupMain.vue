@@ -2,7 +2,7 @@
 import { useDark } from "@vueuse/core";
 import { cloneDeep } from "lodash";
 import { ScrapeResults } from "neo-scraper";
-import { getUrl, encodeTagName, getErrorMessage, getPostInfoSummary } from "~/utils";
+import { getUrl, encodeTagName, getErrorMessage, getPostInfoSummary, ensurePostHasContentToken } from "~/utils";
 import {
   BrowserCommand,
   ScrapedPostDetails,
@@ -108,6 +108,10 @@ async function grabPost() {
         vm.tags.splice(0);
       }
 
+      if (cfg.value.alwaysUploadAsContent && vm.name !== "[fallback] Upload as URL") {
+        vm.uploadMode = "content";
+      }
+
       // Add current pageUrl to the source if either
       // a. user has addPageUrlToSource set to true
       // b. source is empty
@@ -162,13 +166,9 @@ async function upload() {
   try {
     const post: ScrapedPostDetails = cloneDeep(pop.selectedPost)!;
 
-    // uploadMode "content" requires a content token to work. So ensure it is
-    // set. Ignore fallback "Upload as URL" mode as well
-    if (
-      (cfg.value.alwaysUploadAsContent || post.uploadMode === "content")
-        && post.name !== "[fallback] Upload as URL"
-    ) {
-      await ensurePostHasContentToken(post);
+    // uploadMode "content" requires a content token to work. So ensure it is set.
+    if (post.uploadMode === "content") {
+      await ensurePostHasContentToken(szuru.value!, post, cfg);
     }
 
     const cmdData = new PostUploadCommandData(post, <SzuruSiteConfig>cloneDeep(selectedSite.value));
@@ -249,34 +249,14 @@ async function clickFindSimilar() {
   if (pop.selectedPost) return await findSimilar(pop.selectedPost);
 }
 
-async function ensurePostHasContentToken(post: ScrapedPostDetails) {
-  if (!szuru.value || !cfg.value.selectedSiteId) return;
-
-  const selectedInstance = toRaw(szuru.value); // Get current object, and not reactive.
-  let instanceSpecificData = post.instanceSpecificData[cfg.value.selectedSiteId];
-
-  if (!instanceSpecificData) {
-    console.error("instanceSpecificData is undefined. This should never happen!");
-    return;
-  }
-
-  try {
-    const uploadMode =
-      cfg.value.alwaysUploadAsContent && post.name !== "[fallback] Upload as URL" ?
-        'content' : post.uploadMode;
-    let tmpRes = await selectedInstance.uploadTempFile(post.contentUrl, uploadMode);
-    // Save contentToken in PostViewModel so that we can reuse it when creating/uploading the post.
-    instanceSpecificData.contentToken = tmpRes.token;
-  } catch (ex) {
-    instanceSpecificData.genericError = "Couldn't upload content. " + getErrorMessage(ex);
-    throw ex;
-  }
-}
-
 async function findSimilar(post: ScrapedPostDetails | undefined) {
   if (!post || !szuru.value || !cfg.value.selectedSiteId) return;
 
   // TODO: This code might not work.
+  // Why is toRaw used?
+  // I guess it could happen that the selectedInstance changes halfway during this function?
+  // And in that case toRaw would ensure we have the original selected instance (as it was at the start of this function).
+  // In theory this sounds correct, but idk if it is needed in practice.
   const selectedInstance = toRaw(szuru.value); // Get current object, and not reactive.
   let instanceSpecificData = post.instanceSpecificData[cfg.value.selectedSiteId];
 
@@ -291,7 +271,7 @@ async function findSimilar(post: ScrapedPostDetails | undefined) {
   isSearchingForSimilarPosts.value++;
 
   try {
-    await ensurePostHasContentToken(post);
+    await ensurePostHasContentToken(selectedInstance, post, cfg);
 
     const res = await selectedInstance.reverseSearchToken(instanceSpecificData.contentToken!);
 
