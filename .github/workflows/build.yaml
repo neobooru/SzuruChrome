@@ -15,7 +15,7 @@ on:
 jobs:
   build_chrome:
     name: "Build Chrome Extension"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -33,11 +33,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Chrome Extension (Unsigned)
-          path: SzuruChrome-*.zip
+          path: extension.zip
 
   build_unlisted_firefox:
     name: "Build Unlisted Firefox Extension"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     # Doesn't really need the Chrome build, but we can reuse its cache.
     needs: build_chrome
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
@@ -70,7 +70,7 @@ jobs:
 
   build_amo_firefox:
     name: "Build Firefox Extension for AMO"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     # Doesn't really need the Chrome build, but we can reuse its cache.
     needs: build_chrome
     # Only run (on master branch && if tagged) or (manually dispatching).
