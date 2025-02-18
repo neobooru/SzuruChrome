@@ -28,12 +28,14 @@ jobs:
         run: pnpm build
 
       - name: Pack ZIP
-        run: pnpm pack:zip
+        run: |
+          pnpm pack:zip
+          mv extension.zip "SzuruChrome-v${{ steps.version.outputs.AssemblySemFileVer }}.zip"
 
       - uses: actions/upload-artifact@v4
         with:
           name: Chrome Extension (Unsigned)
-          path: extension.zip
+          path: SzuruChrome-*.zip
 
   build_unlisted_firefox:
     name: "Build Unlisted Firefox Extension"
@@ -59,6 +61,9 @@ jobs:
         env:
           WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
           WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+
+      - name: Rename XPI
+        run: rename.ul szuruchrome_gh- SzuruChrome-v web-ext-artifacts/*.xpi
 
       - uses: actions/upload-artifact@v4
         with:
