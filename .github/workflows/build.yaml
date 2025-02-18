@@ -28,9 +28,7 @@ jobs:
         run: pnpm build
 
       - name: Pack ZIP
-        run: |
-          pnpm pack:zip
-          mv extension.zip "SzuruChrome-v${{ steps.version.outputs.AssemblySemFileVer }}.zip"
+        run: pnpm pack:zip
 
       - uses: actions/upload-artifact@v4
         with:
