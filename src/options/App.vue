@@ -8,7 +8,7 @@ import TabView from "primevue/tabview";
 import TabPanel from "primevue/tabpanel";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
-import { SzuruSiteConfig, TagCategoryColor, getDefaultTagCategories } from "~/models";
+import { TagDetails, SzuruSiteConfig, TagCategoryColor, getDefaultTagCategories } from "~/models";
 import SzurubooruApi from "~/api";
 
 type StatusType = "success" | "error" | "quiet";
@@ -100,6 +100,14 @@ async function importTagCategoriesFromInstance() {
       cfg.value.tagCategories.push(new TagCategoryColor(cat.name, cat.color));
     }
   }
+}
+
+function addTagIgnore() {
+  cfg.value.tagIgnores.push(new TagDetails([""]))
+}
+
+function resetTagIgnores() {
+  cfg.value.tagIgnores.splice(0);
 }
 
 // For debugging
@@ -300,7 +308,26 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
 
           <!-- TODO: Tag category colors -->
 
-          <!-- TODO: Tag ignore list -->
+          <div class="grid">
+            <DataTable :value="cfg.tagIgnores" table-class="col-12" style="width: 100%">
+              <Column field="names" :header="'Names'">
+                <template #body="{ data, field }">
+                  <input type="text" :name="field" v-model="data[field][0]" />
+                </template>
+              </Column>
+
+              <Column field="remove">
+                <template #body="{ index }">
+                  <a class="color-primary cursor-pointer" @click="() => cfg.tagIgnores.splice(index, 1)">Remove</a>
+                </template>
+              </Column>
+            </DataTable>
+
+            <div class="col-12 flex flex-wrap grid grid-nogutter gap-1">
+              <button class="primary" @click="addTagIgnore">Add tag</button>
+              <button class="bg-danger sm:ml-auto" @click="resetTagIgnores">Clear</button>
+            </div>
+          </div>
 
           <!-- TODO: Category ignore list -->
         </TabPanel>
