@@ -73,32 +73,45 @@ function openOptionsPage() {
   browser.runtime.openOptionsPage();
 }
 
-async function getActiveTabId(): Promise<number> {
-  const activeTabs = await browser.tabs.query({
-    active: true,
+async function getSelectedTabIds(): Promise<number[]> {
+  const selectedTabs = await browser.tabs.query({
+    highlighted: true,
     currentWindow: true,
   });
 
-  if (activeTabs.length > 0 && activeTabs[0].id) return activeTabs[0].id;
+  if (selectedTabs.length > 0 && selectedTabs[0].id) {
+    return selectedTabs
+      .filter(tab => tab.id)
+      .map(tab => tab.id as number)
+  }
   throw new Error("No active tab.");
 }
 
 async function grabPost() {
   // Get active tab
-  const activeTabId = await getActiveTabId();
+  const selectedTabIds = await getSelectedTabIds();
 
-  // Send 'grab_post' to the content script on the active tab
-  const x = await browser.tabs.sendMessage(activeTabId, new BrowserCommand("grab_post"));
-  // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
-  // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
-  const res: ScrapeResults = Object.assign(new ScrapeResults(), x);
+  let scrapeResults: ScrapeResults = new ScrapeResults();
+  for(const selectedTabId of selectedTabIds) {
+    // Send 'grab_post' to the content script on the active tabs
+    const x = await browser.tabs.sendMessage(selectedTabId, new BrowserCommand("grab_post"));
+    // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
+    // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
+    const results: ScrapeResults = Object.assign(new ScrapeResults(), x);
 
-  console.dir(res);
+    for(const result of results.results) {
+      const res = scrapeResults.results.find((r) => r.engine === result.engine);
+      if(res) res.posts.push(...result.posts);
+      else scrapeResults.results.push(result);
+    }
+  }
+
+  console.dir(scrapeResults);
 
   // Clear current posts array
   pop.posts.splice(0);
 
-  for (const result of res.results) {
+  for (const result of scrapeResults.results) {
     for (const i in result.posts) {
       const vm = new ScrapedPostDetails(result.posts[i]);
       const name = result.posts[i].name ?? `Post ${parseInt(i) + 1}`; // parseInt() is required!
