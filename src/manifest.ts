@@ -31,7 +31,7 @@ export async function getManifest() {
       page: "./dist/background/index.html",
       // persistent: false,
     },
-    permissions: ["storage", "activeTab", "webRequest", "webRequestBlocking", "<all_urls>"],
+    permissions: ["storage", "activeTab", "webRequest", "webRequestBlocking", "notifications", "<all_urls>"],
     content_scripts: [
       {
         matches: ["http://*/*", "https://*/*"],

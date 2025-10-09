@@ -1,4 +1,4 @@
-import { encodeTagName, getErrorMessage } from "~/utils";
+import { encodeTagName, getErrorMessage, getUrl } from "~/utils";
 import {
   BrowserCommand,
   PostUploadCommandData,
@@ -18,6 +18,13 @@ if (import.meta.hot) {
   // load latest content script
   import("./contentScriptHMR");
 }
+
+browser.notifications.onClicked.addListener((url) => {
+  if (url) {
+    browser.tabs.create({ url });
+    browser.notifications.clear(url);
+  }
+});
 
 async function uploadPost(data: PostUploadCommandData) {
   const info: PostUploadInfo = {
@@ -116,6 +123,16 @@ async function uploadPost(data: PostUploadCommandData) {
 
         await szuru.updatePool(existingPool.id, updateRequest);
       }
+    }
+
+    if (browser.notifications) {
+      const createdPostUrl = getUrl(data.selectedSite.domain, "post", createdPost.id.toString());
+      browser.notifications.create(createdPostUrl, {
+        type: "basic",
+        iconUrl: browser.runtime.getURL("assets/icon-128.png"),
+        title: "SzuruChrome",
+        message: `Uploaded ${data.post.contentUrl}`,
+      });
     }
   } catch (ex: any) {
     console.error(ex);
