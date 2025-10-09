@@ -150,6 +150,17 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
               </p>
             </div>
 
+            <div class="col-12 md:col-6">
+              <label>
+                <input type="checkbox" v-model="cfg.sendUploadNotifications" />
+                Send browser notifications after uploading
+              </label>
+              <p class="hint">
+                This will send a browser notification after a successful upload. Clicking the notification will open
+                the uploaded post in a new tab.
+              </p>
+            </div>
+
             <span class="col-12 status-quiet">{{ versionInfo }}</span>
           </div>
         </TabPanel>

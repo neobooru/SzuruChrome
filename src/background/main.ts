@@ -125,12 +125,12 @@ async function uploadPost(data: PostUploadCommandData) {
       }
     }
 
-    if (browser.notifications) {
+    if (data.sendNotifications && browser.notifications) {
       const createdPostUrl = getUrl(data.selectedSite.domain, "post", createdPost.id.toString());
       browser.notifications.create(createdPostUrl, {
         type: "basic",
         iconUrl: browser.runtime.getURL("assets/icon-128.png"),
-        title: "SzuruChrome",
+        title: data.selectedSite.domain,
         message: `Uploaded ${data.post.contentUrl}`,
       });
     }

@@ -171,7 +171,7 @@ async function upload() {
       await ensurePostHasContentToken(szuru.value!, post, cfg);
     }
 
-    const cmdData = new PostUploadCommandData(post, <SzuruSiteConfig>cloneDeep(selectedSite.value));
+    const cmdData = new PostUploadCommandData(post, <SzuruSiteConfig>cloneDeep(selectedSite.value), cfg.value.sendUploadNotifications);
     const cmd = new BrowserCommand("upload_post", cmdData);
     await browser.runtime.sendMessage(cmd);
   } catch (ex: any) {
