@@ -148,6 +148,7 @@ export class PostUploadCommandData {
   constructor(
     public readonly post: ScrapedPostDetails,
     public readonly selectedSite: SzuruSiteConfig,
+    public readonly sendNotifications: boolean,
   ) { }
 }
 
