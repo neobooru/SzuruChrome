@@ -268,3 +268,9 @@ a.remove-tag {
 .color-primary {
   color: var(--primary-color);
 }
+
+.separated-content > * + * {
+  padding-top: 1rem;
+  margin-top: 1.5rem;
+  border-top: 3px solid #333;
+}

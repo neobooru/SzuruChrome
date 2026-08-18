@@ -103,7 +103,7 @@ async function importTagCategoriesFromInstance() {
 }
 
 function addTagIgnore() {
-  cfg.value.tagIgnores.push(new TagDetails([""]))
+  cfg.value.tagIgnores.push(new TagDetails([""]));
 }
 
 function resetTagIgnores() {
@@ -152,10 +152,7 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
                 <input type="checkbox" v-model="cfg.alwaysUploadAsContent" />
                 Always upload as content
               </label>
-              <p class="hint">
-                This will always upload the image content directly, instead of
-                as an URL
-              </p>
+              <p class="hint">This will always upload the image content directly, instead of as an URL</p>
             </div>
 
             <div class="col-12 md:col-6">
@@ -164,8 +161,8 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
                 Send browser notifications after uploading
               </label>
               <p class="hint">
-                This will send a browser notification after a successful upload. Clicking the notification will open
-                the uploaded post in a new tab.
+                This will send a browser notification after a successful upload. Clicking the notification will open the
+                uploaded post in a new tab.
               </p>
             </div>
 
@@ -279,68 +276,70 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
         </TabPanel>
 
         <TabPanel header="Tags">
-          <div class="grid">
-            <DataTable :value="cfg.tagCategories" table-class="col-12" style="width: 100%">
-              <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header">
-                <template #body="{ data, field }">
-                  <template v-if="field == 'color'">
-                    <div class="color-preview">
-                      <input type="text" class="color" v-model="data[field]" />
-                      <div
-                        class="preview background-preview"
-                        :style="{ 'border-color': data[field], 'background-color': data[field] }"
-                      ></div>
-                      <div
-                        class="preview text-preview"
-                        :style="{ 'border-color': data[field], color: data[field] }"
-                      ></div>
-                    </div>
+          <div class="separated-content">
+            <div class="grid">
+              <DataTable :value="cfg.tagCategories" table-class="col-12" style="width: 100%">
+                <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header">
+                  <template #body="{ data, field }">
+                    <template v-if="field == 'color'">
+                      <div class="color-preview">
+                        <input type="text" class="color" v-model="data[field]" />
+                        <div
+                          class="preview background-preview"
+                          :style="{ 'border-color': data[field], 'background-color': data[field] }"
+                        ></div>
+                        <div
+                          class="preview text-preview"
+                          :style="{ 'border-color': data[field], color: data[field] }"
+                        ></div>
+                      </div>
+                    </template>
+
+                    <template v-else>
+                      <input type="text" :name="field" v-model="data[field]" />
+                    </template>
                   </template>
+                </Column>
 
-                  <template v-else>
-                    <input type="text" :name="field" v-model="data[field]" />
+                <Column field="name">
+                  <template #body="{ index }">
+                    <a class="color-primary cursor-pointer" @click="() => cfg.tagCategories.splice(index, 1)">Remove</a>
                   </template>
-                </template>
-              </Column>
+                </Column>
+              </DataTable>
 
-              <Column field="name">
-                <template #body="{ index }">
-                  <a class="color-primary cursor-pointer" @click="() => cfg.tagCategories.splice(index, 1)">Remove</a>
-                </template>
-              </Column>
-            </DataTable>
-
-            <div class="col-12 flex flex-wrap grid grid-nogutter gap-1">
-              <button class="primary" @click="addTagCategory">Add new category</button>
-              <button @click="importTagCategoriesFromInstance">Import from active instance</button>
-              <button class="bg-danger sm:ml-auto" @click="resetTagCategories">Reset to default</button>
+              <div class="col-12 flex flex-wrap grid grid-nogutter gap-1">
+                <button class="primary" @click="addTagCategory">Add new category</button>
+                <button @click="importTagCategoriesFromInstance">Import from active instance</button>
+                <button class="bg-danger sm:ml-auto" @click="resetTagCategories">Reset to default</button>
+              </div>
             </div>
-          </div>
 
-          <!-- TODO: Tag category colors -->
+            <!-- TODO: Tag category colors -->
 
-          <div class="grid">
-            <DataTable :value="cfg.tagIgnores" table-class="col-12" style="width: 100%">
-              <Column field="names" :header="'Names'">
-                <template #body="{ data, field }">
-                  <input type="text" :name="field" v-model="data[field][0]" />
-                </template>
-              </Column>
+            <div class="grid">
+              <DataTable :value="cfg.tagIgnores" table-class="col-12" style="width: 100%">
+                <Column field="names" header="Tags to ignore">
+                  <template #body="{ data, field }">
+                    <input type="text" :name="field" v-model="data[field][0]" />
+                  </template>
+                </Column>
 
-              <Column field="remove">
-                <template #body="{ index }">
-                  <a class="color-primary cursor-pointer" @click="() => cfg.tagIgnores.splice(index, 1)">Remove</a>
-                </template>
-              </Column>
-            </DataTable>
+                <Column field="remove">
+                  <template #body="{ index }">
+                    <a class="color-primary cursor-pointer" @click="() => cfg.tagIgnores.splice(index, 1)">Remove</a>
+                  </template>
+                </Column>
+              </DataTable>
 
-            <div class="col-12 flex flex-wrap grid grid-nogutter gap-1">
-              <button class="primary" @click="addTagIgnore">Add tag</button>
-              <button class="bg-danger sm:ml-auto" @click="resetTagIgnores">Clear</button>
+              <div class="col-12 flex flex-wrap grid grid-nogutter gap-1">
+                <button class="primary" @click="addTagIgnore">Add tag</button>
+                <button class="bg-danger sm:ml-auto" @click="resetTagIgnores">Clear</button>
+              </div>
             </div>
-          </div>
 
-          <!-- TODO: Category ignore list -->
+            <!-- TODO: Category ignore list -->
+          </div>
         </TabPanel>
 
         <!-- <TabPanel header="About">
