@@ -24,8 +24,8 @@ importers:
         specifier: ^14.3.0
         version: 14.3.0
       neo-scraper:
-        specifier: ^0.11.0
-        version: 0.11.0
+        specifier: ^0.11.1
+        version: 0.11.1
       normalize.css:
         specifier: ^8.0.1
         version: 8.0.1
@@ -2501,8 +2501,8 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  neo-scraper@0.11.0:
-    resolution: {integrity: sha512-KHH+l43ikgTeZel/BUm72VNaM9N5/DuSw9qAUPQKuUzfOH97xPbmNx2V6HEs877VflsWah/DepvI+iVI6bfV1Q==}
+  neo-scraper@0.11.1:
+    resolution: {integrity: sha512-blxmVvlg7Ifw+FKSc1h7OClNyfqPLTZEO5svWljvCSFEatWI32IEVQ1E1dcERr9kDqNfYb6HhQHy4cmgPVKG5Q==}
 
   nice-try@1.0.5:
     resolution: {integrity: sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==}
@@ -6022,7 +6022,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  neo-scraper@0.11.0:
+  neo-scraper@0.11.1:
     dependencies:
       js-cookie: 3.0.8
       turndown: 7.2.4
