@@ -142,7 +142,7 @@ async function mergeChanges() {
   if (imageToKeep.value == "new") {
     // In practice this should not be needed, because finding similar posts requires the use of content tokens.
     // So if a similar post is found, it means that a contentToken has already been set.
-    ensurePostHasContentToken(szuru, scrapedPost, cfg);
+    await ensurePostHasContentToken(szuru, scrapedPost, cfg);
     req.contentToken = scrapedPost.instanceSpecificData[cfg.value.selectedSiteId!].contentToken!;
   }
 
