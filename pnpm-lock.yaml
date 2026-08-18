@@ -36,8 +36,8 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
       primevue:
-        specifier: ^3.53.1
-        version: 3.53.1(vue@3.5.41(typescript@5.9.3))
+        specifier: 3.45.0
+        version: 3.45.0(vue@3.5.41(typescript@5.9.3))
       vue-router:
         specifier: ^4.6.4
         version: 4.6.4(vue@3.5.41(typescript@5.9.3))
@@ -2754,8 +2754,8 @@ packages:
   primeflex@3.3.1:
     resolution: {integrity: sha512-zaOq3YvcOYytbAmKv3zYc+0VNS9Wg5d37dfxZnveKBFPr7vEIwfV5ydrpiouTft8MVW6qNjfkaQphHSnvgQbpQ==}
 
-  primevue@3.53.1:
-    resolution: {integrity: sha512-Bp4peZPdhfKYXwvtsOGGh5dfgmTelm+LZEZKGs/c5mOHhsUJ6xi3EcOZoQVI6oklS946ayMQvgD5L0S7itGO0g==}
+  primevue@3.45.0:
+    resolution: {integrity: sha512-qtA2YDi6SSBkGRb33lUXL2WnzMd7VZd4IC/YLXiUZLnxCGxqtB4iYj+jGqINNDcIFVqIYYMrc1UhiX+C68GQEQ==}
     peerDependencies:
       vue: ^3.0.0
 
@@ -6297,7 +6297,7 @@ snapshots:
 
   primeflex@3.3.1: {}
 
-  primevue@3.53.1(vue@3.5.41(typescript@5.9.3)):
+  primevue@3.45.0(vue@3.5.41(typescript@5.9.3)):
     dependencies:
       vue: 3.5.41(typescript@5.9.3)
 
