@@ -80,9 +80,7 @@ async function getSelectedTabIds(): Promise<number[]> {
   });
 
   if (selectedTabs.length > 0 && selectedTabs[0].id) {
-    return selectedTabs
-      .filter(tab => tab.id)
-      .map(tab => tab.id as number)
+    return selectedTabs.filter((tab) => tab.id).map((tab) => tab.id as number);
   }
   throw new Error("No active tab.");
 }
@@ -92,16 +90,16 @@ async function grabPost() {
   const selectedTabIds = await getSelectedTabIds();
 
   let scrapeResults: ScrapeResults = new ScrapeResults();
-  for(const selectedTabId of selectedTabIds) {
+  for (const selectedTabId of selectedTabIds) {
     // Send 'grab_post' to the content script on the active tabs
     const x = await browser.tabs.sendMessage(selectedTabId, new BrowserCommand("grab_post"));
     // We need to create a new ScrapeResults object and fill it with our data, because the get_posts()
     // method gets 'lost' when sent from the contentscript to the popup (it gets JSON.stringified and any prototype defines are lost there)
     const results: ScrapeResults = Object.assign(new ScrapeResults(), x);
 
-    for(const result of results.results) {
+    for (const result of results.results) {
       const res = scrapeResults.results.find((r) => r.engine === result.engine);
-      if(res) res.posts.push(...result.posts);
+      if (res) res.posts.push(...result.posts);
       else scrapeResults.results.push(result);
     }
   }
@@ -140,9 +138,11 @@ async function grabPost() {
 
       // Remove ignored tags
       // The complexity for this is quite bad but all the other ways I tried were even worse
-      vm.tags = vm.tags.filter(tag => cfg.value.tagIgnores.every(
-        ignoredTag => tag.name != ignoredTag.names[0] // no getters after deserializing
-      ));
+      vm.tags = vm.tags.filter((tag) =>
+        cfg.value.tagIgnores.every(
+          (ignoredTag) => tag.name != ignoredTag.names[0], // no getters after deserializing
+        ),
+      );
 
       pop.posts.push(vm);
     }
@@ -190,7 +190,11 @@ async function upload() {
       await ensurePostHasContentToken(szuru.value!, post, cfg);
     }
 
-    const cmdData = new PostUploadCommandData(post, <SzuruSiteConfig>cloneDeep(selectedSite.value), cfg.value.sendUploadNotifications);
+    const cmdData = new PostUploadCommandData(
+      post,
+      <SzuruSiteConfig>cloneDeep(selectedSite.value),
+      cfg.value.sendUploadNotifications,
+    );
     const cmd = new BrowserCommand("upload_post", cmdData);
     await browser.runtime.sendMessage(cmd);
   } catch (ex: any) {
@@ -321,7 +325,7 @@ async function loadTagCounts() {
       for (let post of pop.posts)
         for (let tag of resp.results) {
           const postTag = post.tags.find((postTag) => tag.names.includes(postTag.name));
-          if(postTag) postTag.usages = tag.usages;
+          if (postTag) postTag.usages = tag.usages;
         }
     }
   }

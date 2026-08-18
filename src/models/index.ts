@@ -8,7 +8,7 @@ export class TagDetails {
     public names: string[],
     public category?: string,
     public usages?: number,
-  ) { }
+  ) {}
 
   get name() {
     return this.names[0];
@@ -38,7 +38,7 @@ export class PoolDetails {
     public names: string[],
     public category?: string,
     public postCount?: number,
-  ) { }
+  ) {}
 
   get name() {
     return this.names[0];
@@ -109,7 +109,7 @@ export class SimilarPostInfo {
   constructor(
     public readonly id: number,
     public readonly percentage: number,
-  ) { }
+  ) {}
 }
 
 export type PostUploadState = "uploading" | "uploaded" | "error";
@@ -149,7 +149,7 @@ export class PostUploadCommandData {
     public readonly post: ScrapedPostDetails,
     public readonly selectedSite: SzuruSiteConfig,
     public readonly sendNotifications: boolean,
-  ) { }
+  ) {}
 }
 
 export class SetPostUploadInfoData {
@@ -157,7 +157,7 @@ export class SetPostUploadInfoData {
     public instanceId: string,
     public postId: string,
     public info: PostUploadInfo,
-  ) { }
+  ) {}
 }
 
 export class SetExactPostId {
@@ -165,7 +165,7 @@ export class SetExactPostId {
     public readonly instanceId: string,
     public readonly postId: string,
     public readonly exactPostId: number,
-  ) { }
+  ) {}
 }
 
 export class PostUpdateCommandData {
@@ -173,14 +173,14 @@ export class PostUpdateCommandData {
     public readonly postId: number,
     public readonly updateRequest: UpdatePostRequest,
     public readonly selectedSite: SzuruSiteConfig,
-  ) { }
+  ) {}
 }
 
 export class FetchCommandData {
   constructor(
     public readonly url: string,
     public readonly options: RequestInit | undefined = undefined,
-  ) { }
+  ) {}
 }
 
 export class SzuruSiteConfig {
@@ -194,7 +194,7 @@ export class TagCategoryColor {
   constructor(
     public name: string,
     public color: string,
-  ) { }
+  ) {}
 }
 
 export const getDefaultTagCategories = () => [
