@@ -27,12 +27,12 @@ runs:
       name: Install pnpm
       id: pnpm-install
       with:
-        version: 9
+        version: 12
         run_install: false
 
     - uses: actions/setup-node@v3
       with:
-        node-version: "20"
+        node-version: "26"
         cache: "pnpm"
 
     - name: Install dependencies
