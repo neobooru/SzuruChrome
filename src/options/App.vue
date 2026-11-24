@@ -117,11 +117,11 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
 </script>
 
 <template>
-  <div class="content-holder">
+  <div class="content-holder p-2 sm:p-4">
     <div class="content-wrapper flex flex-auto flex-column gap-3">
       <div><strong>SzuruChrome Settings</strong></div>
 
-      <TabView>
+      <TabView :pt="{ nav: { class: 'flex-wrap' } }">
         <TabPanel header="General">
           <div class="grid">
             <div class="col-12 md:col-6">
@@ -372,7 +372,6 @@ wnd.szc_set_config_version = (v = 0) => (cfg.value.version = v);
 
 <style lang="scss">
 .content-holder {
-  padding: 1.5em;
   display: flex;
   justify-content: center;
 
@@ -418,16 +417,6 @@ html.dark .content-wrapper {
 
 input[type="checkbox"] {
   margin: 0 3px 0 0;
-}
-
-@media only screen and (max-width: 600px) {
-  .content-holder {
-    padding: 0;
-  }
-
-  .status {
-    flex: 0 0 100%;
-  }
 }
 
 div.color-preview {
